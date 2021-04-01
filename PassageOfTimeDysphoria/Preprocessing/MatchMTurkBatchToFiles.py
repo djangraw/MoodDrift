@@ -12,7 +12,7 @@ import numpy as np
 import os.path
 import glob
 import dateutil.parser as dparser
-from ImportMmiSurveyData import ImportMmiSurveyData
+from .ImportMmiSurveyData import ImportMmiSurveyData
 
 
 def MatchMTurkBatchToFiles(batchFile,pilotDataFolder,batchName='',demoDataFile=''):
