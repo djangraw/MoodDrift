@@ -17,7 +17,7 @@ We have broken down processing into 3 processing folders that can be executed se
 
 ### Preprocessing
 Converts raw data into preprocessed files that combine across cohorts (or "batches") of participants. Run the following:
-- [ImportMmiData_May2020.py](Analysis/ImportMmiData_May2020.py) to import online adult cohorts
+- [ImportMmiData_May2020.py](Preprocessing/ImportMmiData_May2020.py) to import online adult cohorts
 - [ImportNimhMmiData.py](Preprocessing/ImportNimhMmiData.py) to import online adolescent cohorts
 - [AssembleMmiBatches.py](Preprocessing/AssembleMmiBatches.py) to combine across cohorts for grouped analyses
 - [MakePytorchInputTable.py](Preprocessing/MakePytorchInputTable.py) to format data for computational model fitting.
