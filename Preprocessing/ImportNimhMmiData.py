@@ -35,25 +35,27 @@ def AgeFromDateStrings(currStr,dobStr):
 
 # %% Load demographics data
 # Import
-pilotDataDir = '../Data/PilotData' # where pilot data can be found
+rawDataDir = '../Data/PilotData' # where pilot data can be found
 dataCheckDir = '../Data/DataChecks' # where data check files should be saved
 procDataDir = '../Data/OutFiles' # where preprocessed data should be saved
 outFigDir = '../Figures' # where figures should be saved
-batchName = 'RecoveryNimh' # TODO: SWITCH TO NIMH!
+batchName = 'RecoveryNimh' # Name of this batch
+plotEveryParticipant = False
+plotEveryParticipant = False # should we make a plot for every participant?
+overwrite = False; # overwrite previous results if they already exist?
 
-#demoFile = '../PilotData/MmiRecoveryNimh_AllData.csv' # OLD (5/18/20)
-demoFile = '%s/MmiRecoveryNimh_Demographics.csv'%pilotDataDir # NEW (6/9/20)
+demoFile = '%s/MmiRecoveryNimh_Demographics.csv'%rawDataDir # NEW (6/9/20)
 print('=== Reading and cropping %s...'%demoFile)
 dfData = pd.read_csv(demoFile)
 
 if demoFile.endswith('AllData.csv'):
     # extract info for each subject
     cols = ['participant','SEX','DOB','Participant_Type','Age']
-    dfSubj = dfData.loc[:,cols].drop_duplicates().reset_index(drop=True)
+    dfSurvey = dfData.loc[:,cols].drop_duplicates().reset_index(drop=True)
     # adjust to match MTurk names/values
-    dfSubj.loc[dfSubj.SEX=='MALE','SEX'] = 'Male'
-    dfSubj.loc[dfSubj.SEX=='FEMALE','SEX'] = 'Female'
-    dfSubj = dfSubj.rename(columns={'SEX':'gender',
+    dfSurvey.loc[dfSurvey.SEX=='MALE','SEX'] = 'Male'
+    dfSurvey.loc[dfSurvey.SEX=='FEMALE','SEX'] = 'Female'
+    dfSurvey = dfSurvey.rename(columns={'SEX':'gender',
                             'Age':'age',
                             'Participant_Type':'diagnosis'})
 
@@ -62,47 +64,50 @@ elif demoFile.endswith('Demographics.csv'):
     isBase = pd.notna(dfData.s_crisis_base_date)
     dfData.loc[isBase,['s_crisis_fu_tot','s_crisis_fu_date']] = dfData.loc[isBase,['s_crisis_base_tot','s_crisis_base_date']]
     cols = ['participant','SEX','DOB','Participant_Type','s_crisis_fu_tot','s_mfq_tot','s_scaredshort_tot','s_crisis_fu_date']
-    dfSubj = dfData.loc[:,cols].drop_duplicates().reset_index(drop=True)
-    dfSubj['age'] = np.nan
+    dfSurvey = dfData.loc[:,cols].drop_duplicates().reset_index(drop=True)
+    dfSurvey['age'] = np.nan
     # adjust to match MTurk names/values
-    dfSubj.loc[dfSubj.SEX=='MALE','SEX'] = 'Male'
-    dfSubj.loc[dfSubj.SEX=='FEMALE','SEX'] = 'Female'
-    dfSubj = dfSubj.rename(columns={'SEX':'gender',
+    dfSurvey.loc[dfSurvey.SEX=='MALE','SEX'] = 'Male'
+    dfSurvey.loc[dfSurvey.SEX=='FEMALE','SEX'] = 'Female'
+    dfSurvey = dfSurvey.rename(columns={'SEX':'gender',
                             'Participant_Type':'diagnosis',
                             's_crisis_fu_tot':'CRISIS',
                             's_mfq_tot':'MFQ',
                             's_scaredshort_tot':'SCARED',
                             's_crisis_fu_date': 'DateOfSurvey'})
     # Crop to COMPLETE measurements only
-    nSubj_orig = np.unique(dfSubj.participant).size
-    isOk = pd.notna(dfSubj.CRISIS) & pd.notna(dfSubj.MFQ) & pd.notna(dfSubj.SCARED)
-    dfSubj = dfSubj.loc[isOk,:]
+    nSubj_orig = np.unique(dfSurvey.participant).size
+    isOk = pd.notna(dfSurvey.CRISIS) & pd.notna(dfSurvey.MFQ) & pd.notna(dfSurvey.SCARED)
+    dfSurvey = dfSurvey.loc[isOk,:]
 
     # Crop to the ***FIRST measurement*** for each subject
-    participants = np.unique(dfSubj.participant)
+    participants = np.unique(dfSurvey.participant)
     nDupes = 0;
     for participant in participants:
-        isThis = dfSubj.participant==participant
+        isThis = dfSurvey.participant==participant
         if np.sum(isThis)>1:
-            earliestDate = np.min(dfSubj.loc[isThis,'DateOfSurvey'])
-            isNotEarliest = isThis & (dfSubj.DateOfSurvey>earliestDate)
+            earliestDate = np.min(dfSurvey.loc[isThis,'DateOfSurvey'])
+            isNotEarliest = isThis & (dfSurvey.DateOfSurvey>earliestDate)
             nDupes = nDupes + np.sum(isNotEarliest)
-            dfSubj = dfSubj.drop(isNotEarliest[isNotEarliest].index,axis=0)
+            dfSurvey = dfSurvey.drop(isNotEarliest[isNotEarliest].index,axis=0)
 #            print(' - subj %d: %d duplicates.'%(participant,np.sum(isNotEarliest)))
-    dfSubj = dfSubj.reset_index(drop=True)
+    dfSurvey = dfSurvey.reset_index(drop=True)
     print('Deleted %d duplicate lines.'%(nDupes))
 
 
-participants = np.unique(dfSubj.participant)
+participants = np.unique(dfSurvey.participant)
 nSubj = participants.size
-assert (dfSubj.shape[0]==nSubj) # make sure all participants are unique
+assert (dfSurvey.shape[0]==nSubj) # make sure all participants are unique
 print('%d of %d subjects had complete survey data.'%(nSubj,nSubj_orig))
 
 # Save results
-outFile = '%s/Mmi-%s_Survey.csv'%(procDataDir,batchName)
-print('Saving to %s...'%outFile)
-dfSubj.to_csv(outFile)
-print('Done!')
+#outFile = '%s/Mmi-%s_Survey.csv'%(procDataDir,batchName)
+#print('Saving to %s...'%outFile)
+#if os.path.exists(outFile) and not overwrite:
+#    print('Not overwriting existing file.')
+#else:
+#    dfSurvey.to_csv(outFile)
+#    print('Done!')
 
 
 # %% Load data from Pavlovia
@@ -137,8 +142,11 @@ for iSubj,participant in enumerate(participants):
 
 outFile = '%s/%s_DataCheck.csv'%(dataCheckDir,batchName)
 print('Saving to %s...'%outFile)
-dfDataCheck.to_csv(outFile)
-print('Done!')
+if os.path.exists(outFile) and not overwrite:
+    print('Not overwriting existing file.')
+else:
+    dfDataCheck.to_csv(outFile)
+    print('Done!')
 
 # %% Import data
 dfDataCheck['isComplete'] = True;
@@ -161,6 +169,7 @@ for iLine in range(nSubj):
             date = dfDataCheck_complete.loc[iLine,'taskFile_run%d'%run].split('_')[2]
             # Task
             inFile = dfDataCheck_complete.loc[iLine,'taskFile_run%d'%run]
+            inFile = inFile.replace('../PilotData',rawDataDir) # replace relative path from data check file with relative path from here            
             dfTrial,dfRating,dfLifeHappy = GetMmiRatingsAndTimes(inFile)
             # Add run/date info
             for df in [dfTrial,dfRating,dfLifeHappy]:
@@ -172,19 +181,20 @@ for iLine in range(nSubj):
             lifeHappyList.append(dfLifeHappy)
 
             # Plot task data
-            plt.figure(1,figsize=(10,4),dpi=180, facecolor='w', edgecolor='k');
-            plt.clf();
-            ax1 = plt.subplot(2,1,1);
-            pmd.PlotMmiRatings(dfTrial,dfRating,'line')
-            plt.title('MMI participant %d, run %d'%(participant,run))
-            ax2 = plt.subplot(2,1,2);
-            plt.xlim(ax1.get_xlim())
-            pmd.PlotMmiRPEs(dfTrial,dfRating)
-            plt.tight_layout()
-            # Save figure
-            outFig = '%s/Mmi-%s-%s-run%d.png'%(outFigDir,batchName,participant,run)
-            print('Saving figure as %s...'%outFig)
-            plt.savefig(outFig)
+            if plotEveryParticipant:
+                plt.figure(1,figsize=(10,4),dpi=180, facecolor='w', edgecolor='k');
+                plt.clf();
+                ax1 = plt.subplot(2,1,1);
+                pmd.PlotMmiRatings(dfTrial,dfRating,'line')
+                plt.title('MMI participant %d, run %d'%(participant,run))
+                ax2 = plt.subplot(2,1,2);
+                plt.xlim(ax1.get_xlim())
+                pmd.PlotMmiRPEs(dfTrial,dfRating)
+                plt.tight_layout()
+                # Save figure
+                outFig = '%s/Mmi-%s-%s-run%d.png'%(outFigDir,batchName,participant,run)
+                print('Saving figure as %s...'%outFig)
+                plt.savefig(outFig)
 
 print('=== Done! ===')
 # %% Append across lists
@@ -193,7 +203,7 @@ dfRating = pd.concat(ratingList);
 dfLifeHappy = pd.concat(lifeHappyList);
 
 # %% Save?
-overwrite = True;
+
 files = {'trial': '%s/Mmi-%s_Trial.csv'%(procDataDir,batchName),
          'ratings': '%s/Mmi-%s_Ratings.csv'%(procDataDir,batchName),
          'lifeHappy':'%s/Mmi-%s_LifeHappy.csv'%(procDataDir,batchName)}
@@ -223,21 +233,30 @@ for item in [x[0] for x in files.items()]:
 # %% Calculate age with fraction-of-years, calculated from date of task and DOB.
 # Adapted from GetRecoveryNimhAgeWithFractions.py.
 dfAll = pd.read_csv('%s/Mmi-RecoveryNimh-run1_Ratings.csv'%procDataDir)
-dfSurvey = pd.read_csv('%s/Mmi-RecoveryNimh_Survey.csv'%procDataDir)
+#dfSurvey = pd.read_csv('%s/Mmi-RecoveryNimh_Survey.csv'%procDataDir)
 
 print('==== Adjusting survey age to be in fraction of years at date of first task =====')
 dfSurvey['age'] = np.nan
 for iLine in range(dfSurvey.shape[0]):
-    isThis = dfAll['participant']==dfSurvey.loc[iLine,'participant']
+    isThis = dfAll['participant']==dfSurvey.loc[iLine,'participant'] # find this participant in ratings table
     if np.any(isThis):
-        ageInYears = AgeFromDateStrings(dfAll.loc[isThis,'date'].values[0], dfSurvey.loc[iLine,'DOB'])
-        dfSurvey.loc[iLine,'age'] = ageInYears
+        ageInYears = AgeFromDateStrings(dfAll.loc[isThis,'date'].values[0], dfSurvey.loc[iLine,'DOB']) # calculate age
+        dfSurvey.loc[iLine,'age'] = ageInYears # add to survey table
 
+# Save file for all runs together
 outFile = '%s/Mmi-RecoveryNimh_Survey.csv'%procDataDir
 print('==== Saving Survey results as %s...'%(outFile))
-dfSurvey.to_csv(outFile)
+if os.path.exists(outFile) and not overwrite:
+    print('Not overwriting existing file.')
+else:
+    dfSurvey.to_csv(outFile)
+# Save files for each run separately
 for iRun in range(maxNRuns):
     run = iRun+1
     outFile = '%s/Mmi-RecoveryNimh-run%d_Survey.csv'%(procDataDir,run)
     print('==== Saving Survey run %d as %s...'%(run,outFile))
-    dfSurvey.to_csv(outFile)
+    if os.path.exists(outFile) and not overwrite:
+        print('Not overwriting existing file.')
+    else:
+        dfSurvey.to_csv(outFile)
+        print('Done!')

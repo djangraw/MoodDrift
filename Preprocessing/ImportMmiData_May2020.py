@@ -43,8 +43,8 @@ overwrite = False; # overwrite previous results if they already exist?
 
 # %% Import data
 for batchName in batchNames:
-    pilotDataFolder = '../Data/PilotData/%s'%batchName
-    batchFile = '../Data/PilotData/Batch_%s_results.csv'%batchName
+    pilotDataFolder = '%s/%s'%(rawDataDir,batchName)
+    batchFile = '%s/Batch_%s_results.csv'%(rawDataDir,batchName)
 
     if batchName.startswith('COVID'):
         demoDataFile='%s/COVID01_DataCheck.csv'%dataCheckDir
