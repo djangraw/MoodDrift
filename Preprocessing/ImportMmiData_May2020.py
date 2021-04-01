@@ -34,8 +34,10 @@ batchNames = ['COVID01','COVID02','COVID03','Expectation-7min','Expectation-12mi
               'Stability01-Rest','Stability02-Rest',
               'Stability01-Closed','Stability02-Closed']
 dataCheckDir = '../Data/DataChecks' # where dataCheck files sit
+rawDataDir = '../Data/PilotData' # where raw data files sit
 dataDir = '../Data/OutFiles' # where processed data sits
 outFigDir = '../Figures' # where results should go
+plotEveryParticipant = False # should we make a plot for every participant?
 overwrite = False; # overwrite previous results if they already exist?
 
 
@@ -85,6 +87,7 @@ for batchName in batchNames:
         print('=== Importing Subject %d/%d... ==='%(iLine,nSubj))
         # Task
         inFile = dfDataCheck_complete.loc[iLine,'taskFile']
+        inFile = inFile.replace('../PilotData',rawDataDir) # replace relative path from data check file with relative path from here
         dfTrial,dfRating,dfLifeHappy = GetMmiRatingsAndTimes(inFile)
         # Get summary of task data
         trialList.append(dfTrial)
@@ -93,6 +96,7 @@ for batchName in batchNames:
 
         # Survey
         inFile = dfDataCheck_complete.loc[iLine,'surveyFile']
+        inFile = inFile.replace('../PilotData',rawDataDir) # replace relative path from data check file with relative path from here
         mTurkID = dfDataCheck_complete.loc[iLine,'MTurkID']
         dfQandA = ImportMmiSurveyData(inFile, mTurkID, demoDataFile)
         # Score survey and add to survey list
@@ -100,18 +104,19 @@ for batchName in batchNames:
         surveyList.append(ScoreMmiSurvey(dfQandA,dfDataCheck_complete.loc[iLine,'participant']))
 
         # Plot task data
-        plt.figure(1,figsize=(10,4),dpi=180, facecolor='w', edgecolor='k');
-        plt.clf();
-        ax1 = plt.subplot(2,1,1);
-        pmd.PlotMmiRatings(dfTrial,dfRating,'line')
-        ax2 = plt.subplot(2,1,2);
-        plt.xlim(ax1.get_xlim())
-        pmd.PlotMmiRPEs(dfTrial,dfRating)
-        plt.tight_layout()
-        # Save figure
-        outFig = '%s/Mmi-%s-%s.png'%(outFigDir,batchName,participant)
-        print('Saving figure as %s...'%outFig)
-        plt.savefig(outFig)
+        if plotEveryParticipant:
+            plt.figure(1,figsize=(10,4),dpi=180, facecolor='w', edgecolor='k');
+            plt.clf();
+            ax1 = plt.subplot(2,1,1);
+            pmd.PlotMmiRatings(dfTrial,dfRating,'line')
+            ax2 = plt.subplot(2,1,2);
+            plt.xlim(ax1.get_xlim())
+            pmd.PlotMmiRPEs(dfTrial,dfRating)
+            plt.tight_layout()
+            # Save figure
+            outFig = '%s/Mmi-%s-%s.png'%(outFigDir,batchName,participant)
+            print('Saving figure as %s...'%outFig)
+            plt.savefig(outFig)
 
     print('=== Done! ===')
     # %% Append across lists

@@ -1,3 +1,10 @@
+# Large data folders
+Data/DataChecks
+Data/OutFiles
+Data/PilotData
+# Figures produced by the code
+Figures/*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
