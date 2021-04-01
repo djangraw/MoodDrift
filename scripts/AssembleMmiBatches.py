@@ -16,8 +16,8 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from glob import glob
-import PlotMmiData as pmd
-from CombineMmiBatches import CombineMmiBatches
+import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
+from PassageOfTimeDysphoria.Preprocessing.CombineMmiBatches import CombineMmiBatches
 
 # Get batch names
 dataCheckDir = '../Data/DataChecks'

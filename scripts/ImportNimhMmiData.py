@@ -20,8 +20,8 @@ from matplotlib import pyplot as plt
 import glob
 import dateutil.parser as dparser
 import datetime
-import PlotMmiData as pmd
-from GetMmiRatingsAndTimes import GetMmiRatingsAndTimes
+import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
+from PassageOfTimeDysphoria.Preprocessing.GetMmiRatingsAndTimes import GetMmiRatingsAndTimes
 import os.path
 
 # Get age from datestrings for current time and DOB

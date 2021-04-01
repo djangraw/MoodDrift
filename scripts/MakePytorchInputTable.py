@@ -15,6 +15,7 @@ Prepare data for processing with pytorch scripts.
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+from PassageOfTimeDysphoria.Analysis import RemoveFirstRatingFromPytorchData
 
 # Declare folders
 datDir = '../Data/OutFiles'
