@@ -14,11 +14,11 @@ cohorts), or run without modifying to import all batches collected on MTurk.
 """
 
 # %% Import packages
-from MatchMTurkBatchToFiles import MatchMTurkBatchToFiles
-from GetMmiRatingsAndTimes import GetMmiRatingsAndTimes
-from ImportMmiSurveyData import ImportMmiSurveyData
-from ScoreMmiSurvey import ScoreMmiSurvey
-import PlotMmiData as pmd
+from PassageOfTimeDysphoria.Preprocessing.MatchMTurkBatchToFiles import MatchMTurkBatchToFiles
+from PassageOfTimeDysphoria.Preprocessing.GetMmiRatingsAndTimes import GetMmiRatingsAndTimes
+from PassageOfTimeDysphoria.Preprocessing.ImportMmiSurveyData import ImportMmiSurveyData
+from PassageOfTimeDysphoria.Preprocessing.ScoreMmiSurvey import ScoreMmiSurvey
+import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
 import numpy as np
 import pandas as pd
 import os.path
