@@ -9,6 +9,7 @@ Prepare data for processing with pytorch scripts.
 - Updated 2/4/21 by DJ - split GbeConfirm dataset to avoid memory error
 - Updated 3/31/21 by DJ - adapted for shared code structure, added call to
    RemoveFirstRatingFromPytorchData.
+- Updated 4/2/21 by DJ - fixed typos.
 """
 
 # Import packages
@@ -18,13 +19,13 @@ from matplotlib import pyplot as plt
 from PassageOfTimeDysphoria.Analysis import RemoveFirstRatingFromPytorchData
 
 # Declare folders
-datDir = '../Data/OutFiles'
-batchNames = ['gbeExplore','GbeConfirm'] # batches to remove first rating from
+dataDir = '../Data/OutFiles'
+batchNames = ['GbeExplore','GbeConfirm'] # batches to remove first rating from
 
 # Load
 for batchName in batchNames:
-    dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(datDir,batchName),index_col=0)
-    dfTrial = pd.read_csv('%s/Mmi-%s_Trial.csv'%(datDir,batchName),index_col=0)
+    dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName),index_col=0)
+    dfTrial = pd.read_csv('%s/Mmi-%s_Trial.csv'%(dataDir,batchName),index_col=0)
 
     # Add first rating to each participant's trials
     participants = np.unique(dfTrial.participant)
@@ -66,7 +67,7 @@ for batchName in batchNames:
             else:
                 dfDataSplit = dfData.iloc[iSplit*5000*nTrials:,:]
             print('%d subjects in split %d'%(dfDataSplit.shape[0]/nTrials,iSplit))
-            outFile = '%s/Mmi-%s_TrialForMdls_split%d.csv'%(datDir,batchName,iSplit)
+            outFile = '%s/Mmi-%s_TrialForMdls_split%d.csv'%(dataDir,batchName,iSplit)
             print('Saving as %s...'%outFile)
             dfDataSplit.to_csv(outFile)
             print('Done!')
