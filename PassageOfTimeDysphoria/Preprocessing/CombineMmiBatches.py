@@ -7,10 +7,13 @@ Combine MTurk batches from the MMI experiment.
 
 Created 6/5/20 by DJ.
 Updated 3/31/21 by DJ - adapted for shared code structure.
+Updated 4/2/21 by DJ - changed to not write combined pymer files if individual inputs don't exist
 """
+# Import packages
 import pandas as pd
 import numpy as np
 
+# Define main function
 def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDir = '../Data/OutFiles'):
     """
     dfRating,dfTrial,dfSurvey,dfLifeHappy,pymerCoeffs,pymerInput = CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDir = '../Data/OutFiles')
@@ -37,6 +40,8 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
     dfLifeHappy_list = []
     dfPymerCoeffs_list = []
     dfPymerInput_list = []
+    writePymerFiles = True # only write outputs if all input files exist
+    
     # Load info from each batch and concatenate
     for batchName in oldBatches:
         # load info using standardized batch file names
@@ -47,17 +52,21 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
         try:
             dfPymerCoeffs = pd.read_csv('%s/Mmi-%s_pymerCoeffs.csv'%(dataDir,batchName))
             dfPymerInput = pd.read_csv('%s/Mmi-%s_pymerInput.csv'%(dataDir,batchName),index_col=0)
-        except:
+        except IOError:
+            writePymerFiles = False
+            print('pymer files for batch %s not found. Combined pymer outputs will not be written.'%batchName)
             participants = np.unique(dfRating.participant)
             dfPymerCoeffs = pd.DataFrame(np.ones((len(participants),2))*np.nan,columns = ['(Intercept)','Time'],index=participants)
             dfPymerInput = pd.DataFrame(np.ones((0,4))*np.nan,columns = ['Cohort','Subject','Mood','Time'])
+
         # add batch columns
         dfRating['batchName'] = batchName
         dfTrial['batchName'] = batchName
         dfSurvey['batchName'] = batchName
         dfLifeHappy['batchName'] = batchName
-        dfPymerCoeffs['batchName'] = batchName
-        dfPymerInput['batchName'] = batchName
+        if writePymerFiles:
+            dfPymerCoeffs['batchName'] = batchName
+            dfPymerInput['batchName'] = batchName
 
         # Change subject numbers
         if makeSubjectsMatchPymer:
@@ -68,8 +77,9 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
                 dfTrial.participant = -dfTrial.participant
                 dfSurvey.participant = -dfSurvey.participant
                 dfLifeHappy.participant = -dfLifeHappy.participant
-                dfPymerCoeffs.Subject = -dfPymerCoeffs.Subject
-                dfPymerInput.Subject = -dfPymerInput.Subject
+                if writePymerFiles:
+                    dfPymerCoeffs.Subject = -dfPymerCoeffs.Subject
+                    dfPymerInput.Subject = -dfPymerInput.Subject
             elif 'Nimh-run2' in batchName:
                 # make negative to avoid overlap with MTurk participant numbers
                 print('Making participant numbers in batch %s negative and -900000 to avoid overlap with MTurk subjects.'%batchName)
@@ -77,8 +87,9 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
                 dfTrial.participant = -dfTrial.participant - 900000
                 dfSurvey.participant = -dfSurvey.participant - 900000
                 dfLifeHappy.participant = -dfLifeHappy.participant - 900000
-                dfPymerCoeffs.Subject = -dfPymerCoeffs.Subject - 900000
-                dfPymerInput.Subject = -dfPymerInput.Subject - 900000
+                if writePymerFiles:
+                    dfPymerCoeffs.Subject = -dfPymerCoeffs.Subject - 900000
+                    dfPymerInput.Subject = -dfPymerInput.Subject - 900000
 
             elif 'Nimh-run3' in batchName:
                 print('Making participant numbers in batch %s negative and -9900000 to avoid overlap with MTurk subjects.'%batchName)
@@ -86,8 +97,9 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
                 dfTrial.participant = -dfTrial.participant - 9900000
                 dfSurvey.participant = -dfSurvey.participant - 9900000
                 dfLifeHappy.participant = -dfLifeHappy.participant - 9900000
-                dfPymerCoeffs.Subject = -dfPymerCoeffs.Subject - 9900000
-                dfPymerInput.Subject = -dfPymerInput.Subject - 9900000
+                if writePymerFiles:
+                    dfPymerCoeffs.Subject = -dfPymerCoeffs.Subject - 9900000
+                    dfPymerInput.Subject = -dfPymerInput.Subject - 9900000
 
             dfRating['participant']
 
@@ -96,16 +108,21 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
         dfTrial_list.append(dfTrial)
         dfSurvey_list.append(dfSurvey)
         dfLifeHappy_list.append(dfLifeHappy)
-        dfPymerCoeffs_list.append(dfPymerCoeffs)
-        dfPymerInput_list.append(dfPymerInput)
+        if writePymerFiles:
+            dfPymerCoeffs_list.append(dfPymerCoeffs)
+            dfPymerInput_list.append(dfPymerInput)
 
     # Concatenate across batches
-    dfRating = pd.concat(dfRating_list,axis=0,ignore_index=True)
-    dfTrial = pd.concat(dfTrial_list,axis=0,ignore_index=True)
-    dfSurvey = pd.concat(dfSurvey_list,axis=0,ignore_index=True)
-    dfLifeHappy = pd.concat(dfLifeHappy_list,axis=0,ignore_index=True)
-    dfPymerCoeffs = pd.concat(dfPymerCoeffs_list,axis=0) # index is participant, so don't ignore
-    dfPymerInput = pd.concat(dfPymerInput_list,axis=0,ignore_index=True)
+    dfRating = pd.concat(dfRating_list,axis=0,ignore_index=True,sort=False)
+    dfTrial = pd.concat(dfTrial_list,axis=0,ignore_index=True,sort=False)
+    dfSurvey = pd.concat(dfSurvey_list,axis=0,ignore_index=True,sort=False)
+    dfLifeHappy = pd.concat(dfLifeHappy_list,axis=0,ignore_index=True,sort=False)
+    if writePymerFiles:
+        dfPymerCoeffs = pd.concat(dfPymerCoeffs_list,axis=0,sort=False) # index is participant, so don't ignore
+        dfPymerInput = pd.concat(dfPymerInput_list,axis=0,ignore_index=True,sort=False)
+    else: # create empty variables for return statement
+        dfPymerCoeffs = None 
+        dfPymerInput = None 
 
     # Save results
     if newBatch!='':
@@ -114,8 +131,10 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
         dfTrial.to_csv('%s/Mmi-%s_Trial.csv'%(dataDir,newBatch))
         dfSurvey.to_csv('%s/Mmi-%s_Survey.csv'%(dataDir,newBatch))
         dfLifeHappy.to_csv('%s/Mmi-%s_LifeHappy.csv'%(dataDir,newBatch))
-        dfPymerCoeffs.to_csv('%s/Mmi-%s_pymerCoeffs.csv'%(dataDir,newBatch),index_label='Subject')
-        dfPymerInput.to_csv('%s/Mmi-%s_pymerInput.csv'%(dataDir,newBatch))
-
+        if writePymerFiles:
+            dfPymerCoeffs.to_csv('%s/Mmi-%s_pymerCoeffs.csv'%(dataDir,newBatch),index_label='Subject')
+            dfPymerInput.to_csv('%s/Mmi-%s_pymerInput.csv'%(dataDir,newBatch))
+        print('Done!')
+        
     # Return results
     return dfRating,dfTrial,dfSurvey,dfLifeHappy,dfPymerCoeffs,dfPymerInput
