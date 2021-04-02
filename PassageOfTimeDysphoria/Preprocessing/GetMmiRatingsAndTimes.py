@@ -6,17 +6,20 @@ GetMmiRatingsAndTimes.py
 Created on Tue Apr 21 09:05:54 2020
 
 @author: jangrawdc
-Updated 6/2/20 by DJ to fill in missing responses in Numbers version
+- Updated 6/2/20 by DJ to fill in missing responses in Numbers version
+- Updated 4/2/21 by DJ - changed Numbers doRatings excel path for shared code structure.
 """
 
+# Import packages
 import pandas as pd
 import numpy as np
-#from matplotlib import pyplot as plt
+import os
 
+# Declare main function
 def GetMmiRatingsAndTimes(inFile):
 
+    # Read input
     print('Reading data from %s...'%inFile)
-    # %%
     dfIn = pd.read_csv(inFile);
     nLines = dfIn.shape[0];
     
@@ -73,7 +76,8 @@ def GetMmiRatingsAndTimes(inFile):
         dfIn['lifeHappySlider.response'] = (dfIn['lifeHappyResp.keys']-1.0)/8.0;
         print('Numbers version detected. Inferring *happySlider responses from *happyResp responses.')        
         try:
-            dfDoRating = pd.read_excel('/Users/jangrawdc/Documents/PRJ24_MmiOnline_Hanna-Argyris/mmi-numbers/doRatingConditions.xlsx')
+            dorating_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'doRatingConditions.xlsx')
+            dfDoRating = pd.read_excel(dorating_path)
             isRatingTrial = dfDoRating.doRating.values=='Yes'
             isGambleRow = pd.notna(dfIn['choice'])
             dfIn['isRatingTrial'] = False;
@@ -207,5 +211,5 @@ def GetMmiRatingsAndTimes(inFile):
             dfTrial.loc[iTrial,'ratingTime'] = dfRating.loc[iRating,'time']
     
         
-
+    # Return results
     return dfTrial,dfRating,dfLifeHappy
