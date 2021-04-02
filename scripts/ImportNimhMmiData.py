@@ -9,9 +9,9 @@ the COVID-19 pandemic.
 Created on Tue May 19 13:41:11 2020
 
 @author: jangrawdc
-Updated 6/2/20 by DJ - renamed dfDataCheck
-Updated 3/31/21 by DJ - adapted for shared code structure.
-Updated 4/2/21 by DJ - allowed date strings in MM/DD/YY format
+- Updated 6/2/20 by DJ - renamed dfDataCheck
+- Updated 3/31/21 by DJ - adapted for shared code structure.
+- Updated 4/2/21 by DJ - allowed date strings in MM/DD/YY format, use and accommodate de-ID'ed demographics file.
 """
 
 # %% Set up
@@ -63,15 +63,16 @@ procDataDir = '../Data/OutFiles' # where preprocessed data should be saved
 outFigDir = '../Figures' # where figures should be saved
 batchName = 'RecoveryNimh' # Name of this batch
 plotEveryParticipant = False # should we make a plot for every participant?
-overwrite = False; # overwrite previous results if they already exist?
+overwrite = True; # overwrite previous results if they already exist?
 
-demoFile = '%s/MmiRecoveryNimh_Demographics.csv'%rawDataDir # Demographics file for NIMH participants
+#demoFile = '%s/MmiRecoveryNimh_Demographics.csv'%rawDataDir # Demographics file for NIMH participants including DOB
+demoFile = '%s/MmiRecoveryNimh_Demographics_nodob.csv'%rawDataDir # deID's Demographics file for NIMH participants in which DOBs are replaced with floored age
 
 # Load demographics data
 print('=== Reading and cropping %s...'%demoFile)
 dfData = pd.read_csv(demoFile)
 
-if demoFile.endswith('AllData.csv'):
+if 'AllData' in demoFile:
     # extract info for each subject
     cols = ['participant','SEX','DOB','Participant_Type','Age']
     dfSurvey = dfData.loc[:,cols].drop_duplicates().reset_index(drop=True)
@@ -82,13 +83,13 @@ if demoFile.endswith('AllData.csv'):
                             'Age':'age',
                             'Participant_Type':'diagnosis'})
 
-elif demoFile.endswith('Demographics.csv'):
+elif 'Demographics' in demoFile:
     # extract info for each subject
     isBase = pd.notna(dfData.s_crisis_base_date)
     dfData.loc[isBase,['s_crisis_fu_tot','s_crisis_fu_date']] = dfData.loc[isBase,['s_crisis_base_tot','s_crisis_base_date']]
-    cols = ['participant','SEX','DOB','Participant_Type','s_crisis_fu_tot','s_mfq_tot','s_scaredshort_tot','s_crisis_fu_date']
-    dfSurvey = dfData.loc[:,cols].drop_duplicates().reset_index(drop=True)
-    dfSurvey['age'] = np.nan
+    cols = ['participant','SEX','DOB','Participant_Type','s_crisis_fu_tot','s_mfq_tot','s_scaredshort_tot','s_crisis_fu_date','age']
+    dfSurvey = dfData.loc[:,cols].drop_duplicates(cols[:-1]).reset_index(drop=True) # drop based on everything except age
+    # dfSurvey['age'] = np.nan
     # adjust to match MTurk names/values
     dfSurvey.loc[dfSurvey.SEX=='MALE','SEX'] = 'Male'
     dfSurvey.loc[dfSurvey.SEX=='FEMALE','SEX'] = 'Female'
@@ -258,13 +259,19 @@ for item in [x[0] for x in files.items()]:
 dfAll = pd.read_csv('%s/Mmi-RecoveryNimh-run1_Ratings.csv'%procDataDir)
 #dfSurvey = pd.read_csv('%s/Mmi-RecoveryNimh_Survey.csv'%procDataDir)
 
-print('==== Adjusting survey age to be in fraction of years at date of first task =====')
-dfSurvey['age'] = np.nan
-for iLine in range(dfSurvey.shape[0]):
-    isThis = dfAll['participant']==dfSurvey.loc[iLine,'participant'] # find this participant in ratings table
-    if np.any(isThis):
-        ageInYears = AgeFromDateStrings(dfAll.loc[isThis,'date'].values[0], dfSurvey.loc[iLine,'DOB']) # calculate age
+if dfSurvey['DOB'].dtype=='object': # try to calculate age from DOB
+    print('==== Adjusting survey age to be in fraction of years at date of first task =====')
+    dfSurvey['age'] = np.nan
+    for iLine in range(dfSurvey.shape[0]):
+        isThis = dfAll['participant']==dfSurvey.loc[iLine,'participant'] # find this participant in ratings table
+        if np.any(isThis):
+            ageInYears = AgeFromDateStrings(dfAll.loc[isThis,'date'].values[0], dfSurvey.loc[iLine,'DOB']) # calculate age
         dfSurvey.loc[iLine,'age'] = ageInYears # add to survey table
+else:
+    print('DOB not present in demographics file - using reported age instead.')
+
+# Make sure all ages have been calculated
+assert not np.any(np.isnan(dfSurvey['age'].values))
 
 # Save file for all runs together
 outFile = '%s/Mmi-RecoveryNimh_Survey.csv'%procDataDir
