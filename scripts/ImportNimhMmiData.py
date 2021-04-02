@@ -11,9 +11,11 @@ Created on Tue May 19 13:41:11 2020
 @author: jangrawdc
 Updated 6/2/20 by DJ - renamed dfDataCheck
 Updated 3/31/21 by DJ - adapted for shared code structure.
+Updated 4/2/21 by DJ - allowed date strings in MM/DD/YY format
 """
 
 # %% Set up
+# Import packages
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
@@ -24,27 +26,48 @@ import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
 from PassageOfTimeDysphoria.Preprocessing.GetMmiRatingsAndTimes import GetMmiRatingsAndTimes
 import os.path
 
+# Convert MM/DD/YY datestr to year, month, and day ints
+def GetYearMonthDay(dateStr):
+    if '-' in dateStr: #YYYY-MM-DD format
+        dateYear,dateMonth,dateDay = [int(x) for x in dateStr.split('-')]
+    elif '/' in dateStr: # MM/DD/YY format
+        dateMonth,dateDay,dateYear2 = [int(x) for x in dateStr.split('/')]
+        # convert to 4-digit year
+        if dateYear2<21:
+            dateYear = 2000+dateYear2
+        else:
+            dateYear = 1900+dateYear2
+    else:
+        raise ValueError('date string must be in YYYY-MM-DD or MM/DD/YY format')
+        
+    return dateYear,dateMonth,dateDay
+
 # Get age from datestrings for current time and DOB
 def AgeFromDateStrings(currStr,dobStr):
-    currYear,currMonth,currDay = [int(x) for x in currStr.split('-')]
-    dobYear,dobMonth,dobDay = [int(x) for x in dobStr.split('-')]
+    # Convert stting to day, month, and year
+    currYear,currMonth,currDay = GetYearMonthDay(currStr)
+    dobYear,dobMonth,dobDay = GetYearMonthDay(dobStr)
+    # convert to datetime objects
     currDatetime = datetime.datetime(currYear,currMonth,currDay)
     dobDatetime = datetime.datetime(dobYear,dobMonth,dobDay)
+    # get difference, convert to years
     ageInYears = (currDatetime-dobDatetime).days/365.25 # get age in years (days/365.25 for leap year)
+    # return result
     return ageInYears
 
 # %% Load demographics data
-# Import
+# Import data
 rawDataDir = '../Data/PilotData' # where pilot data can be found
 dataCheckDir = '../Data/DataChecks' # where data check files should be saved
 procDataDir = '../Data/OutFiles' # where preprocessed data should be saved
 outFigDir = '../Figures' # where figures should be saved
 batchName = 'RecoveryNimh' # Name of this batch
-plotEveryParticipant = False
 plotEveryParticipant = False # should we make a plot for every participant?
 overwrite = False; # overwrite previous results if they already exist?
 
-demoFile = '%s/MmiRecoveryNimh_Demographics.csv'%rawDataDir # NEW (6/9/20)
+demoFile = '%s/MmiRecoveryNimh_Demographics.csv'%rawDataDir # Demographics file for NIMH participants
+
+# Load demographics data
 print('=== Reading and cropping %s...'%demoFile)
 dfData = pd.read_csv(demoFile)
 
@@ -118,7 +141,7 @@ dfDataCheck = pd.DataFrame(participants,columns=['participant'])
 maxNRuns = 0;
 for iSubj,participant in enumerate(participants):
     # get list of files from this participant
-    files = np.array(glob.glob('../PilotData/%s/%s*.csv'%(batchName,participant)))
+    files = np.array(glob.glob('%s/%s/%s*.csv'%(rawDataDir,batchName,participant)))
     # get completion indicator and date
     fileDate = np.zeros(len(files),datetime.datetime)
     isComplete = np.zeros(len(files),bool)

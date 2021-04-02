@@ -9,12 +9,14 @@ batches that will later be analyzed as a single group.
 
 Created 6/2/20 by DJ.
 Updated 3/31/21 by DJ - adapted for shared code structure.
+Updated 4/2/21 by DJ - added overwrite flag.
 """
 
 # %% Import packages
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+import os
 from glob import glob
 import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
 from PassageOfTimeDysphoria.Preprocessing.CombineMmiBatches import CombineMmiBatches
@@ -22,9 +24,10 @@ from PassageOfTimeDysphoria.Preprocessing.CombineMmiBatches import CombineMmiBat
 # Get batch names
 dataCheckDir = '../Data/DataChecks'
 outDir = '../Data/OutFiles'
-includeRepeats = False; # should the "AllOpeningRestAndRandom" superbatch include
+includeRepeats = False; # should the "AllOpeningRestAndRandom" superbatch include returning subjects?
+overwrite = False # overwrite existing files?
 
-print('Gathering batches...')
+print('Gathring batches...')
 batchFiles_glob = glob('%s/*DataCheck.csv'%dataCheckDir)
 batchFiles_glob.sort()
 print('%d batches found.'%len(batchFiles_glob))
@@ -40,17 +43,18 @@ nSubjCompleted = []
 print('Getting info from DataCheck files...')
 for batchFile in batchFiles_glob:
     print('   batch %s...'%batchFile)
-    dfDataCheck = pd.read_csv(batchFile,index_col=0)
-    batchName = batchFile.split('/')[1].split('_')[0]
+    dfDataCheck = pd.read_csv(batchFile,index_col=0) # read in file
+    batchName = os.path.basename(batchFile).split('_')[0] # extract name of batch
 
+    # Online adolescent participants: split across runs
     if 'Nimh' in batchFile:
         nRuns = 3
         for run in range(1,nRuns+1):
             minDate = '2999-01-01'
             maxDate = '1999-01-01'
-            taskFile = ''
             for iLine in range(dfDataCheck.shape[0]):
-                if isinstance(dfDataCheck.loc[iLine,'taskFile_run%d'%run],str): # if it's a string
+                taskFile = dfDataCheck.loc[iLine,'taskFile_run%d'%run]
+                if isinstance(taskFile,str) and not taskFile[0].isdigit(): # if it's a string and not '0.0'
                     minDate = min(minDate,dfDataCheck.loc[iLine,'taskFile_run%d'%run].split('_')[-2])
                     maxDate = max(maxDate,dfDataCheck.loc[iLine,'taskFile_run%d'%run].split('_')[-2])
             batchNames.append('%s-run%s'%(batchName,run))
@@ -60,11 +64,12 @@ for batchFile in batchFiles_glob:
             # Add number of subjects
             nSubjAttempted.append(np.sum(pd.notna(dfDataCheck['taskFile_run%d'%run])))
             nSubjCompleted.append(np.sum(pd.notna(dfDataCheck['taskFile_run%d'%run])))
-    else:
+    else: # online adult participants: no splitting
         minDate = '2999-01-01'
         maxDate = '1999-01-01'
         for iLine in range(dfDataCheck.shape[0]):
-            if isinstance(dfDataCheck.loc[iLine,'taskFile'],str): # if it's a string
+            taskFile = dfDataCheck.loc[iLine,'taskFile']
+            if isinstance(taskFile,str) and not taskFile[0].isdigit(): # if it's a string and not '0.0'
                 minDate = min(minDate,dfDataCheck.loc[iLine,'taskFile'].split('_')[-2])
                 maxDate = max(maxDate,dfDataCheck.loc[iLine,'taskFile'].split('_')[-2])
         batchNames.append(batchName)
@@ -111,7 +116,7 @@ dfBatches['isNimhCohort'] = ['Nimh' in batchName for batchName in batchNames]
 # Get block info
 print('Getting block info...')
 for iBatch,batchName in enumerate(batchNames):
-    print('   batch %s...'%batchFile)
+    print('   batch %s...'%batchName)
     # Load
     dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(outDir,batchName))
     dfTrial = pd.read_csv('%s/Mmi-%s_Trial.csv'%(outDir,batchName))
@@ -133,8 +138,11 @@ for iBatch,batchName in enumerate(batchNames):
 
 outFile = '%s/Mmi-Batches.csv'%outDir
 print('Writing to %s...'%outFile)
-dfBatches.to_csv(outFile)
-print('Done!')
+if os.path.exists(outFile) and not overwrite:
+    print('Not overwriting existing file.')
+else:
+    dfBatches.to_csv(outFile)
+    print('Done!')
 
 
 
