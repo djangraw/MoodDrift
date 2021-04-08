@@ -22,7 +22,7 @@ def GetMmiRatingsAndTimes(inFile):
     print('Reading data from %s...'%inFile)
     dfIn = pd.read_csv(inFile);
     nLines = dfIn.shape[0];
-    
+
     # Extract timing parameters
     timingParams = {'freqMult': 1.0,
                     'getAnswerDur':3.0,
@@ -44,7 +44,7 @@ def GetMmiRatingsAndTimes(inFile):
         elif param=='iriDur':
             timingParams['iriDur'] = 15.0/timingParams['freqMult'];
     print('Done! Using defaults for the rest.')
-    
+
     # detect open/closed-loop gambling condition
     if 'condition' in dfIn.columns:
         mmiCondition = dfIn.loc[0,'condition']
@@ -55,7 +55,7 @@ def GetMmiRatingsAndTimes(inFile):
     else:
         mmiCondition = 'closed'
         print('Assuming gambling condition = %s.'%mmiCondition)
-    
+
     # check if subject made no selections
     if 'choice' not in dfIn.columns:
         print('WARNING: subject never chose gamble vs. certain.')
@@ -65,7 +65,7 @@ def GetMmiRatingsAndTimes(inFile):
         dfIn['returnLoop.ran'] = np.nan;
         dfIn.loc[pd.notna(dfIn['happySlider.response']) & pd.isna(dfIn['choice']),'returnLoop.ran'] = 1;
         print('Inferring returnLoop.ran column... %d rest trials found.'%np.nansum(dfIn['returnLoop.ran']))
-    
+
     # In Numbers version, sliders were replaced with keypresses. Reconstruct them.
     if 'happySlider.rt' not in dfIn.columns:
         dfIn['happySlider.rt'] = dfIn['happyResp.rt'];
@@ -74,7 +74,7 @@ def GetMmiRatingsAndTimes(inFile):
         dfIn['blockHappySlider.response'] = (dfIn['blockHappyResp.keys']-1.0)/8.0;
         dfIn['lifeHappySlider.rt'] = dfIn['lifeHappyResp.rt'];
         dfIn['lifeHappySlider.response'] = (dfIn['lifeHappyResp.keys']-1.0)/8.0;
-        print('Numbers version detected. Inferring *happySlider responses from *happyResp responses.')        
+        print('Numbers version detected. Inferring *happySlider responses from *happyResp responses.')
         try:
             dorating_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'doRatingConditions.xlsx')
             dfDoRating = pd.read_excel(dorating_path)
@@ -88,7 +88,7 @@ def GetMmiRatingsAndTimes(inFile):
             print('Filled in %d missing responses.'%np.sum(isMissingResp))
         except:
             print('WARNING: Failed to fill in missing happiness ratings.')
-            
+
     # Calculate trial times (MINUS RESPONSE-LIMITED PERIODS)
     # rest period trials
     restDur = timingParams['iriDur']
@@ -96,7 +96,7 @@ def GetMmiRatingsAndTimes(inFile):
     trialDur = timingParams['showChoiceDur'] + timingParams['showResultDur'] + timingParams['itiDur']; # showChoiceDur=4; showResultDur=1;
     # period before mood ratings during gambling trials
     trialIsiDur = timingParams['isiDur']
-    
+
     # Read in ratings & timing line by line
     tNow = 0;
     iRating = -1;
@@ -112,17 +112,17 @@ def GetMmiRatingsAndTimes(inFile):
     dfTrial = pd.DataFrame(np.ones((nTrials,len(cols)))*np.nan,columns=cols)
     dfTrial['participant'] = participant
     dfTrial['isRatingTrial'] = False;
-    
+
     # Walk down lines of input table
     for iLine in range(nLines):
-        
+
         # Life happiness rating
         if pd.notna(dfIn.loc[iLine,'lifeHappySlider.response']):
             # record response and RT
             dfLifeHappy = pd.DataFrame({'participant': [participant],
                                         'rating': [dfIn.loc[iLine,'lifeHappySlider.response']],
                                         'RT': [dfIn.loc[iLine,'lifeHappySlider.rt']]},columns=['participant','rating','RT'])
-        
+
         # Mood rating at start of each block
         if pd.notna(dfIn.loc[iLine,'blockHappySlider.response']):
             # increment counters
@@ -137,9 +137,9 @@ def GetMmiRatingsAndTimes(inFile):
             # Add info to table
             dfRating.loc[iRating,'rating'] = dfIn.loc[iLine,'blockHappySlider.response']
             dfRating.loc[iRating,'RT'] = RT
-            dfRating.loc[iRating,'time'] = tNow            
+            dfRating.loc[iRating,'time'] = tNow
             dfRating.loc[iRating,'iBlock'] = iBlock
-            dfRating.loc[iRating,'iTrial'] = iTrial            
+            dfRating.loc[iRating,'iTrial'] = iTrial
 
         # Trial (with or without mood rating)
         if pd.notna(dfIn.loc[iLine,'choice']):
@@ -154,10 +154,13 @@ def GetMmiRatingsAndTimes(inFile):
                 tNow = tNow + trialDur + RT
             # add to trial table
             dfTrial.loc[iTrial,'trialType'] = mmiCondition
-            dfTrial.loc[iTrial,'RT'] = RT 
-            dfTrial.loc[iTrial,'time'] = tNow 
+            dfTrial.loc[iTrial,'RT'] = RT
+            dfTrial.loc[iTrial,'time'] = tNow
             dfTrial.loc[iTrial,'iBlock'] = iBlock
-            dfTrial.loc[iTrial,'iTrial'] = iTrial                
+            dfTrial.loc[iTrial,'iTrial'] = iTrial
+            # If target happiness is not present, make it defautl to nans (mimicking old Pandas functionality)
+            if 'targetHappiness' not in dfIn.columns:
+                dfIn['targetHappiness'] = np.nan
             dfTrial.loc[iTrial,['lastHappyRating','targetHappiness','choice','outcome','outcomeAmount','currentWinnings','RPE']] = dfIn.loc[iLine,['lastHappyRating','targetHappiness','choice','outcome','outcomeAmount','currentWinnings','RPE']]
             # infer target happiness from another column if it's not present
             if pd.isna(dfTrial.loc[iTrial,'targetHappiness']):
@@ -165,7 +168,7 @@ def GetMmiRatingsAndTimes(inFile):
                     dfTrial.loc[iTrial,'targetHappiness'] = 1;
                 else:
                     dfTrial.loc[iTrial,'targetHappiness'] = 0;
-                    
+
         # Trial Happiness Rating
         if pd.notna(dfIn.loc[iLine,'happySlider.response']):
             iRating = iRating + 1
@@ -181,10 +184,10 @@ def GetMmiRatingsAndTimes(inFile):
                 # add info to table
                 dfTrial.loc[iTrial,'trialType'] = 'rest'
                 dfTrial.loc[iTrial,'lastHappyRating'] = dfIn.loc[iLine,'lastHappyRating']
-                dfTrial.loc[iTrial,'RT'] = np.nan 
-                dfTrial.loc[iTrial,'time'] = tNow 
+                dfTrial.loc[iTrial,'RT'] = np.nan
+                dfTrial.loc[iTrial,'time'] = tNow
                 dfTrial.loc[iTrial,'iBlock'] = iBlock
-                dfTrial.loc[iTrial,'iTrial'] = iTrial    
+                dfTrial.loc[iTrial,'iTrial'] = iTrial
                 dfTrial.loc[iTrial,['choice','outcome']] = ''
                 dfTrial.loc[iTrial,'targetHappiness'] = np.nan
                 dfTrial.loc[iTrial,'outcomeAmount'] = 0
@@ -209,7 +212,7 @@ def GetMmiRatingsAndTimes(inFile):
             dfTrial.loc[iTrial,'rating'] = dfRating.loc[iRating,'rating']
             dfTrial.loc[iTrial,'ratingRT'] = dfRating.loc[iRating,'RT']
             dfTrial.loc[iTrial,'ratingTime'] = dfRating.loc[iRating,'time']
-    
-        
+
+
     # Return results
     return dfTrial,dfRating,dfLifeHappy
