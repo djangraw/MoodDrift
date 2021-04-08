@@ -82,7 +82,7 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
         dfDataCheck01 = pd.read_csv(demoDataFile, index_col=0)
         isMatch = (dfDataCheck01['MTurkID'] == mTurkID)
         # fill in
-        demographics = ['location','gender','age','status']
+        demographics = ['gender','age','status']
         for iDemo,demo in enumerate(demographics):
             dfQandA.loc[iDemo,'Question'] = demo
             if demo in dfDataCheck01.columns:
