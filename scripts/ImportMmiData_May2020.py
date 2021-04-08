@@ -191,7 +191,7 @@ for batchName in batchNames:
             except:
                 dfDataCheck.loc[iSubj,'taskFile_day2'] = np.nan;
 
-        colsToKeep = ['participant_day1','participant_day2','taskFile_day1','taskFile_day2','location','gender','age','status']
+        colsToKeep = ['participant_day1','participant_day2','taskFile_day1','taskFile_day2','gender','age','status']
         dfKey = dfDataCheck.loc[:,colsToKeep]
         outFile = '%s/%s_key.xlsx'%(dataDir,batchName)
         print('Saving key to %s...'%outFile)
