@@ -263,7 +263,7 @@ for item in [x[0] for x in files.items()]:
 dfAll = pd.read_csv('%s/Mmi-RecoveryNimh-run1_Ratings.csv'%procDataDir)
 #dfSurvey = pd.read_csv('%s/Mmi-RecoveryNimh_Survey.csv'%procDataDir)
 
-if dfSurvey['DOB'].dtype=='object': # try to calculate age from DOB
+if ('DOB' in dfSurvey) and (dfSurvey['DOB'].dtype=='object'): # try to calculate age from DOB
     print('==== Adjusting survey age to be in fraction of years at date of first task =====')
     dfSurvey['age'] = np.nan
     for iLine in range(dfSurvey.shape[0]):
