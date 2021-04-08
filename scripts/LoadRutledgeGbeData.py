@@ -19,9 +19,10 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 # Get in & out directories
-dataDir = '../Data'
-inFile = '%s/PilotData/GBE_StringarisData.mat'%dataDir
-outDir = '%s/OutFiles'%dataDir
+dataDir = '../Data' # directory where data is found
+inFile = '%s/PilotData/GBE_StringarisData.mat'%dataDir # Path to mobile app data file
+outDir = '%s/OutFiles'%dataDir # directory where processed data files go
+outFigDir = '../Figures' # directory where figures should go
 
 
 # Load full dataset
@@ -297,7 +298,7 @@ plt.title('Individual ratings of first %d subjects'%nToPlot)
 plt.tight_layout()
 
 # Save result
-outFile = '%s/RutledgeGbeRatings.png'%outDir
+outFile = '%s/RutledgeGbeRatings.png'%outFigDir
 print('Saving figure as %s...'%outFile)
 plt.savefig(outFile)
 print('Done!')
@@ -326,7 +327,7 @@ plt.legend()
 plt.tight_layout()
 
 # Save result
-outFile = '%s/RutledgeGbeWinnings.png'%outDir
+outFile = '%s/RutledgeGbeWinnings.png'%outFigDir
 print('Saving figure as %s...'%outFile)
 plt.savefig(outFile)
 print('Done!')
@@ -357,7 +358,7 @@ plt.legend()
 plt.tight_layout()
 
 # Save result
-outFile = '%s/RutledgeGbeVsCovid01.png'%outDir
+outFile = '%s/RutledgeGbeVsCovid01.png'%outFigDir
 print('Saving figure as %s...'%outFile)
 plt.savefig(outFile)
 print('Done!')
