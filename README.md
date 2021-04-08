@@ -27,7 +27,7 @@ pip install -e .
 If you need an environment for running the pytorch models, please open an issue and we'll work on adding this.
 
 ## Usage
-Data can be downloaded to the Data folder from https://osf.io/km69z/ . Processed data files will be saved to the Data/OutFiles folder. Figures will be saved to the Figures folder.
+Data can be downloaded from the above locations to the Data folder of this repository. The scripts described below should then be run from the scripts folder. Processed data files will be saved to the Data/OutFiles folder. Figures will be saved to the Figures folder.
 We have broken down processing into 3 processing stages, outlined below.
 
 ### Preprocessing
