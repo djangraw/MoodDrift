@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 Produce all results for the Passage-of-Time Dysphoria paper.
@@ -9,11 +9,11 @@ To use, run whole script or cell-by-cell for specific results.
 """
 
 # Import packages
-import PlotMmiData as pmd
+import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from CompareMmiRatings import CompareMmiRatings
+from PassageOfTimeDysphoria.Analysis.CompareMmiRatings import CompareMmiRatings
 import PlotPytorchPenaltyTuning as ppt
 from scipy import stats
 import imp
