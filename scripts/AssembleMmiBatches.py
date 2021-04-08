@@ -10,6 +10,7 @@ batches that will later be analyzed as a single group.
 Created 6/2/20 by DJ.
 Updated 3/31/21 by DJ - adapted for shared code structure.
 Updated 4/2/21 by DJ - added overwrite flag.
+Updated 4/8/21 by DJ - added line to calculate Recovery(Instructed)1.
 """
 
 # %% Import packages
@@ -144,7 +145,9 @@ else:
     dfBatches.to_csv(outFile)
     print('Done!')
 
-
+# %% Combine two batches with identical trials
+    
+CombineMmiBatches(['Recovery1','RecoveryInstructed1'],'Recovery(Instructed)1');
 
 # %% Assemble batches with no opening rest, short opening rest, and long opening rest
 
