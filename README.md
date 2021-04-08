@@ -4,12 +4,20 @@ This repository contains the scripts necessary to preprocess, analyze, print and
 
 > Jangraw, Keren, Bedder, Rutledge, Pereira et al. (2021). "Passage-of-Time Dysphoria: A Highly Replicable, Gradual Decline in Subjective Mood Observed During Rest and Simple Tasks." BioRxiv.
 
-Analyses are performed on the data found in the following repository on the Open Science Framework: https://osf.io/km69z/
+Analyses are performed on the data found in the following repository on the Open Science Framework: https://osf.io/km69z/.
 
 ## Dependencies
-- Python 2.7 and various packages found in the Anaconda distribution for Python 2.7, available at https://anaconda.com
 - pymer4, available at https://eshinjolly.com/pymer4
+### Fitting models to GBE data
 - pytorch, available at https://pytorch.org
+
+Code for preprocessing, fitting mixed effects models, and analysis and plotting of results will work from a conda environment created with this command:
+```
+conda create -p potdys3 -c ejolly -c defaults -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.2.3 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 r-base=3.6.3 r-lme4=1.1_21 pymer4=0.7.1 matplotlib=3.3.4 seaborn=0.11.1
+```
+
+If you need an environment for running the pytorch models, please open an issue and we'll work on adding this.
+
 
 ## Usage
 Data can be downloaded to the Data folder from https://osf.io/km69z/ . Figures will be saved to the Figures folder.
