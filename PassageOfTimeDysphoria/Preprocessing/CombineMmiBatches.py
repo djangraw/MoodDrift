@@ -41,7 +41,9 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
     dfPymerCoeffs_list = []
     dfPymerInput_list = []
     writePymerFiles = True # only write outputs if all input files exist
-    
+    # Print status as bookend to processing
+    print('Creating new batch %s from %d inputs...'%(newBatch, len(oldBatches)))
+
     # Load info from each batch and concatenate
     for batchName in oldBatches:
         # load info using standardized batch file names
@@ -54,7 +56,7 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
             dfPymerInput = pd.read_csv('%s/Mmi-%s_pymerInput.csv'%(dataDir,batchName),index_col=0)
         except IOError:
             writePymerFiles = False
-            print('pymer files for batch %s not found. Combined pymer outputs will not be written.'%batchName)
+            print('   pymer files for batch %s not found. Combined pymer outputs will not be written.'%batchName)
             participants = np.unique(dfRating.participant)
             dfPymerCoeffs = pd.DataFrame(np.ones((len(participants),2))*np.nan,columns = ['(Intercept)','Time'],index=participants)
             dfPymerInput = pd.DataFrame(np.ones((0,4))*np.nan,columns = ['Cohort','Subject','Mood','Time'])
@@ -121,8 +123,8 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
         dfPymerCoeffs = pd.concat(dfPymerCoeffs_list,axis=0,sort=False) # index is participant, so don't ignore
         dfPymerInput = pd.concat(dfPymerInput_list,axis=0,ignore_index=True,sort=False)
     else: # create empty variables for return statement
-        dfPymerCoeffs = None 
-        dfPymerInput = None 
+        dfPymerCoeffs = None
+        dfPymerInput = None
 
     # Save results
     if newBatch!='':
@@ -135,6 +137,6 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
             dfPymerCoeffs.to_csv('%s/Mmi-%s_pymerCoeffs.csv'%(dataDir,newBatch),index_label='Subject')
             dfPymerInput.to_csv('%s/Mmi-%s_pymerInput.csv'%(dataDir,newBatch))
         print('Done!')
-        
+
     # Return results
     return dfRating,dfTrial,dfSurvey,dfLifeHappy,dfPymerCoeffs,dfPymerInput

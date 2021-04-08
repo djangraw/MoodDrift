@@ -4,21 +4,30 @@ This repository contains the scripts necessary to preprocess, analyze, print and
 
 > Jangraw, Keren, Bedder, Rutledge, Pereira et al. (2021). "Passage-of-Time Dysphoria: A Highly Replicable, Gradual Decline in Subjective Mood Observed During Rest and Simple Tasks." BioRxiv.
 
-Analyses are performed on the data found in the following repository on the Open Science Framework: https://osf.io/km69z/.
+## Datasets
+
+Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/km69z/.
+
+Data from the mobile app participants described in the paper are an earlier version of the dataset shared by Robb Rutledge's laboratory, now available at:
+
+> Rutledge, Robb B. (2021), Risky decision and happiness task: The Great Brain Experiment smartphone app, Dryad, Dataset, https://doi.org/10.5061/dryad.prr4xgxkk
+
+However, the earlier dataset used in this paper was from a subset of participants and included a life happiness rating from each. Inquiries about this dataset can be made to TOKUM TOKUM at TOKUM@TOKUM.TOKUM .
 
 ## Dependencies
 
 Code for preprocessing, fitting mixed effects models, and analysis and plotting of results will work from a conda environment created with this command:
 ```
-conda create -p potdys3 -c defaults -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 r-base=3.6.3 r-lme4=1.1_21 pymer4=0.7.1 matplotlib=3.3.4 seaborn=0.11.1
+conda create -p potdys3 -c defaults -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 r-base=3.6.3 r-lme4=1.1_21 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2
 conda activate ./potdys3
 pip install git+https://github.com/ejolly/pymer4.git@23d028278f0061cd07f4e579edf24e010260023d
+pip install -e .
 ```
 
 If you need an environment for running the pytorch models, please open an issue and we'll work on adding this.
 
 ## Usage
-Data can be downloaded to the Data folder from https://osf.io/km69z/ . Processed data files will be saved to the Data/OutFiles folder. Figures will be saved to the Figures folder.
+Data can be downloaded from the above locations to the Data folder of this repository. The scripts described below should then be run from the scripts folder. Processed data files will be saved to the Data/OutFiles folder. Figures will be saved to the Figures folder.
 We have broken down processing into 3 processing stages, outlined below.
 
 ### Preprocessing
