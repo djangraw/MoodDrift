@@ -339,6 +339,16 @@ for outName in cohortsToRun:
             else:
                 raise ValueError('Stage %s not recognized!'%stage)
 
+            # cast bool columns to bool
+            for cc in dfData.columns:
+                colvals = sorted(dfData[cc].unique())
+                boolcol = True
+                for cv in colvals:
+                    if (not isinstance(cv, bool)) and (not isinstance(cv, np.bool_)):
+                        boolcol = False
+                if boolcol:
+                    dfData[cc] = dfData[cc].astype(bool)
+
             # fit LME model
             model = Lmer(lmString,data=dfData)
 
