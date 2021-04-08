@@ -87,8 +87,12 @@ elif 'Demographics' in demoFile:
     # extract info for each subject
     isBase = pd.notna(dfData.s_crisis_base_date)
     dfData.loc[isBase,['s_crisis_fu_tot','s_crisis_fu_date']] = dfData.loc[isBase,['s_crisis_base_tot','s_crisis_base_date']]
-    cols = ['participant','SEX','DOB','Participant_Type','s_crisis_fu_tot','s_mfq_tot','s_scaredshort_tot','s_crisis_fu_date','age']
-    dfSurvey = dfData.loc[:,cols].drop_duplicates(cols[:-1]).reset_index(drop=True) # drop based on everything except age
+    try:
+        cols = ['participant','SEX','DOB','Participant_Type','s_crisis_fu_tot','s_mfq_tot','s_scaredshort_tot','s_crisis_fu_date','age']
+        dfSurvey = dfData.loc[:,cols].drop_duplicates(cols[:-1]).reset_index(drop=True) # drop based on everything except age
+    except KeyError:
+        cols = ['participant','SEX','Participant_Type','s_crisis_fu_tot','s_mfq_tot','s_scaredshort_tot','s_crisis_fu_date','age']
+        dfSurvey = dfData.loc[:,cols].drop_duplicates(cols[:-1]).reset_index(drop=True) # drop based on everything except age
     # dfSurvey['age'] = np.nan
     # adjust to match MTurk names/values
     dfSurvey.loc[dfSurvey.SEX=='MALE','SEX'] = 'Male'
@@ -259,7 +263,7 @@ for item in [x[0] for x in files.items()]:
 dfAll = pd.read_csv('%s/Mmi-RecoveryNimh-run1_Ratings.csv'%procDataDir)
 #dfSurvey = pd.read_csv('%s/Mmi-RecoveryNimh_Survey.csv'%procDataDir)
 
-if dfSurvey['DOB'].dtype=='object': # try to calculate age from DOB
+if ('DOB' in dfSurvey) and (dfSurvey['DOB'].dtype=='object'): # try to calculate age from DOB
     print('==== Adjusting survey age to be in fraction of years at date of first task =====')
     dfSurvey['age'] = np.nan
     for iLine in range(dfSurvey.shape[0]):

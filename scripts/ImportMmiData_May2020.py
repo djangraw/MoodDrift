@@ -21,7 +21,7 @@ from PassageOfTimeDysphoria.Preprocessing.ScoreMmiSurvey import ScoreMmiSurvey
 import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
 import numpy as np
 import pandas as pd
-import os.path
+import os
 from matplotlib import pyplot as plt
 
 # %% Declare constants and batches to be imported
@@ -37,6 +37,8 @@ dataCheckDir = '../Data/DataChecks' # where dataCheck files sit
 rawDataDir = '../Data/PilotData' # where raw data files sit
 dataDir = '../Data/OutFiles' # where processed data sits
 outFigDir = '../Figures' # where results should go
+if not os.path.exists(outFigDir):
+    os.mkdir(outFigDir)
 plotEveryParticipant = False # should we make a plot for every participant?
 overwrite = False; # overwrite previous results if they already exist?
 
