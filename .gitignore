@@ -2,8 +2,12 @@
 Data/DataChecks
 Data/OutFiles
 Data/PilotData
+
 # Figures produced by the code
 Figures/*.png
+
+# conda environment
+potdys3
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
