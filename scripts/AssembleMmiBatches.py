@@ -156,16 +156,19 @@ dfBatches = pd.read_csv(batchFile,index_col=0)
 # Get batches matching our description
 isNoRestBatch = (dfBatches.nPreviousRuns==0) & \
              (dfBatches.block0_type=='closed') & \
-             (dfBatches.block0_targetHappiness=='1.0')
+             ((dfBatches.block0_targetHappiness=='1.0') | \
+              (dfBatches.block0_targetHappiness=='1'))
 isShortBatch = (dfBatches.nPreviousRuns==0) & \
              (dfBatches.block0_type=='rest') & \
              (dfBatches.block1_type=='closed') & \
-             (dfBatches.block1_targetHappiness=='1.0') & \
+             ((dfBatches.block1_targetHappiness=='1.0') | \
+              (dfBatches.block1_targetHappiness=='1')) & \
              (dfBatches.block0_meanDuration<500)
 isLongBatch = (dfBatches.nPreviousRuns==0) & \
              (dfBatches.block0_type=='rest') & \
              (dfBatches.block1_type=='closed') & \
-             (dfBatches.block1_targetHappiness=='1.0') & \
+             ((dfBatches.block1_targetHappiness=='1.0') | \
+              (dfBatches.block1_targetHappiness=='1')) & \
              (dfBatches.block0_meanDuration>=500)
 
 
