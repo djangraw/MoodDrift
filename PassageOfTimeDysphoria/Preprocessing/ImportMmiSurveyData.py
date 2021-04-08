@@ -21,19 +21,19 @@ def GetNonNanValues(df,field,justOne=True):
 
 def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_DataCheck.csv'):
     # print('  Importing Survey File %s '%inFile)
-    
+
     if not os.path.exists(str(inFile)):
         # dfDataCheck.loc[sdan,'isSurveyPresent'] = False
         print('*** Survey file not found!')
         return -1
-    
-    
+
+
     # read and extract info
     dfIn = pd.read_csv(inFile);
     # If there's no 'Page' input, add it
     if 'Page' not in dfIn.columns:
         dfIn['Page'] = np.arange(dfIn.shape[0])+1
-    
+
     # hashCode = GetNonNanValues(dfIn,'hashCode',True)
     # participant = dfIn.participant[0]
     nPages = np.sum(pd.notna(dfIn.Responses)) # pages of non-COVID responses
@@ -42,16 +42,16 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
         nCovid = 27; # number of covid questions
     else:
         nCovid = 0;
-    
+
     # Set up
     nQ = 6*nPages+nDemo+nCovid
     dfQandA = pd.DataFrame(np.zeros((nQ,8)),columns=['Survey','SurveyQNum','Page','Question','iAnswer','Answer','RT','iCatchAnswer'])
     for intCol in ['SurveyQNum','Page','iAnswer','iCatchAnswer']:
         dfQandA[intCol] = dfQandA[intCol].astype(int)
 
-    # Compile demo q's            
+    # Compile demo q's
     if 'genderSlider.response' in dfIn.columns: # COVID01, Expectation, Stability
-        # location                            
+        # location
         try:
             location = GetNonNanValues(dfIn,'location (City, State)',False)[0]
         except:
@@ -80,13 +80,17 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
     else:
         # read demographics info from a dataCheck file
         dfDataCheck01 = pd.read_csv(demoDataFile, index_col=0)
-        isMatch = (dfDataCheck01['MTurkID'] == mTurkID)                
+        isMatch = (dfDataCheck01['MTurkID'] == mTurkID)
         # fill in
         demographics = ['location','gender','age','status']
         for iDemo,demo in enumerate(demographics):
             dfQandA.loc[iDemo,'Question'] = demo
-            dfQandA.loc[iDemo,'Answer'] = dfDataCheck01.loc[isMatch,demo].values
-        
+            if demo in dfDataCheck01.columns:
+                dfQandA.loc[iDemo,'Answer'] = dfDataCheck01.loc[isMatch,demo].values
+            else:
+                print('Location not found in file. Defaulting to blank.')
+                dfQandA.loc[iDemo,'Answer'] = ''
+
     # Compile questionnaire q's
     for iPage in range(nPages):
         isThisPage = dfIn['Page']==(iPage+1)
@@ -94,7 +98,7 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
         for iQ in range(6):
             iLine = 6*iPage+iQ+nDemo
             dfQandA.loc[iLine,'Page'] = iPage+1
-            if pd.notna(dfIn.loc[isThisPage,'slider%d.response'%(iQ+1)].values):         
+            if pd.notna(dfIn.loc[isThisPage,'slider%d.response'%(iQ+1)].values):
                 dfQandA.loc[iLine,'Question'] = dfIn.loc[isThisPage,'Quest%d'%(iQ+1)].values
                 dfQandA.loc[iLine,'iAnswer'] = int(dfIn.loc[isThisPage,'slider%d.response'%(iQ+1)].values)
                 dfQandA.loc[iLine,'Answer'] = resps[int(dfQandA.loc[iLine,'iAnswer']-1)]
@@ -104,20 +108,20 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
                 dfQandA.loc[iLine,'iAnswer'] = np.nan
                 dfQandA.loc[iLine,'Answer'] = ''
                 dfQandA.loc[iLine,'RT'] = np.nan
-            
-        
+
+
     # Compile COVID q's
     covidCols = [x.split('.')[0] for x in dfIn.columns if (x.startswith('s_covid19') and x.endswith('.response'))];
     iBoxAnswer = []
     iLine = 6*nPages+nDemo-1
-    for col in covidCols: 
+    for col in covidCols:
         resp = GetNonNanValues(dfIn,col+'.response',True)
         page = dfIn.loc[pd.notna(dfIn[col+'.response']),'covidPage'].values[0]
         colID = col.split('_')[2]
         if colID=='13': # boxes
             iBox = int(col.split('.')[0][-1]) # get box number
             if resp==True:
-                iBoxAnswer = iBoxAnswer + [iBox] # add this number to the list of checks                    
+                iBoxAnswer = iBoxAnswer + [iBox] # add this number to the list of checks
             if iBox==3: # for first one only, increment line number (to avoid overwriting)
                 iLine = iLine + 1;
                 resp = np.nan;
@@ -131,15 +135,15 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
             iLine = iLine + 1;
             RT = GetNonNanValues(dfIn,col+'.RT',True)
             answer = '?' # TODO: read from condition files? Include in data file?
-        
+
         # Add results to dfQA
         dfQandA.loc[iLine,'Page'] = page
         dfQandA.loc[iLine,'Question'] = col
         dfQandA.loc[iLine,'iAnswer'] = resp
-        dfQandA.loc[iLine,'Answer'] = answer; 
+        dfQandA.loc[iLine,'Answer'] = answer;
         dfQandA.loc[iLine,'RT'] = RT
-        
-    
+
+
     # Manually categorize
     dfQandA['Survey'] = 'BLANK'
     dfQandA.loc[0:4,'Survey'] = 'DEMOG'
@@ -150,10 +154,10 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
     # fill in catch answers manually
     dfQandA['iCatchAnswer'] = np.nan
     dfQandA.loc[[24,25,42],'iCatchAnswer'] = [2,1,3]
-    
+
     for survey in np.unique(dfQandA.Survey):
         dfQandA.loc[dfQandA.Survey==survey,'SurveyQNum'] = np.arange(np.sum(dfQandA.Survey==survey))+1
-    
+
     isCatch = dfQandA.Survey=='CATCH'
     catchCorrect = np.sum(dfQandA.loc[isCatch,'iAnswer']==dfQandA.loc[isCatch,'iCatchAnswer'])
     # print('participant %s: %d/%d catch questions correct'%(participant,catchCorrect,np.sum(isCatch)))
