@@ -27,7 +27,7 @@ from pymer4.io import save_model
 print('=== Loading Data... ===')
 
 # Declare cohorts to run
-cohortsToRun = ['AllOpeningRestAndRandom','Stability01-RandomVer2','GbeExplore','GbeConfirm']
+cohortsToRun = ['AllOpeningRestAndRandom','Stability01-RandomVer2']#,'GbeExplore','GbeConfirm']
 
 # Declare other parameters
 procDataDir = '../Data/OutFiles' # path to preprocessed data
