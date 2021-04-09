@@ -14,7 +14,8 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from PassageOfTimeDysphoria.Analysis.CompareMmiRatings import CompareMmiRatings
-import PlotPytorchPenaltyTuning as ppt
+import PassageOfTimeDysphoria.Analysis.PlotPytorchPenaltyTuning as ppt
+from PassageOfTimeDysphoria.Analysis.CalculatePytorchModelError import CalculatePytorchModelError
 from scipy import stats
 import imp
 import seaborn as sns
@@ -24,7 +25,7 @@ IS_EXPLORE = False # GbeExplore (True) or GbeConfirm (False)
 dataDir = '../Data/OutFiles' # path to processed data
 pytorchDir = dataDir # path to model fitting results
 outFigDir = '../Figures' # where model fitting figures should be saved
-
+have_gbe = False
 
 # %% Print Cohen's D for original cohort
 for batchName in ['Recovery(Instructed)1']:
@@ -194,197 +195,197 @@ for batchNames in [['Numbers','Recovery(Instructed)1'],
     T,p = stats.ttest_ind(dfCoeffs.loc[isIn0,'Time'],dfCoeffs.loc[isIn1,'Time'])
     print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, p=%.3g'%(batchNames[0],np.sum(isIn0),batchNames[1],np.sum(isIn1),T,p))
 
+if have_gbe:
+    # %% Pytorch: including beta_T improves fit to testing data
+    CalculatePytorchModelError()
 
-# %% Pytorch: including beta_T improves fit to testing data
-runfile('CalculatePytorchModelError.py')
+    # %% Plot penalty tuning
 
-# %% Plot penalty tuning
+    for suffix in ['_tune-Oct2020', '_tune-noBetaT','_tune-Stability01-RandomVer2_ntr31']:
+        ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
-for suffix in ['_tune-Oct2020', '_tune-noBetaT','_tune-Stability01-RandomVer2_ntr31']:
-    ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
-
-# %% Penalty tuning excluding first rating  (12/19/20)
-for suffix in ['_tune-late','_tune-late-retest','_tune-late-noBetaT']:
-    ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
+    # %% Penalty tuning excluding first rating  (12/19/20)
+    for suffix in ['_tune-late','_tune-late-retest','_tune-late-noBetaT']:
+        ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
 
-# %% Plot parameter distributions
+    # %% Plot parameter distributions
 
-if IS_EXPLORE:
-    suffix = '_GbeExplore'
-else:
-    suffix = '_GbeConfirm'
-
-for stage in ['full','late']:
-    if stage=='late':
-        suffix = suffix + '-late'
-    # Load results
-    paramInFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
-    print('Loading pyTorch best parameters from %s...'%paramInFile)
-    best_pars = pd.read_csv(paramInFile,index_col=0).drop('participant',axis=1);
-    params = best_pars.columns; # exclude lifeHappiness
-    paramLabelDict = {'m0': r'$M_0$',
-                   'lambda': r'$\lambda$',
-                   'beta_E': r'$\beta_E$',
-                   'beta_A': r'$\beta_A$',
-                   'beta_T': r'$\beta_T$',
-                   'SSE': 'SSE',
-                   'lifeHappy':'life happiness'}
-    print('Done!')
-
-    # Add lifeHappy to best_pars and beta_T to dfSummary
     if IS_EXPLORE:
-        summaryFile = '%s/Mmi-GbeExplore_Summary.csv'%(dataDir)
+        suffix = '_GbeExplore'
     else:
-        summaryFile = '%s/Mmi-GbeConfirm_Summary.csv'%(dataDir)
-    dfSummary = pd.read_csv(summaryFile,index_col=0)
+        suffix = '_GbeConfirm'
 
-    best_pars['lifeHappy'] = dfSummary['lifeHappy'].values
-    dfSummary['beta_T'] = best_pars['beta_T'].values
+    for stage in ['full','late']:
+        if stage=='late':
+            suffix = suffix + '-late'
+        # Load results
+        paramInFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading pyTorch best parameters from %s...'%paramInFile)
+        best_pars = pd.read_csv(paramInFile,index_col=0).drop('participant',axis=1);
+        params = best_pars.columns; # exclude lifeHappiness
+        paramLabelDict = {'m0': r'$M_0$',
+                       'lambda': r'$\lambda$',
+                       'beta_E': r'$\beta_E$',
+                       'beta_A': r'$\beta_A$',
+                       'beta_T': r'$\beta_T$',
+                       'SSE': 'SSE',
+                       'lifeHappy':'life happiness'}
+        print('Done!')
 
-    isTop = best_pars.lifeHappy>=np.median(best_pars.lifeHappy)
+        # Add lifeHappy to best_pars and beta_T to dfSummary
+        if IS_EXPLORE:
+            summaryFile = '%s/Mmi-GbeExplore_Summary.csv'%(dataDir)
+        else:
+            summaryFile = '%s/Mmi-GbeConfirm_Summary.csv'%(dataDir)
+        dfSummary = pd.read_csv(summaryFile,index_col=0)
 
-    # Plot parameter histograms
-    plt.figure(264,figsize=(14,6)); plt.clf()
-    nRows = 2
-    nCols = 3
-    for i,col in enumerate(params):
-        # plot
-        plt.subplot(nRows,nCols,i+1)
-        plt.hist(best_pars[col],50)
-        # annotate axis
-        plt.xlabel(paramLabelDict[col])
-        plt.ylabel('Number of subjects (n=%d)'%dfSummary.shape[0])
-        plt.grid()
+        best_pars['lifeHappy'] = dfSummary['lifeHappy'].values
+        dfSummary['beta_T'] = best_pars['beta_T'].values
 
-    # annotate figure
-    plt.tight_layout(rect=(0,0,1.0,0.93))
-    plt.suptitle('Computational model parameter fits')
+        isTop = best_pars.lifeHappy>=np.median(best_pars.lifeHappy)
 
-    # save results
-    outFile = '%s/PytorchParamHistos%s.png'%(outFigDir,suffix)
-    print('Saving figure %s...'%outFile)
-    plt.savefig(outFile)
-    print('Done!')
+        # Plot parameter histograms
+        plt.figure(264,figsize=(14,6)); plt.clf()
+        nRows = 2
+        nCols = 3
+        for i,col in enumerate(params):
+            # plot
+            plt.subplot(nRows,nCols,i+1)
+            plt.hist(best_pars[col],50)
+            # annotate axis
+            plt.xlabel(paramLabelDict[col])
+            plt.ylabel('Number of subjects (n=%d)'%dfSummary.shape[0])
+            plt.grid()
+
+        # annotate figure
+        plt.tight_layout(rect=(0,0,1.0,0.93))
+        plt.suptitle('Computational model parameter fits')
+
+        # save results
+        outFile = '%s/PytorchParamHistos%s.png'%(outFigDir,suffix)
+        print('Saving figure %s...'%outFile)
+        plt.savefig(outFile)
+        print('Done!')
 
 
-# %% Get stats on beta_T vs. 0
+    # %% Get stats on beta_T vs. 0
 
-for stage in ['full','late']:
-    print('=== STAGE %s ==='%stage)
+    for stage in ['full','late']:
+        print('=== STAGE %s ==='%stage)
+        # Load pytorch results
+        if IS_EXPLORE:
+            suffix = '_GbeExplore'
+        else:
+            suffix = '_GbeConfirm'
+        if stage=='late':
+            suffix = suffix + '-late'
+        inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading best parameters from %s...'%inFile)
+        best_pars = pd.read_csv(inFile);
+
+        #stat,p = stats.ttest_1samp(best_pars['beta_T'],0)
+        print('mean +/- SE beta_T: %.3g%% mood/min +/- %.3g'%(np.mean(best_pars['beta_T'])*100,np.std(best_pars['beta_T'])*100/np.sqrt(best_pars.shape[0])))
+        #print('2-tailed t-test on beta_T vs. 0: T=%.3g, p=%.3g'%(stat,p))
+
+        stat,p = stats.wilcoxon(best_pars['beta_T'])
+        #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
+        print('2-sided wilcoxon sign-rank test on beta_T vs. 0: p=%.3g'%p)
+
+    # %% Get stats on Mobile app LME slopes vs. 0
+
+    batchName_online = 'AllOpeningRestAndRandom'
+    if IS_EXPLORE:
+        batchName_app = 'GbeExplore'
+    else:
+        batchName_app = 'GbeConfirm'
+
+    for stage in ['full','late']:
+        print('=== STAGE = %s ==='%stage)
+        #dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
+        dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_online,stage),index_col=0)
+        dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_app,stage),index_col=0)
+
+        #stat,p = stats.ttest_1samp(best_pars['beta_T'],0)
+        print('mean +/- SE LME slope param: %.3g%% mood/min +/- %.3g'%(np.mean(dfPymerCoeffs_app['Time'])*100,np.std(dfPymerCoeffs_app['Time'])*100/np.sqrt(dfPymerCoeffs_app.shape[0])))
+        #print('2-tailed t-test on beta_T vs. 0: T=%.3g, p=%.3g'%(stat,p))
+
+        stat,p = stats.wilcoxon(dfPymerCoeffs_app['Time'])
+        #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
+        print('2-sided wilcoxon sign-rank test on %s LME slope vs. 0: p=%.3g'%(batchName_app,p))
+
+
+        # Print ranksum comparison
+        stat,p = stats.ranksums(dfPymerCoeffs_online.Time, dfPymerCoeffs_app.Time)
+        print('Ranksum of LME time coeff for online (%s) vs. mobile app (%s): p=%.3g'%(batchName_online,batchName_app,p))
+
+
+
+
+    # %% Compare LME and comp model
     # Load pytorch results
     if IS_EXPLORE:
         suffix = '_GbeExplore'
     else:
         suffix = '_GbeConfirm'
-    if stage=='late':
-        suffix = suffix + '-late'
     inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
     print('Loading best parameters from %s...'%inFile)
     best_pars = pd.read_csv(inFile);
 
-    #stat,p = stats.ttest_1samp(best_pars['beta_T'],0)
-    print('mean +/- SE beta_T: %.3g%% mood/min +/- %.3g'%(np.mean(best_pars['beta_T'])*100,np.std(best_pars['beta_T'])*100/np.sqrt(best_pars.shape[0])))
-    #print('2-tailed t-test on beta_T vs. 0: T=%.3g, p=%.3g'%(stat,p))
-
-    stat,p = stats.wilcoxon(best_pars['beta_T'])
-    #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
-    print('2-sided wilcoxon sign-rank test on beta_T vs. 0: p=%.3g'%p)
-
-# %% Get stats on Mobile app LME slopes vs. 0
-
-batchName_online = 'AllOpeningRestAndRandom'
-if IS_EXPLORE:
-    batchName_app = 'GbeExplore'
-else:
-    batchName_app = 'GbeConfirm'
-
-for stage in ['full','late']:
-    print('=== STAGE = %s ==='%stage)
-    #dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
-    dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_online,stage),index_col=0)
-    dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_app,stage),index_col=0)
-
-    #stat,p = stats.ttest_1samp(best_pars['beta_T'],0)
-    print('mean +/- SE LME slope param: %.3g%% mood/min +/- %.3g'%(np.mean(dfPymerCoeffs_app['Time'])*100,np.std(dfPymerCoeffs_app['Time'])*100/np.sqrt(dfPymerCoeffs_app.shape[0])))
-    #print('2-tailed t-test on beta_T vs. 0: T=%.3g, p=%.3g'%(stat,p))
-
-    stat,p = stats.wilcoxon(dfPymerCoeffs_app['Time'])
-    #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
-    print('2-sided wilcoxon sign-rank test on %s LME slope vs. 0: p=%.3g'%(batchName_app,p))
-
+    # Load LME results
+    batchName = 'AllOpeningRestAndRandom'
+    stage = 'full'
+    inFile = '%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName,stage)
+    print('Loading pymer fits from %s...'%inFile)
+    dfCoeffs = pd.read_csv(inFile)
+    print('Done!')
 
     # Print ranksum comparison
-    stat,p = stats.ranksums(dfPymerCoeffs_online.Time, dfPymerCoeffs_app.Time)
-    print('Ranksum of LME time coeff for online (%s) vs. mobile app (%s): p=%.3g'%(batchName_online,batchName_app,p))
+
+    stat,p = stats.ranksums(dfCoeffs.Time, best_pars.beta_T)
+    print('Ranksum of LME time coeff vs. PyTorch beta_T (%s): p=%.3g'%(suffix,p))
 
 
+    # %% Plot histograms of LME slopes from online and mobile app data
+    # Set up figure
+    plt.close(632);
+    plt.figure(632,figsize=(6,4),dpi=180, facecolor='w', edgecolor='k')
+    plt.clf();
 
+    batchName_online = 'AllOpeningRestAndRandom'
+    if IS_EXPLORE:
+        batchName_app = 'GbeExplore'
+    else:
+        batchName_app = 'GbeConfirm'
+    #dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
+    dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_online),index_col=0)
+    dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_app),index_col=0)
 
-# %% Compare LME and comp model
-# Load pytorch results
-if IS_EXPLORE:
-    suffix = '_GbeExplore'
-else:
-    suffix = '_GbeConfirm'
-inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
-print('Loading best parameters from %s...'%inFile)
-best_pars = pd.read_csv(inFile);
+    # Plot histograms
+    xHist = np.linspace(-10.0,10.0,100)
+    nSubj_online = dfPymerCoeffs_online.shape[0]
+    weights = np.ones(nSubj_online)/nSubj_online*100
+    plt.hist(dfPymerCoeffs_online['Time']*100.0,xHist,weights=weights,alpha=0.5,label='All online participants (n=%d), LME'%nSubj_online)
+    nSubj_app = dfPymerCoeffs_app.shape[0]
+    weights = np.ones(nSubj_app)/nSubj_app*100
+    if IS_EXPLORE:
+        plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Exploratory mobile app participants (n=%d), LME'%nSubj_app)
+    else:
+        plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Confirmatory mobile app participants (n=%d), LME'%nSubj_app)
 
-# Load LME results
-batchName = 'AllOpeningRestAndRandom'
-stage = 'full'
-inFile = '%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName,stage)
-print('Loading pymer fits from %s...'%inFile)
-dfCoeffs = pd.read_csv(inFile)
-print('Done!')
+    # Annotate plot
+    plt.grid(True)
+    plt.xlabel('LME slope parameter (% mood/min)')
+    plt.ylabel('Percent of participants')
+    plt.legend()
+    plt.title('LME mood slope parameter histograms')
 
-# Print ranksum comparison
-
-stat,p = stats.ranksums(dfCoeffs.Time, best_pars.beta_T)
-print('Ranksum of LME time coeff vs. PyTorch beta_T (%s): p=%.3g'%(suffix,p))
-
-
-# %% Plot histograms of LME slopes from online and mobile app data
-# Set up figure
-plt.close(632);
-plt.figure(632,figsize=(6,4),dpi=180, facecolor='w', edgecolor='k')
-plt.clf();
-
-batchName_online = 'AllOpeningRestAndRandom'
-if IS_EXPLORE:
-    batchName_app = 'GbeExplore'
-else:
-    batchName_app = 'GbeConfirm'
-#dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
-dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_online),index_col=0)
-dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_app),index_col=0)
-
-# Plot histograms
-xHist = np.linspace(-10.0,10.0,100)
-nSubj_online = dfPymerCoeffs_online.shape[0]
-weights = np.ones(nSubj_online)/nSubj_online*100
-plt.hist(dfPymerCoeffs_online['Time']*100.0,xHist,weights=weights,alpha=0.5,label='All online participants (n=%d), LME'%nSubj_online)
-nSubj_app = dfPymerCoeffs_app.shape[0]
-weights = np.ones(nSubj_app)/nSubj_app*100
-if IS_EXPLORE:
-    plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Exploratory mobile app participants (n=%d), LME'%nSubj_app)
-else:
-    plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Confirmatory mobile app participants (n=%d), LME'%nSubj_app)
-
-# Annotate plot
-plt.grid(True)
-plt.xlabel('LME slope parameter (% mood/min)')
-plt.ylabel('Percent of participants')
-plt.legend()
-plt.title('LME mood slope parameter histograms')
-
-# Save figure
-#outFile = '%s/Mmi-Vs-Gbe-Slopes.png'%outFigDirƒ%%
-outFile = '%s/LmeSlopeHistograms_OnlineVsApp_%s_2grp.png'%(outFigDir,batchName_app)
-print('Saving figure as %s...'%outFile)
-plt.savefig(outFile)
-print('Done!')
+    # Save figure
+    #outFile = '%s/Mmi-Vs-Gbe-Slopes.png'%outFigDirƒ%%
+    outFile = '%s/LmeSlopeHistograms_OnlineVsApp_%s_2grp.png'%(outFigDir,batchName_app)
+    print('Saving figure as %s...'%outFile)
+    plt.savefig(outFile)
+    print('Done!')
 
 
 
@@ -432,7 +433,7 @@ slope = np.zeros(nSubj)
 for i,participant in enumerate(participants):
     fracRiskScore[i] = dfPymerInput.loc[dfPymerInput.Subject==participant,'fracRiskScore'].values[0]
     slope[i] = dfCoeffs.loc[dfCoeffs.Subject==participant,'Time'].values[0]
-    ms
+    #ms
 isAtRisk = fracRiskScore>=1
 print('Mean +/- ste slope when fracRiskScore>=1: %.3f +/- %.3f'
       %(np.mean(slope[isAtRisk])*100, np.std(slope[isAtRisk]*100)/np.sqrt(np.sum(isAtRisk))))
@@ -531,219 +532,219 @@ plt.savefig(outFig)
 print('Done!')
 
 
+if have_gbe:
+    # %% Plot beta_T against life happiness score
+    sns.set(font_scale=0.8)
+    sns.set_style("whitegrid")
+    alpha = 0.2
+    nGrps = 2
+    paramToPlot = 'beta_T'
+    param = 'beta_A'
 
-# %% Plot beta_T against life happiness score
-sns.set(font_scale=0.8)
-sns.set_style("whitegrid")
-alpha = 0.2
-nGrps = 2
-paramToPlot = 'beta_T'
-param = 'beta_A'
-
-for stage in ['full','late']:
-    print('=== STAGE %s ==='%stage)
-    # Load pytorch results
-    if IS_EXPLORE:
-        suffix = '_GbeExplore'
-    else:
-        suffix = '_GbeConfirm'
-    if stage=='late':
-        suffix = suffix + '-late'
-    inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
-    print('Loading best parameters from %s...'%inFile)
-    best_pars = pd.read_csv(inFile);
-
-
-    if IS_EXPLORE:
-        summaryFile = '%s/Mmi-GbeExplore_Summary.csv'%(dataDir)
-    else:
-        summaryFile = '%s/Mmi-GbeConfirm_Summary.csv'%(dataDir)
-    print('Loading summary from %s..'%summaryFile)
-    dfSummary = pd.read_csv(summaryFile,index_col=0)
-    dfSummary['beta_T'] = best_pars['beta_T'].values
-    best_pars['lifeHappy'] = dfSummary['lifeHappy'].values
+    for stage in ['full','late']:
+        print('=== STAGE %s ==='%stage)
+        # Load pytorch results
+        if IS_EXPLORE:
+            suffix = '_GbeExplore'
+        else:
+            suffix = '_GbeConfirm'
+        if stage=='late':
+            suffix = suffix + '-late'
+        inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading best parameters from %s...'%inFile)
+        best_pars = pd.read_csv(inFile);
 
 
-
-    plt.close(621)
-    plt.figure(621,figsize=(10,4),dpi=120)
-    plt.clf()
-    rs,ps = stats.spearmanr(dfSummary['lifeHappy'],dfSummary['beta_T'])
-    print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
-
-    print('Plotting lifeHappy vs. beta_T with best fit line...')
-    plt.subplot(1,3,1)
-    sns.regplot(x='lifeHappy', y='beta_T', data=dfSummary);
-    # Annotate plot
-    plt.xlabel('Life happiness rating (0-1)')
-    plt.ylabel(r'$\beta_T$')
-    plt.title(r'Life happiness vs. $\beta_T$:' + '\n' + r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
-
-    plt.subplot(1,3,2)
-    rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
-    print('%s vs. %s: r_s = %.3g, p_s = %.3g'%(param,paramToPlot,rs,ps))
-
-    print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
-    sns.regplot(x=param, y=paramToPlot, data=best_pars,scatter_kws={'alpha':alpha});
-    plt.xlabel(paramLabelDict[param])
-    plt.ylabel(paramLabelDict[paramToPlot])
-    plt.title('%s vs. %s:\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
-                              r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
-
-    plt.subplot(1,3,3)
-    topCutoff = np.median(best_pars.lifeHappy)
-    botCutoff = np.median(best_pars.lifeHappy)
-    if nGrps==2:
-        isTop = best_pars.lifeHappy>=topCutoff
-        isBot = best_pars.lifeHappy<botCutoff
-    elif nGrps==4:
-        topCutoff = 0.8
-        botCutoff = 0.6
-    elif nGrps==11:
-        topCutoff = 0.9
-        botCuotff = 0.1
-    nTop = np.sum(isTop)
-    nBot = np.sum(isBot)
-    # Run spearman corr's
-    rs_top,ps_top = stats.spearmanr(best_pars.loc[isTop,param],best_pars.loc[isTop,paramToPlot])
-    print('%s vs. %s (lifeHappy>=%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,topCutoff,rs_top,ps_top))
-    rs_bot,ps_bot = stats.spearmanr(best_pars.loc[isBot,param],best_pars.loc[isBot,paramToPlot])
-    print('%s vs. %s (lifeHappy<%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,botCutoff,rs_bot,ps_bot))
-
-    # Is the diff between the two significant?
-    zs_top = np.arctanh(rs_top)
-    zs_bot = np.arctanh(rs_bot)
-    se_diff_r = np.sqrt(1.0/(nTop - 3) + 1.0/(nBot - 3))
-    diff = zs_top - zs_bot
-    z = abs(diff / se_diff_r)
-    p = (1 - stats.norm.cdf(z))
-    #            if twotailed:
-    #                p *= 2
-    print('correlation difference between top & bottom: z=%.3g, p=%.3g'%(z,p))
-
-    print('Plotting %d-group %s vs. %s with best fit lines...'%(nGrps,param,paramToPlot))
-    if param=='lifeHappy':
-        plt.xlim([-0.06,1.06])
-    topLabel = 'Life happiness >= %g (n = %d)\n'%(topCutoff,nTop) + r'$r_s=%.3g, p_s=%.3g$'%(rs_top,ps_top)
-    botLabel = 'Life happiness < %g (n = %d)\n'%(botCutoff,nBot) + r'$r_s=%.3g, p_s=%.3g$'%(rs_bot,ps_bot)
-    g1 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isTop,:], line_kws={'color':'tab:blue','label':topLabel},scatter_kws={'color':'tab:blue','alpha':alpha});
-    g2 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isBot,:], line_kws={'color':'tab:orange','label':botLabel},scatter_kws={'color':'tab:orange','alpha':alpha});
-    plt.xlabel(paramLabelDict[param])
-    plt.ylabel(paramLabelDict[paramToPlot])
-    plt.title('%s vs. %s: group corr. diff.\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
-                              r'$z = %.3g, p = %.3g$'%(z,p))
-    plt.legend()
-
-    plt.tight_layout()
-    plt.savefig('%s/PyTorch_betaT-vs-lifeHappyAndBetaA%s.png'%(outFigDir,suffix))
+        if IS_EXPLORE:
+            summaryFile = '%s/Mmi-GbeExplore_Summary.csv'%(dataDir)
+        else:
+            summaryFile = '%s/Mmi-GbeConfirm_Summary.csv'%(dataDir)
+        print('Loading summary from %s..'%summaryFile)
+        dfSummary = pd.read_csv(summaryFile,index_col=0)
+        dfSummary['beta_T'] = best_pars['beta_T'].values
+        best_pars['lifeHappy'] = dfSummary['lifeHappy'].values
 
 
 
-# %% Plot each parameters vs. betaT
-sns.set(font_scale=0.8)
-sns.set_style("whitegrid")
-alpha = 0.2
-nGrps = 2
-paramToPlot = 'beta_T'
-colsToPlot = ['m0','lambda','beta_E','beta_A','SSE','lifeHappy']
-for stage in ['full','late']:
-    print('=== STAGE %s ==='%stage)
-    # Load pytorch results
-    if IS_EXPLORE:
-        suffix = '_GbeExplore'
-    else:
-        suffix = '_GbeConfirm'
-    if stage=='late':
-        suffix = suffix + '-late'
-    inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
-    print('Loading best parameters from %s...'%inFile)
-    best_pars = pd.read_csv(inFile);
+        plt.close(621)
+        plt.figure(621,figsize=(10,4),dpi=120)
+        plt.clf()
+        rs,ps = stats.spearmanr(dfSummary['lifeHappy'],dfSummary['beta_T'])
+        print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
 
+        print('Plotting lifeHappy vs. beta_T with best fit line...')
+        plt.subplot(1,3,1)
+        sns.regplot(x='lifeHappy', y='beta_T', data=dfSummary);
+        # Annotate plot
+        plt.xlabel('Life happiness rating (0-1)')
+        plt.ylabel(r'$\beta_T$')
+        plt.title(r'Life happiness vs. $\beta_T$:' + '\n' + r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
 
-    if IS_EXPLORE:
-        summaryFile = '%s/Mmi-GbeExplore_Summary.csv'%(dataDir)
-    else:
-        summaryFile = '%s/Mmi-GbeConfirm_Summary.csv'%(dataDir)
-    print('Loading summary from %s..'%summaryFile)
-    dfSummary = pd.read_csv(summaryFile,index_col=0)
-    dfSummary['beta_T'] = best_pars['beta_T'].values
-    best_pars['lifeHappy'] = dfSummary['lifeHappy'].values
+        plt.subplot(1,3,2)
+        rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
+        print('%s vs. %s: r_s = %.3g, p_s = %.3g'%(param,paramToPlot,rs,ps))
 
+        print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
+        sns.regplot(x=param, y=paramToPlot, data=best_pars,scatter_kws={'alpha':alpha});
+        plt.xlabel(paramLabelDict[param])
+        plt.ylabel(paramLabelDict[paramToPlot])
+        plt.title('%s vs. %s:\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
+                                  r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
 
+        plt.subplot(1,3,3)
+        topCutoff = np.median(best_pars.lifeHappy)
+        botCutoff = np.median(best_pars.lifeHappy)
+        if nGrps==2:
+            isTop = best_pars.lifeHappy>=topCutoff
+            isBot = best_pars.lifeHappy<botCutoff
+        elif nGrps==4:
+            topCutoff = 0.8
+            botCutoff = 0.6
+        elif nGrps==11:
+            topCutoff = 0.9
+            botCuotff = 0.1
+        nTop = np.sum(isTop)
+        nBot = np.sum(isBot)
+        # Run spearman corr's
+        rs_top,ps_top = stats.spearmanr(best_pars.loc[isTop,param],best_pars.loc[isTop,paramToPlot])
+        print('%s vs. %s (lifeHappy>=%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,topCutoff,rs_top,ps_top))
+        rs_bot,ps_bot = stats.spearmanr(best_pars.loc[isBot,param],best_pars.loc[isBot,paramToPlot])
+        print('%s vs. %s (lifeHappy<%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,botCutoff,rs_bot,ps_bot))
 
-    plt.close(621)
-    plt.figure(621,figsize=(13,8),dpi=120)
-    plt.clf()
+        # Is the diff between the two significant?
+        zs_top = np.arctanh(rs_top)
+        zs_bot = np.arctanh(rs_bot)
+        se_diff_r = np.sqrt(1.0/(nTop - 3) + 1.0/(nBot - 3))
+        diff = zs_top - zs_bot
+        z = abs(diff / se_diff_r)
+        p = (1 - stats.norm.cdf(z))
+        #            if twotailed:
+        #                p *= 2
+        print('correlation difference between top & bottom: z=%.3g, p=%.3g'%(z,p))
 
-
-    for i,param in enumerate(colsToPlot):
-        plt.subplot(2,3,i+1)
-        if nGrps==1:
-            rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
-            print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
-
-            print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
-            rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
-            print('%s vs. %s: r_s = %.3g, p_s = %.3g'%(param,paramToPlot,rs,ps))
-
-            print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
-            sns.regplot(x=param, y=paramToPlot, data=best_pars,scatter_kws={'alpha':alpha});
-            plt.xlabel(paramLabelDict[parafm])
-            plt.ylabel(paramLabelDict[paramToPlot])
-            plt.title('%s vs. %s:\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
-                                      r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
-
-        elif nGrps==2:
-            topCutoff = np.median(best_pars.lifeHappy)
-            botCutoff = np.median(best_pars.lifeHappy)
-            if nGrps==2:
-                isTop = best_pars.lifeHappy>=topCutoff
-                isBot = best_pars.lifeHappy<botCutoff
-            elif nGrps==4:
-                topCutoff = 0.8
-                botCutoff = 0.6
-            elif nGrps==11:
-                topCutoff = 0.9
-                botCuotff = 0.1
-            nTop = np.sum(isTop)
-            nBot = np.sum(isBot)
-            # Run spearman corr's
-            rs_top,ps_top = stats.spearmanr(best_pars.loc[isTop,param],best_pars.loc[isTop,paramToPlot])
-            print('%s vs. %s (lifeHappy>=%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,topCutoff,rs_top,ps_top))
-            rs_bot,ps_bot = stats.spearmanr(best_pars.loc[isBot,param],best_pars.loc[isBot,paramToPlot])
-            print('%s vs. %s (lifeHappy<%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,botCutoff,rs_bot,ps_bot))
-
-            # Is the diff between the two significant?
-            zs_top = np.arctanh(rs_top)
-            zs_bot = np.arctanh(rs_bot)
-            se_diff_r = np.sqrt(1.0/(nTop - 3) + 1.0/(nBot - 3))
-            diff = zs_top - zs_bot
-            z = abs(diff / se_diff_r)
-            p = (1 - stats.norm.cdf(z))
-            #            if twotailed:
-            #                p *= 2
-            print('correlation difference between top & bottom: z=%.3g, p=%.3g'%(z,p))
-
-            print('Plotting %d-group %s vs. %s with best fit lines...'%(nGrps,param,paramToPlot))
-            if param=='lifeHappy':
-                plt.xlim([-0.06,1.06])
-            topLabel = 'Life happiness >= %g (n = %d)\n'%(topCutoff,nTop) + r'$r_s=%.3g, p_s=%.3g$'%(rs_top,ps_top)
-            botLabel = 'Life happiness < %g (n = %d)\n'%(botCutoff,nBot) + r'$r_s=%.3g, p_s=%.3g$'%(rs_bot,ps_bot)
-            g1 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isTop,:], line_kws={'color':'tab:blue','label':topLabel},scatter_kws={'color':'tab:blue','alpha':alpha});
-            g2 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isBot,:], line_kws={'color':'tab:orange','label':botLabel},scatter_kws={'color':'tab:orange','alpha':alpha});
-            plt.xlabel(paramLabelDict[param])
-            plt.ylabel(paramLabelDict[paramToPlot])
-            plt.title('%s vs. %s: group corr. diff.\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
-                                      r'$z = %.3g, p = %.3g$'%(z,p))
-            plt.legend()
+        print('Plotting %d-group %s vs. %s with best fit lines...'%(nGrps,param,paramToPlot))
+        if param=='lifeHappy':
+            plt.xlim([-0.06,1.06])
+        topLabel = 'Life happiness >= %g (n = %d)\n'%(topCutoff,nTop) + r'$r_s=%.3g, p_s=%.3g$'%(rs_top,ps_top)
+        botLabel = 'Life happiness < %g (n = %d)\n'%(botCutoff,nBot) + r'$r_s=%.3g, p_s=%.3g$'%(rs_bot,ps_bot)
+        g1 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isTop,:], line_kws={'color':'tab:blue','label':topLabel},scatter_kws={'color':'tab:blue','alpha':alpha});
+        g2 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isBot,:], line_kws={'color':'tab:orange','label':botLabel},scatter_kws={'color':'tab:orange','alpha':alpha});
+        plt.xlabel(paramLabelDict[param])
+        plt.ylabel(paramLabelDict[paramToPlot])
+        plt.title('%s vs. %s: group corr. diff.\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
+                                  r'$z = %.3g, p = %.3g$'%(z,p))
+        plt.legend()
 
         plt.tight_layout()
+        plt.savefig('%s/PyTorch_betaT-vs-lifeHappyAndBetaA%s.png'%(outFigDir,suffix))
+
+
+
+    # %% Plot each parameters vs. betaT
+    sns.set(font_scale=0.8)
+    sns.set_style("whitegrid")
+    alpha = 0.2
+    nGrps = 2
+    paramToPlot = 'beta_T'
+    colsToPlot = ['m0','lambda','beta_E','beta_A','SSE','lifeHappy']
+    for stage in ['full','late']:
+        print('=== STAGE %s ==='%stage)
+        # Load pytorch results
+        if IS_EXPLORE:
+            suffix = '_GbeExplore'
+        else:
+            suffix = '_GbeConfirm'
+        if stage=='late':
+            suffix = suffix + '-late'
+        inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading best parameters from %s...'%inFile)
+        best_pars = pd.read_csv(inFile);
+
+
+        if IS_EXPLORE:
+            summaryFile = '%s/Mmi-GbeExplore_Summary.csv'%(dataDir)
+        else:
+            summaryFile = '%s/Mmi-GbeConfirm_Summary.csv'%(dataDir)
+        print('Loading summary from %s..'%summaryFile)
+        dfSummary = pd.read_csv(summaryFile,index_col=0)
+        dfSummary['beta_T'] = best_pars['beta_T'].values
+        best_pars['lifeHappy'] = dfSummary['lifeHappy'].values
+
+
+
+        plt.close(621)
+        plt.figure(621,figsize=(13,8),dpi=120)
+        plt.clf()
+
+
+        for i,param in enumerate(colsToPlot):
+            plt.subplot(2,3,i+1)
+            if nGrps==1:
+                rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
+                print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
+
+                print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
+                rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
+                print('%s vs. %s: r_s = %.3g, p_s = %.3g'%(param,paramToPlot,rs,ps))
+
+                print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
+                sns.regplot(x=param, y=paramToPlot, data=best_pars,scatter_kws={'alpha':alpha});
+                plt.xlabel(paramLabelDict[parafm])
+                plt.ylabel(paramLabelDict[paramToPlot])
+                plt.title('%s vs. %s:\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
+                                          r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
+
+            elif nGrps==2:
+                topCutoff = np.median(best_pars.lifeHappy)
+                botCutoff = np.median(best_pars.lifeHappy)
+                if nGrps==2:
+                    isTop = best_pars.lifeHappy>=topCutoff
+                    isBot = best_pars.lifeHappy<botCutoff
+                elif nGrps==4:
+                    topCutoff = 0.8
+                    botCutoff = 0.6
+                elif nGrps==11:
+                    topCutoff = 0.9
+                    botCuotff = 0.1
+                nTop = np.sum(isTop)
+                nBot = np.sum(isBot)
+                # Run spearman corr's
+                rs_top,ps_top = stats.spearmanr(best_pars.loc[isTop,param],best_pars.loc[isTop,paramToPlot])
+                print('%s vs. %s (lifeHappy>=%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,topCutoff,rs_top,ps_top))
+                rs_bot,ps_bot = stats.spearmanr(best_pars.loc[isBot,param],best_pars.loc[isBot,paramToPlot])
+                print('%s vs. %s (lifeHappy<%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,botCutoff,rs_bot,ps_bot))
+
+                # Is the diff between the two significant?
+                zs_top = np.arctanh(rs_top)
+                zs_bot = np.arctanh(rs_bot)
+                se_diff_r = np.sqrt(1.0/(nTop - 3) + 1.0/(nBot - 3))
+                diff = zs_top - zs_bot
+                z = abs(diff / se_diff_r)
+                p = (1 - stats.norm.cdf(z))
+                #            if twotailed:
+                #                p *= 2
+                print('correlation difference between top & bottom: z=%.3g, p=%.3g'%(z,p))
+
+                print('Plotting %d-group %s vs. %s with best fit lines...'%(nGrps,param,paramToPlot))
+                if param=='lifeHappy':
+                    plt.xlim([-0.06,1.06])
+                topLabel = 'Life happiness >= %g (n = %d)\n'%(topCutoff,nTop) + r'$r_s=%.3g, p_s=%.3g$'%(rs_top,ps_top)
+                botLabel = 'Life happiness < %g (n = %d)\n'%(botCutoff,nBot) + r'$r_s=%.3g, p_s=%.3g$'%(rs_bot,ps_bot)
+                g1 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isTop,:], line_kws={'color':'tab:blue','label':topLabel},scatter_kws={'color':'tab:blue','alpha':alpha});
+                g2 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isBot,:], line_kws={'color':'tab:orange','label':botLabel},scatter_kws={'color':'tab:orange','alpha':alpha});
+                plt.xlabel(paramLabelDict[param])
+                plt.ylabel(paramLabelDict[paramToPlot])
+                plt.title('%s vs. %s: group corr. diff.\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
+                                          r'$z = %.3g, p = %.3g$'%(z,p))
+                plt.legend()
+
+            plt.tight_layout()
 
 
 
 
-    plt.tight_layout()
-    plt.savefig('%s/PyTorch_betaT-vs-others%s-%dGrps.png'%(outFigDir,suffix,nGrps))
+        plt.tight_layout()
+        plt.savefig('%s/PyTorch_betaT-vs-others%s-%dGrps.png'%(outFigDir,suffix,nGrps))
 
 
 # %% Get impacts of fracRiskScore from the LME results table

@@ -18,9 +18,9 @@ However, the earlier dataset used in this paper was from a subset of participant
 
 Code for preprocessing, fitting mixed effects models, and analysis and plotting of results will work from a conda environment created with this command:
 ```
-conda create -p potdys3 -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.1
+conda create -p potdys3 -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.2
 conda activate ./potdys3
-pip install git+https://github.com/ejolly/pymer4.git@23d028278f0061cd07f4e579edf24e010260023d
+pip install git+https://github.com/shotgunosine/pymer4.git@fixef_labels
 pip install -e .
 ```
 
