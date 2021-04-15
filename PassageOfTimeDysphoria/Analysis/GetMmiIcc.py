@@ -15,12 +15,12 @@ Created on Fri Sep 18 12:22:26 2020
 # %%
 # conda install -c r rpy2
 # conda install r-psych
-#import rpy2
-#import rpy2.robjects as ro
+import rpy2
+import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
 from rpy2.robjects.packages import importr
-#from rpy2.robjects.conversion import localconverter
+from rpy2.robjects.conversion import localconverter
 psych = importr('psych')
 import pandas as pd
 import numpy as np
@@ -77,29 +77,29 @@ def PlotReliability(cohort1,cohort2,intOrSlope='Intercept',dataDir='../Data/OutF
 
 def GetIcc(dfInput):
 
-    dfCoeffR = pandas2ri.py2ri(dfInput)
+    #dfCoeffR = pandas2ri.py2ri(dfInput)
     #dfCoeffR = numpy2ri.py2ri(dfCoeff[['Intercept1','Intercept2']].values)
 
-    icc = psych.ICC(dfCoeffR)
+    icc = psych.ICC(dfInput)
 
-    #with localconverter(ro.default_converter + pandas2ri.converter):
+    # with localconverter(ro.default_converter + pandas2ri.converter):
     #    pd_from_r_df = ro.conversion.rpy2py(icc[0])
 
-    colnames = np.zeros(len(icc[0][0]),dtype=object)
-    for i in range(len(icc[0][0])):
-        colnames[i] = icc[0][0][i]
+    # colnames = np.zeros(len(icc[0][0]),dtype=object)
+    # for i in range(len(icc[0][0])):
+    #     colnames[i] = icc[0][0][i]
     # colnames = ['Single_raters_absolute','Single_random_raters','Single_fixed_raters',
     #             'Average_raters_absolute','Average_random_raters','Average_fixed_raters']
+    # colnames = icc[0].index
+    # rownames = ['ICC','F','df1','df2','p','CImin','CImax']
 
-    rownames = ['ICC','F','df1','df2','p','CImin','CImax']
-
-    data = np.zeros((len(icc[0])-1,len(icc[0][1])))
-    for i in range(1,len(icc[0])):
-        for j in range(len(icc[0][i])):
-            data[i-1,j] = icc[0][i][j]
-    dfICC = pd.DataFrame(data,columns=colnames,index=rownames).T
-    icc21 = dfICC.loc['ICC2','ICC']
-    p21 = dfICC.loc['ICC2','p']
+    # data = np.zeros((len(icc[0])-1,len(icc[0][1])))
+    # for i in range(1,len(icc[0])):
+    #     for j in range(len(icc[0][i])):
+    #         data[i-1,j] = icc[0][i][j]
+    dfICC = icc[0]
+    icc21 = dfICC.loc[dfICC.type == 'ICC2','ICC']
+    p21 = dfICC.loc[dfICC.type == 'ICC2','p']
 
     return icc21, p21
 
