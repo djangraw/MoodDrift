@@ -8,6 +8,7 @@ Created on Fri Sep 18 12:22:26 2020
 
 - Updated 10/29/20 by DJ - made axis labels have only first letter capitalized
 - Updated 3/31/21 by DJ - adapted for shared code structure.
+- Updated 4/15/21 by DJ - adjusted to new key filenames
 """
 
 
@@ -29,7 +30,7 @@ from scipy import stats
 def PlotReliability(cohort1,cohort2,intOrSlope='Intercept',dataDir='../Data/OutFiles'):
 
     # load data
-    dfKey = pd.read_excel('%s/Mmi-Reliability_%s_key.xlsx'%(dataDir,cohort2))
+    dfKey = pd.read_excel('%s/%s_key.xlsx'%(dataDir,cohort2))
 
     dfCoeff1 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort1))
     dfCoeff2 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort2))
@@ -107,7 +108,7 @@ def GetIcc(dfInput):
 
 def GetMmiIcc(cohort1,cohort2,doPlot=False,dataDir='../Data/OutFiles',outFigDir='../Figures'):
     # load data
-    dfKey = pd.read_excel('%s/Mmi-Reliability_%s_key.xlsx'%(dataDir,cohort2))
+    dfKey = pd.read_excel('%s/%s_key.xlsx'%(dataDir,cohort2))
 
     dfCoeff1 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort1))
     dfCoeff2 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort2))
@@ -202,7 +203,10 @@ def GetMmiIcc(cohort1,cohort2,doPlot=False,dataDir='../Data/OutFiles',outFigDir=
             plt.suptitle('Weekly-Rest cohort (rest block, 2 weeks apart)')
 
         plt.tight_layout(rect=(0,0,1.0,0.94))
-        plt.savefig('%s/Mmi_%s-%s_reliability.png'%(outFigDir,cohort1,cohort2))
+        outFile = '%s/Mmi_%s-%s_reliability.png'%(outFigDir,cohort1,cohort2)
+        print('Saving figure as %s...'%outFile)
+        plt.savefig(outFile)
+        print('Done!')
 
     elif doPlot=='T1T2':
         plt.figure(923); plt.clf()
@@ -239,7 +243,10 @@ def GetMmiIcc(cohort1,cohort2,doPlot=False,dataDir='../Data/OutFiles',outFigDir=
 
 
         plt.tight_layout(rect=(0,0,1.0,0.94))
-        plt.savefig('%s/Mmi_%s-%s_T1T2.png'%(outFigDir,cohort1,cohort2))
+        outFile = '%s/Mmi_%s-%s_T1T2.png'%(outFigDir,cohort1,cohort2)
+        print('Saving figure as %s...'%outFile)
+        plt.savefig(outFile)
+        print('Done!')
 
     # %% Return
     return icc21_int,p21_int,icc21_slope,p21_slope
