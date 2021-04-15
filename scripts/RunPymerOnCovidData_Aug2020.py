@@ -351,7 +351,7 @@ for outName in cohortsToRun:
 
             # fit LME model
             model = Lmer(lmString,data=dfData)
-
+            
             # Fit it
             print('=== Fitting Model... ===')
             dfFit = model.fit()
@@ -392,7 +392,6 @@ for outName in cohortsToRun:
             outFile = '%s/Mmi-%s_pymerFit-%s.csv'%(outDir,outName,stage)
             print('Saving %s...'%outFile)
             dfFit.to_csv(outFile,float_format='%.6f')
-
 
         # Save results common to all stages
         print('=== Saving Subject Slopes+Intercepts... ===')

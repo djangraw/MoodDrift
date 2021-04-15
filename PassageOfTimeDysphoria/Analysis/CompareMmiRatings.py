@@ -12,7 +12,7 @@ Created on Mon May 25 15:17:04 2020
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-import PlotMmiData as pmd
+import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
 
 def CompareMmiRatings(batchNames,procDataDir='../Data/OutFiles',batchLabels=[],iBlock='all',doInterpolation=False):
 
