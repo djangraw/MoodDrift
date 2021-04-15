@@ -24,10 +24,9 @@ print('=== Loading Data... ===')
 
 # Declare cohorts to run
 have_gbe = False # are the Rutledge Great Brain Experiment data included?
+cohortsToRun = ['AllOpeningRestAndRandom','COVID01','COVID02','COVID03','Stability01-Rest','Stability01-Rest_block2','Stability02-Rest']#,'Stability01-RandomVer2']
 if have_gbe:
-    cohortsToRun = ['AllOpeningRestAndRandom','GbeExplore','GbeConfirm'] 
-else:
-    cohortsToRun = ['AllOpeningRestAndRandom']#,'Stability01-RandomVer2']
+    cohortsToRun = cohortsToRun + ['GbeExplore','GbeConfirm'] # add on GBE cohorts
 
 # Declare other parameters
 procDataDir = '../Data/OutFiles' # path to preprocessed data
@@ -333,7 +332,7 @@ for outName in cohortsToRun:
         else:
             # Prepare input
             if stage=='late':
-                dfData = dfAll.loc[dfAll.iRating>=1,:] # trials 1-end
+                dfData = dfAll.loc[dfAll.iRating>=1,:].copy() # trials 1-end
             elif stage=='full':
                 dfData = dfAll
             else:

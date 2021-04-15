@@ -30,7 +30,7 @@ from scipy import stats
 def PlotReliability(cohort1,cohort2,intOrSlope='Intercept',dataDir='../Data/OutFiles'):
 
     # load data
-    dfKey = pd.read_excel('%s/%s_key.xlsx'%(dataDir,cohort2))
+    dfKey = pd.read_excel('%s/%s_key.xlsx'%(dataDir,cohort2),engine='openpyxl')
 
     dfCoeff1 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort1))
     dfCoeff2 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort2))
@@ -108,7 +108,7 @@ def GetIcc(dfInput):
 
 def GetMmiIcc(cohort1,cohort2,doPlot=False,dataDir='../Data/OutFiles',outFigDir='../Figures'):
     # load data
-    dfKey = pd.read_excel('%s/%s_key.xlsx'%(dataDir,cohort2))
+    dfKey = pd.read_excel('%s/%s_key.xlsx'%(dataDir,cohort2),engine='openpyxl')
 
     dfCoeff1 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort1))
     dfCoeff2 = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,cohort2))

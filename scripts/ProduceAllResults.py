@@ -18,7 +18,7 @@ import PassageOfTimeDysphoria.Analysis.PlotPytorchPenaltyTuning as ppt
 from PassageOfTimeDysphoria.Analysis.CalculatePytorchModelError import CalculatePytorchModelError
 from PassageOfTimeDysphoria.Analysis.PlotAgeVsCoeffs import PlotAgeVsCoeffs
 from PassageOfTimeDysphoria.Analysis.PlotTimeOfDayVsSlopeAndIntercept import PlotTimeOfDayVsSlopeAndIntercept
-#import PassageOfTimeDysphoria.Analysis.GetMmiIcc as gmi
+import PassageOfTimeDysphoria.Analysis.GetMmiIcc as gmi
 from scipy import stats
 import seaborn as sns
 
@@ -777,32 +777,32 @@ print('%.3g +/- %.3g %% mood, T=%.3g, p=%.3g'%(m,se,T,p))
 # %% Get Stability plots
 
 # Set up
-#plt.close(923)
-#plt.figure(923,figsize=(9,6),dpi=120); plt.clf()
-#intOrSlopes = ['Intercept','Slope']
-#cohortPairs = [['Stability01-Rest','Stability01-Rest_block2'],
-#               ['Stability01-Rest','Stability02-Rest'],
-#               ['COVID01','COVID03']]
-#pairTitles = ['Blocks','Days','Weeks']
-##
-#icc21 = {'Intercept':0,'Slope':0}
-#p21 = {'Intercept':0,'Slope':0}
-#for i,pair in enumerate(cohortPairs):
-#    icc21['Intercept'],p21['Intercept'],icc21['Slope'],p21['Slope'] = gmi.GetMmiIcc(pair[0],pair[1],doPlot='None')
-#    for j,intOrSlope in enumerate(intOrSlopes):
-#        ax = plt.subplot(2,3,j*3+i+1);
-#        gmi.PlotReliability(pair[0],pair[1],intOrSlope=intOrSlope)
-#        if j==0:
-#            plt.title('%s\nICC(2,1)=%.3g, p=%.3g'%(pairTitles[i],icc21[intOrSlope],p21[intOrSlope]))
-#        else:
-#            plt.title('ICC(2,1)=%.3g, p=%.3g'%(icc21[intOrSlope],p21[intOrSlope]))
-#
-## Save figure
-#plt.tight_layout()
-#outFile = '%s/Mmi_%s_reliability.png'%(dataDir,'-'.join(pairTitles))
-#print('Saving figure as %s...'%outFile)
-#plt.savefig(outFile)
-#print('Done!')
+plt.close(923)
+plt.figure(923,figsize=(9,6),dpi=120); plt.clf()
+intOrSlopes = ['Intercept','Slope']
+cohortPairs = [['Stability01-Rest','Stability01-Rest_block2'],
+               ['Stability01-Rest','Stability02-Rest'],
+               ['COVID01','COVID03']]
+pairTitles = ['Blocks','Days','Weeks']
+# Calculate and plot ICCs
+icc21 = {'Intercept':0,'Slope':0}
+p21 = {'Intercept':0,'Slope':0}
+for i,pair in enumerate(cohortPairs):
+    icc21['Intercept'],p21['Intercept'],icc21['Slope'],p21['Slope'] = gmi.GetMmiIcc(pair[0],pair[1],doPlot='None')
+    for j,intOrSlope in enumerate(intOrSlopes):
+        ax = plt.subplot(2,3,j*3+i+1);
+        gmi.PlotReliability(pair[0],pair[1],intOrSlope=intOrSlope)
+        if j==0:
+            plt.title('%s\nICC(2,1)=%.3g, p=%.3g'%(pairTitles[i],icc21[intOrSlope],p21[intOrSlope]))
+        else:
+            plt.title('ICC(2,1)=%.3g, p=%.3g'%(icc21[intOrSlope],p21[intOrSlope]))
+
+# Save figure
+plt.tight_layout()
+outFile = '%s/Mmi_%s_Reliability.png'%(dataDir,'-'.join(pairTitles))
+print('Saving figure as %s...'%outFile)
+plt.savefig(outFile)
+print('Done!')
 
 
 # %% Check for time of day effects

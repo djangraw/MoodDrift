@@ -199,3 +199,29 @@ for batchName in batchNames:
             print('Not overwriting.')
         else:
             dfKey.to_excel(outFile)
+    
+    # %% Generate dummy key file matching blocks 0 and 2 from the same dataset
+    
+    if batchName=='Stability01-Rest':
+        
+        for iSubj in dfDataCheck.index:
+            # add key of original participant number
+            dfDataCheck.loc[iSubj,'participant_day1'] = dfDataCheck.loc[iSubj,'participant']
+            dfDataCheck.loc[iSubj,'participant_day2'] = dfDataCheck.loc[iSubj,'participant']
+            try:
+                dfDataCheck.loc[iSubj,'taskFile_day1'] = os.path.basename(dfDataCheck.loc[iSubj,'taskFile'].values[0])
+            except:
+                dfDataCheck.loc[iSubj,'taskFile_day1'] = np.nan;
+            try:
+                dfDataCheck.loc[iSubj,'taskFile_day2']= os.path.basename(dfDataCheck.loc[iSubj,'taskFile'])
+            except:
+                dfDataCheck.loc[iSubj,'taskFile_day2'] = np.nan;
+
+        colsToKeep = ['participant_day1','participant_day2','taskFile_day1','taskFile_day2','gender','age','status']
+        dfKey = dfDataCheck.loc[:,colsToKeep]
+        outFile = '%s/%s_block2_key.xlsx'%(dataDir,batchName)
+        print('Saving key to %s...'%outFile)
+        if os.path.exists(outFile) and not overwrite:
+            print('Not overwriting.')
+        else:
+            dfKey.to_excel(outFile)
