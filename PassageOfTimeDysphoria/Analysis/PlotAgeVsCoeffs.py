@@ -23,8 +23,8 @@ def PlotAgeVsCoeffs(cohort = 'AllOpeningRestAndRandom'):
     
     
     # %% Load data
-    dfCoeffs = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full-noAge.csv'%(dataDir,cohort))
-    dfAll = pd.read_csv('%s/Mmi-%s_pymerInputWithAges.csv'%(dataDir,cohort)) # or get from Run... script
+    dfCoeffs = pd.read_csv('%s/Mmi-%s-noAge_pymerCoeffs-full.csv'%(dataDir,cohort))
+    dfAll = pd.read_csv('%s/Mmi-%s-noAge_pymerInput-full.csv'%(dataDir,cohort)) # or get from Run... script
     nSubj = dfCoeffs.shape[0]
     for i in range(nSubj):
         dfCoeffs.loc[i,'age'] = dfAll.loc[dfAll.Subject==dfCoeffs.Subject[i],'age'].values[0]
