@@ -7,27 +7,27 @@ Runs Pymer's linear mixed effects (LME) analysis on specified cohorts.
 - Created Aug 2020 by DJ
 - Updated 2/4/2021 by DJ - accommodated GbeConfirm cohort.
 - Updated 3/31/21 by DJ - adapted for shared code structure.
+- Updated 4/15/21 by DJ - added have_gbe flag, removed extraneous imports
 """
 
 # %% import some basic libraries
-import os
 import pandas as pd
 import numpy as np
-import pickle
 # import dataviz
 import seaborn as sns
 import matplotlib.pyplot as plt
-# import utility function for sample data path
-from pymer4.utils import get_resource_path
 # Import the linear regression model class
 from pymer4.models import Lmer
-from pymer4.io import save_model
 
 # %% Declare constants
 print('=== Loading Data... ===')
 
 # Declare cohorts to run
-cohortsToRun = ['AllOpeningRestAndRandom','Stability01-RandomVer2']#,'GbeExplore','GbeConfirm']
+have_gbe = False # are the Rutledge Great Brain Experiment data included?
+if have_gbe:
+    cohortsToRun = ['AllOpeningRestAndRandom','GbeExplore','GbeConfirm'] 
+else:
+    cohortsToRun = ['AllOpeningRestAndRandom']#,'Stability01-RandomVer2']
 
 # Declare other parameters
 procDataDir = '../Data/OutFiles' # path to preprocessed data

@@ -16,8 +16,10 @@ from matplotlib import pyplot as plt
 from PassageOfTimeDysphoria.Analysis.CompareMmiRatings import CompareMmiRatings
 import PassageOfTimeDysphoria.Analysis.PlotPytorchPenaltyTuning as ppt
 from PassageOfTimeDysphoria.Analysis.CalculatePytorchModelError import CalculatePytorchModelError
+from PassageOfTimeDysphoria.Analysis.PlotAgeVsCoeffs import PlotAgeVsCoeffs
+from PassageOfTimeDysphoria.Analysis.PlotTimeOfDayVsSlopeAndIntercept import PlotTimeOfDayVsSlopeAndIntercept
+#import PassageOfTimeDysphoria.Analysis.GetMmiIcc as gmi
 from scipy import stats
-import imp
 import seaborn as sns
 
 # Use exploratory (True) or Confirmatory (False) mobile app participants?
@@ -770,42 +772,41 @@ print('Age 16-18 x slope in LME:')
 print('%.3g +/- %.3g %% mood, T=%.3g, p=%.3g'%(m,se,T,p))
 
 # %% Link to age in adolescents
-runfile('PlotAgeVsCoeffs.py') # just run the script
+# PlotAgeVsCoeffs('AllOpeningRestAndRandom') # TODO: Get this working
 
 # %% Get Stability plots
 
-import GetMmiIcc as gmi
 # Set up
-plt.close(923)
-plt.figure(923,figsize=(9,6),dpi=120); plt.clf()
-intOrSlopes = ['Intercept','Slope']
-cohortPairs = [['Stability01-Rest','Stability01-Rest_block2'],
-               ['Stability01-Rest','Stability02-Rest'],
-               ['COVID01','COVID03']]
-pairTitles = ['Blocks','Days','Weeks']
+#plt.close(923)
+#plt.figure(923,figsize=(9,6),dpi=120); plt.clf()
+#intOrSlopes = ['Intercept','Slope']
+#cohortPairs = [['Stability01-Rest','Stability01-Rest_block2'],
+#               ['Stability01-Rest','Stability02-Rest'],
+#               ['COVID01','COVID03']]
+#pairTitles = ['Blocks','Days','Weeks']
+##
+#icc21 = {'Intercept':0,'Slope':0}
+#p21 = {'Intercept':0,'Slope':0}
+#for i,pair in enumerate(cohortPairs):
+#    icc21['Intercept'],p21['Intercept'],icc21['Slope'],p21['Slope'] = gmi.GetMmiIcc(pair[0],pair[1],doPlot='None')
+#    for j,intOrSlope in enumerate(intOrSlopes):
+#        ax = plt.subplot(2,3,j*3+i+1);
+#        gmi.PlotReliability(pair[0],pair[1],intOrSlope=intOrSlope)
+#        if j==0:
+#            plt.title('%s\nICC(2,1)=%.3g, p=%.3g'%(pairTitles[i],icc21[intOrSlope],p21[intOrSlope]))
+#        else:
+#            plt.title('ICC(2,1)=%.3g, p=%.3g'%(icc21[intOrSlope],p21[intOrSlope]))
 #
-icc21 = {'Intercept':0,'Slope':0}
-p21 = {'Intercept':0,'Slope':0}
-for i,pair in enumerate(cohortPairs):
-    icc21['Intercept'],p21['Intercept'],icc21['Slope'],p21['Slope'] = gmi.GetMmiIcc(pair[0],pair[1],doPlot='None')
-    for j,intOrSlope in enumerate(intOrSlopes):
-        ax = plt.subplot(2,3,j*3+i+1);
-        gmi.PlotReliability(pair[0],pair[1],intOrSlope=intOrSlope)
-        if j==0:
-            plt.title('%s\nICC(2,1)=%.3g, p=%.3g'%(pairTitles[i],icc21[intOrSlope],p21[intOrSlope]))
-        else:
-            plt.title('ICC(2,1)=%.3g, p=%.3g'%(icc21[intOrSlope],p21[intOrSlope]))
-
-# Save figure
-plt.tight_layout()
-outFile = '%s/Mmi_%s_reliability.png'%(dataDir,'-'.join(pairTitles))
-print('Saving figure as %s...'%outFile)
-plt.savefig(outFile)
-print('Done!')
+## Save figure
+#plt.tight_layout()
+#outFile = '%s/Mmi_%s_reliability.png'%(dataDir,'-'.join(pairTitles))
+#print('Saving figure as %s...'%outFile)
+#plt.savefig(outFile)
+#print('Done!')
 
 
 # %% Check for time of day effects
-runfile('PlotTimeOfDayVsSlopeAndIntercept.py')
+PlotTimeOfDayVsSlopeAndIntercept('AllOpeningRestAndRandom')
 
 # %% Impact of mood on gambling
 batchNames = ['NoOpeningRest','ShortOpeningRest','LongOpeningRest'];
@@ -824,6 +825,7 @@ plt.rcParams.update({'font.size': 6})
 plt.close(412)
 plt.figure(412,figsize=(4,5),dpi=180, facecolor='w', edgecolor='k');
 plt.clf();
+fig, ax = plt.subplots(3,1,num=412)
 meanGamble = np.zeros(len(batchNames))
 steGamble = np.zeros(len(batchNames))
 ratingLabels = list(batchLabels)
@@ -852,7 +854,7 @@ for iBatch, batchName in enumerate(batchNames):
     ratingLabels[iBatch] = '%s (n = %d)'%(batchLabels[iBatch],nSubj)
 #    print(dfTrialMean.shape[0])
 
-    plt.subplot(311)
+    plt.sca(ax[0]) #plt.subplot(311)
     dfTrialMean.time = dfTrialMean.time - dfTrialMean.time[0]
     dfRatingMean.time = dfRatingMean.time - dfRatingMean.time[0]
 
@@ -866,7 +868,7 @@ for iBatch, batchName in enumerate(batchNames):
     plt.grid(zorder=-3)
 
     # plot fraction gambling on each trial
-    plt.subplot(312)
+    plt.sca(ax[1]) #plt.subplot(312)
     plt.plot(dfTrialMean.time,dfTrialMean.gambleFrac,'.-',label=batchLabels[iBatch])
     # add 95% confidence interval patch
     plt.fill_between(dfTrialMean.time,dfTrialMean.gambleFracCIMin,
@@ -878,7 +880,7 @@ for iBatch, batchName in enumerate(batchNames):
     plt.xlim(xlim)
     plt.grid(zorder=-3)
 
-    plt.subplot(313)
+    plt.sca(ax[2]) # plt.subplot(313)
     meanGamble[iBatch] = np.mean(dfTrialMean.gambleFrac[:nGamble])
     plt.bar(iBatch,meanGamble[iBatch],zorder=2)
     steGamble[iBatch] = np.std(1.0*nChoseGamble[iBatch]/nGamble)/np.sqrt(nSubj)
@@ -956,14 +958,16 @@ else:
 for stage in ['full','late']:
     if stage=='late':
         suffix = suffix + '-late'
-    inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
-    print('Loading pyTorch parameters from %s...'%inFile)
-    dfParams = pd.read_csv(inFile,index_col=0)
-    # load life happiness from same cohort
-    if IS_EXPLORE:
-        dfSummary = pd.read_csv('%s/Mmi-GbeExplore_Summary.csv'%dataDir)
-    else:
-        dfSummary = pd.read_csv('%s/Mmi-GbeConfirm_Summary.csv'%dataDir)
+        
+    if have_gbe:
+        inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading pyTorch parameters from %s...'%inFile)
+        dfParams = pd.read_csv(inFile,index_col=0)
+        # load life happiness from same cohort
+        if IS_EXPLORE:
+            dfSummary = pd.read_csv('%s/Mmi-GbeExplore_Summary.csv'%dataDir)
+        else:
+            dfSummary = pd.read_csv('%s/Mmi-GbeConfirm_Summary.csv'%dataDir)
 
     plt.close(841)
     doRisk = False
@@ -990,18 +994,19 @@ for stage in ['full','late']:
     plt.title(r'Online cohort LME' + '\n' + r'$r_s=%.3g$, $p_s=%.3g$'%(rs,ps))
 
     # plot LTA M0 parameter vs. lifeHappy
-    if doRisk:
-        plt.subplot(1,3,3)
-    else:
-        plt.subplot(1,2,2)
-
-    plt.scatter(dfParams['m0'],dfSummary['lifeHappy']+np.random.rand(dfSummary.shape[0])*0.05,alpha=0.01)
-    #plt.hist2d(dfParams['m0'],dfSummary['lifeHappy'], bins=(np.arange(0,1.04,0.02)-0.01, np.arange(0,1.2,0.1)-0.05), cmap=plt.get_cmap('Blues'))
-    rs,ps = stats.spearmanr(dfParams['m0'],dfSummary['lifeHappy'])
-    plt.grid(True)
-    plt.xlabel(r'Initial mood parameter $M_0$')
-    plt.ylabel('Life happiness')
-    plt.title(r'Mobile app cohort computational model' + '\n' + r'$r_s=%.3g$, $p_s=%.3g$'%(rs,ps))
+    if have_gbe:
+        if doRisk:
+            plt.subplot(1,3,3)
+        else:
+            plt.subplot(1,2,2)
+    
+        plt.scatter(dfParams['m0'],dfSummary['lifeHappy']+np.random.rand(dfSummary.shape[0])*0.05,alpha=0.01)
+        #plt.hist2d(dfParams['m0'],dfSummary['lifeHappy'], bins=(np.arange(0,1.04,0.02)-0.01, np.arange(0,1.2,0.1)-0.05), cmap=plt.get_cmap('Blues'))
+        rs,ps = stats.spearmanr(dfParams['m0'],dfSummary['lifeHappy'])
+        plt.grid(True)
+        plt.xlabel(r'Initial mood parameter $M_0$')
+        plt.ylabel('Life happiness')
+        plt.title(r'Mobile app cohort computational model' + '\n' + r'$r_s=%.3g$, $p_s=%.3g$'%(rs,ps))
 
     plt.tight_layout()
     outFile = '%s/PyTorchAndLme_m0-vs-lifeHappy_%s.png'%(outFigDir,suffix)
@@ -1019,7 +1024,8 @@ else:
     batchName_app = 'GbeConfirm'
 #dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
 dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_online),index_col=0)
-dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_app),index_col=0)
+if have_gbe:
+    dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_app),index_col=0)
 
 # Load pytorch results
 if IS_EXPLORE:
@@ -1031,9 +1037,10 @@ for stage in ['full','late']:
     if stage=='late':
         suffix = suffix + '-late'
 
-    inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
-    print('Loading best parameters from %s...'%inFile)
-    best_pars = pd.read_csv(inFile);
+    if have_gbe:
+        inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading best parameters from %s...'%inFile)
+        best_pars = pd.read_csv(inFile);
 
     # Set up Plot
     plt.close(623)
@@ -1045,19 +1052,20 @@ for stage in ['full','late']:
     nSubj_online = dfPymerCoeffs_online.shape[0]
     weights = np.ones(nSubj_online)/nSubj_online*100
     plt.hist(dfPymerCoeffs_online['Time']*100.0,xHist,weights=weights,alpha=0.5,label='All online participants (n=%d), LME'%nSubj_online)
-    nSubj_app = dfPymerCoeffs_app.shape[0]
-    weights = np.ones(nSubj_app)/nSubj_app*100
-    if IS_EXPLORE:
-        plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Exploratory mobile app participants (n=%d), LME'%nSubj_app)
-    else:
-        plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Confirmatory mobile app participants (n=%d), LME'%nSubj_app)
-
-    nSubj_model = best_pars.shape[0]
-    weights = np.ones_like(best_pars.beta_T) * 100.0 / nSubj_model
-    if IS_EXPLORE:
-        plt.hist(best_pars.beta_T*100,xHist,weights=weights,alpha=0.6,zorder=3,label='Exploratory mobile app participants (n=%d), computational model'%nSubj_model)
-    else:
-        plt.hist(best_pars.beta_T*100,xHist,weights=weights,alpha=0.6,zorder=3,label='Confirmatory mobile app participants (n=%d), computational model'%nSubj_model)
+    if have_gbe:
+        nSubj_app = dfPymerCoeffs_app.shape[0]
+        weights = np.ones(nSubj_app)/nSubj_app*100
+        if IS_EXPLORE:
+            plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Exploratory mobile app participants (n=%d), LME'%nSubj_app)
+        else:
+            plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Confirmatory mobile app participants (n=%d), LME'%nSubj_app)
+    
+        nSubj_model = best_pars.shape[0]
+        weights = np.ones_like(best_pars.beta_T) * 100.0 / nSubj_model
+        if IS_EXPLORE:
+            plt.hist(best_pars.beta_T*100,xHist,weights=weights,alpha=0.6,zorder=3,label='Exploratory mobile app participants (n=%d), computational model'%nSubj_model)
+        else:
+            plt.hist(best_pars.beta_T*100,xHist,weights=weights,alpha=0.6,zorder=3,label='Confirmatory mobile app participants (n=%d), computational model'%nSubj_model)
 
     # Annotate plot
     plt.grid(True)
@@ -1073,174 +1081,180 @@ for stage in ['full','late']:
     print('Done!')
 
 # %% Check for stats differences between above cohorts/analyses
-batchName_online = 'AllOpeningRestAndRandom'
-if IS_EXPLORE:
-    batchName_app = 'GbeExplore'
-else:
-    batchName_app = 'GbeConfirm'
 
-for stage in ['full','late']:
-    print('=== STAGE %s ==='%stage)
-    #dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
-    dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_online,stage),index_col=0)
-    dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_app,stage),index_col=0)
-
-    # Load pytorch results
+if have_gbe:
+    batchName_online = 'AllOpeningRestAndRandom'
     if IS_EXPLORE:
-        suffix = '_GbeExplore'
+        batchName_app = 'GbeExplore'
     else:
-        suffix = '_GbeConfirm'
-    if stage=='late':
-        suffix = suffix + '-late'
-    inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
-    print('Loading best parameters from %s...'%inFile)
-    best_pars = pd.read_csv(inFile);
-
-    print('median pymer online slope: %.3g'%np.median(dfPymerCoeffs_online['Time']))
-    print('median pymer app slope: %.3g'%np.median(dfPymerCoeffs_app['Time']))
-    print('median comp. model app slope: %.3g'%np.median(best_pars['beta_T']))
-    _,p = stats.ranksums(dfPymerCoeffs_online['Time'],dfPymerCoeffs_app['Time'])
-    print('pymer online vs. pymer app: ranksum p=%.3g'%p)
-    _,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
-    print('pymer online vs. comp. model app: ranksum p=%.3g'%p)
-    _,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
-    print('pymer app vs. comp. model app: ranksum p=%.3g'%p)
-
-    print('pymer online: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_online['Time']<0)*100))
-    print('pymer app: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_app['Time']<0)*100))
-    print('comp model app: %.1f%% participants had beta_T<0'%(np.mean(best_pars['beta_T']<0)*100))
+        batchName_app = 'GbeConfirm'
+    
+    for stage in ['full','late']:
+        print('=== STAGE %s ==='%stage)
+        #dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
+        dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_online,stage),index_col=0)
+        dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_app,stage),index_col=0)
+    
+        # Load pytorch results
+        if IS_EXPLORE:
+            suffix = '_GbeExplore'
+        else:
+            suffix = '_GbeConfirm'
+        if stage=='late':
+            suffix = suffix + '-late'
+        inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading best parameters from %s...'%inFile)
+        best_pars = pd.read_csv(inFile);
+    
+        print('median pymer online slope: %.3g'%np.median(dfPymerCoeffs_online['Time']))
+        print('median pymer app slope: %.3g'%np.median(dfPymerCoeffs_app['Time']))
+        print('median comp. model app slope: %.3g'%np.median(best_pars['beta_T']))
+        _,p = stats.ranksums(dfPymerCoeffs_online['Time'],dfPymerCoeffs_app['Time'])
+        print('pymer online vs. pymer app: ranksum p=%.3g'%p)
+        _,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
+        print('pymer online vs. comp. model app: ranksum p=%.3g'%p)
+        _,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
+        print('pymer app vs. comp. model app: ranksum p=%.3g'%p)
+    
+        print('pymer online: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_online['Time']<0)*100))
+        print('pymer app: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_app['Time']<0)*100))
+        print('comp model app: %.1f%% participants had beta_T<0'%(np.mean(best_pars['beta_T']<0)*100))
 
 
 # %% Check whether amplitude of residuals are equal over time
 
-if IS_EXPLORE:
-    suffix = '_GbeExplore'
-else:
-    suffix = '_GbeConfirm'
-# Load results
-inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
-print('Loading pyTorch best fits from %s...'%inFile)
-fits = np.load(inFile)
-n_trials,n_subjects = fits.shape
-print('Done!')
-
-# Load data
-if IS_EXPLORE:
-    cohort = 'gbeExplore'
-    inFile = '%s/Mmi-%s_TrialForMdls.csv'%(dataDir,cohort)
-else:
-    cohort = 'GbeConfirm'
-    inFile = '%s/Mmi-%s_TrialForMdls.csv'%(dataDir,cohort)
-print('Loading actual mood data from %s...'%inFile)
-dfData = pd.read_csv(inFile,index_col=0)
-mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T
-tMood = dfData['time'].values.reshape((-1,n_trials)).T
-
-residuals = fits-mood
-meanResiduals = np.mean(residuals,axis=1)
-rmsResiduals = np.sqrt(np.mean(residuals**2,axis=1))
-isRating = ~np.isnan(rmsResiduals)
-
-# Set up Plot
-plt.close(689)
-plt.figure(689,figsize=[10,4],dpi=200)
-plt.clf()
-plt.plot(meanResiduals[isRating],'.-',label='mean')
-plt.plot(rmsResiduals[isRating],'.-',label='RMS')
-plt.grid(True)
-plt.legend()
-plt.xlabel('Rating')
-plt.ylabel('Residuals of computational model (fit-mood)')
-plt.title('Pytorch model fits over ratings on %s cohort'%cohort)
-plt.tight_layout()
-# Save figure
-outFile = '%s/PytorchResidualsVsTime_%s%s.png'%(outFigDir,cohort,suffix)
-print('Saving figure as %s...'%outFile)
-plt.savefig(outFile)
-print('Done!')
-
-# %% Test whether slope is correlated with number of plays
-# Load results
-
-if IS_EXPLORE:
-    suffix = '_GbeExplore'
-    cohort = 'Exploratory Mobile App'
-else:
-    suffix = '_GbeConfirm'
-    cohort = 'Confirmatory Mobile App'
-
-for stage in ['full','late']:
-    if stage=='late':
-        suffix = suffix + '-late'
-
-    inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+if have_gbe:
+    if IS_EXPLORE:
+        suffix = '_GbeExplore'
+    else:
+        suffix = '_GbeConfirm'
+    # Load results
+    inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
     print('Loading pyTorch best fits from %s...'%inFile)
-    dfParams = pd.read_csv(inFile,index_col=0)
-
-    # get number of plays
-    inFile = '%s/Mmi-GBE_Summary.csv'%dataDir
-    print('Loading summary data from %s...'%inFile)
-    dfSummary = pd.read_csv(inFile,index_col=0)
-    print('Adding number of plays...')
-    for subj in dfParams.participant:
-        dfParams.loc[dfParams.participant==subj,'noPlays'] = dfSummary.loc[dfSummary.participant==subj,'noPlays'].values
-
-    # Correlate
-    print('beta_T vs. number of plays:')
-    rs,ps = stats.spearmanr(dfParams.beta_T,dfParams.noPlays)
-    print('rs=%.3g, ps=%.3g'%(rs,ps))
-    _,p = stats.ranksums(dfParams.loc[dfParams.noPlays==1,'beta_T'],
-                         dfParams.loc[dfParams.noPlays>1,'beta_T'])
-    print('ranksum: p=%.3g'%p)
-
-    plt.figure(692);
-    plt.clf();
-    # get betaTs in % mood/min
-    xHist = np.linspace(np.min(dfParams.beta_T),np.max(dfParams.beta_T),30)*100
-    y2 = dfParams.loc[dfParams.noPlays==1,'beta_T']*100
-    y1 = dfParams.loc[dfParams.noPlays>1,'beta_T']*100
-    weights = np.ones_like(y1) * 100.0 / len(y1)
-    plt.hist(y1,xHist,weights=weights,alpha=0.4,label='Played again (n=%d)'%len(y1))
-    weights = np.ones_like(y2) * 100.0 / len(y2)
-    plt.hist(y2,xHist,weights=weights,alpha=0.4,label='Did not play again (n=%d)'%len(y2))
-    # annotate plot
-    plt.legend()
+    fits = np.load(inFile)
+    n_trials,n_subjects = fits.shape
+    print('Done!')
+    
+    # Load data
+    if IS_EXPLORE:
+        cohort = 'gbeExplore'
+        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(dataDir,cohort)
+    else:
+        cohort = 'GbeConfirm'
+        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(dataDir,cohort)
+    print('Loading actual mood data from %s...'%inFile)
+    dfData = pd.read_csv(inFile,index_col=0)
+    mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T
+    tMood = dfData['time'].values.reshape((-1,n_trials)).T
+    
+    residuals = fits-mood
+    meanResiduals = np.mean(residuals,axis=1)
+    rmsResiduals = np.sqrt(np.mean(residuals**2,axis=1))
+    isRating = ~np.isnan(rmsResiduals)
+    
+    # Set up Plot
+    plt.close(689)
+    plt.figure(689,figsize=[10,4],dpi=200)
+    plt.clf()
+    plt.plot(meanResiduals[isRating],'.-',label='mean')
+    plt.plot(rmsResiduals[isRating],'.-',label='RMS')
     plt.grid(True)
-    plt.xlabel(r'Time sensitivity parameter $\beta_T$ (% mood/min)')
-    plt.ylabel('Percent of participants')
-    plt.title('Time sensitivity vs. choice to play again, %s cohort'%cohort)
+    plt.legend()
+    plt.xlabel('Rating')
+    plt.ylabel('Residuals of computational model (fit-mood)')
+    plt.title('Pytorch model fits over ratings on %s cohort'%cohort)
     plt.tight_layout()
     # Save figure
-    outFile = '%s/PytorchBetaT-Vs-NoPlays%s.png'%(outFigDir,suffix)
+    outFile = '%s/PytorchResidualsVsTime_%s%s.png'%(outFigDir,cohort,suffix)
     print('Saving figure as %s...'%outFile)
     plt.savefig(outFile)
     print('Done!')
 
+# %% Test whether slope is correlated with number of plays
+# Load results
+
+if have_gbe:
+    if IS_EXPLORE:
+        suffix = '_GbeExplore'
+        cohort = 'Exploratory Mobile App'
+    else:
+        suffix = '_GbeConfirm'
+        cohort = 'Confirmatory Mobile App'
+    
+    for stage in ['full','late']:
+        if stage=='late':
+            suffix = suffix + '-late'
+    
+        inFile = '%s/PyTorchParameters%s.csv'%(pytorchDir,suffix)
+        print('Loading pyTorch best fits from %s...'%inFile)
+        dfParams = pd.read_csv(inFile,index_col=0)
+    
+        # get number of plays
+        inFile = '%s/Mmi-GBE_Summary.csv'%dataDir
+        print('Loading summary data from %s...'%inFile)
+        dfSummary = pd.read_csv(inFile,index_col=0)
+        print('Adding number of plays...')
+        for subj in dfParams.participant:
+            dfParams.loc[dfParams.participant==subj,'noPlays'] = dfSummary.loc[dfSummary.participant==subj,'noPlays'].values
+    
+        # Correlate
+        print('beta_T vs. number of plays:')
+        rs,ps = stats.spearmanr(dfParams.beta_T,dfParams.noPlays)
+        print('rs=%.3g, ps=%.3g'%(rs,ps))
+        _,p = stats.ranksums(dfParams.loc[dfParams.noPlays==1,'beta_T'],
+                             dfParams.loc[dfParams.noPlays>1,'beta_T'])
+        print('ranksum: p=%.3g'%p)
+    
+        plt.figure(692);
+        plt.clf();
+        # get betaTs in % mood/min
+        xHist = np.linspace(np.min(dfParams.beta_T),np.max(dfParams.beta_T),30)*100
+        y2 = dfParams.loc[dfParams.noPlays==1,'beta_T']*100
+        y1 = dfParams.loc[dfParams.noPlays>1,'beta_T']*100
+        weights = np.ones_like(y1) * 100.0 / len(y1)
+        plt.hist(y1,xHist,weights=weights,alpha=0.4,label='Played again (n=%d)'%len(y1))
+        weights = np.ones_like(y2) * 100.0 / len(y2)
+        plt.hist(y2,xHist,weights=weights,alpha=0.4,label='Did not play again (n=%d)'%len(y2))
+        # annotate plot
+        plt.legend()
+        plt.grid(True)
+        plt.xlabel(r'Time sensitivity parameter $\beta_T$ (% mood/min)')
+        plt.ylabel('Percent of participants')
+        plt.title('Time sensitivity vs. choice to play again, %s cohort'%cohort)
+        plt.tight_layout()
+        # Save figure
+        outFile = '%s/PytorchBetaT-Vs-NoPlays%s.png'%(outFigDir,suffix)
+        print('Saving figure as %s...'%outFile)
+        plt.savefig(outFile)
+        print('Done!')
+
 # %% Check whether initial mood rating correlates
-# Load data
-if IS_EXPLORE:
-    cohort = 'gbeExplore'
-else:
-    cohort = 'GbeConfirm'
-# load mood rating
-inFile = '%s/Mmi-%s_Ratings.csv'%(dataDir,cohort)
-print('Loading ratings data from %s...'%inFile)
-dfRatings = pd.read_csv(inFile,index_col=0)
-nSubj = len(np.unique(dfRatings.participant))
-initMood = dfRatings['rating'].values.reshape((nSubj,-1))[:,0]
-# %%load trial data
-inFile = '%s/Mmi-%s_Trial.csv'%(dataDir,cohort)
-print('Loading trial data from %s...'%inFile)
-dfTrial = pd.read_csv(inFile)
-
-nGamble = 4 # trials on which to assess gambling
-
-# Get average gambleFrac in first nGamble trials for each subject
-nChoseGamble = np.zeros(nSubj)
-for iSubj,subj in enumerate(np.unique(dfTrial.participant)):
-    isGamble = dfTrial.loc[dfTrial.participant==subj].values =='gamble'
-    nChoseGamble[iSubj] = np.sum(isGamble[:nGamble])
-# %%
-rs,ps = stats.spearmanr(initMood,nChoseGamble)
-print('%s first mood rating vs. gambling in 1st %d trials:'%(cohort,nGamble))
-print('rs = %.3g, ps = %.3g'%(rs,ps))
+        
+if have_gbe:
+    # Load data
+    if IS_EXPLORE:
+        cohort = 'gbeExplore'
+    else:
+        cohort = 'GbeConfirm'
+    # load mood rating
+    inFile = '%s/Mmi-%s_Ratings.csv'%(dataDir,cohort)
+    print('Loading ratings data from %s...'%inFile)
+    dfRatings = pd.read_csv(inFile,index_col=0)
+    nSubj = len(np.unique(dfRatings.participant))
+    initMood = dfRatings['rating'].values.reshape((nSubj,-1))[:,0]
+    # load trial data
+    inFile = '%s/Mmi-%s_Trial.csv'%(dataDir,cohort)
+    print('Loading trial data from %s...'%inFile)
+    dfTrial = pd.read_csv(inFile)
+    
+    nGamble = 4 # trials on which to assess gambling
+    
+    # Get average gambleFrac in first nGamble trials for each subject
+    nChoseGamble = np.zeros(nSubj)
+    for iSubj,subj in enumerate(np.unique(dfTrial.participant)):
+        isGamble = dfTrial.loc[dfTrial.participant==subj].values =='gamble'
+        nChoseGamble[iSubj] = np.sum(isGamble[:nGamble])
+    # print Spearman correlation
+    rs,ps = stats.spearmanr(initMood,nChoseGamble)
+    print('%s first mood rating vs. gambling in 1st %d trials:'%(cohort,nGamble))
+    print('rs = %.3g, ps = %.3g'%(rs,ps))
