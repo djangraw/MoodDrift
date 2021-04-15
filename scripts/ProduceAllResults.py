@@ -772,7 +772,7 @@ print('Age 16-18 x slope in LME:')
 print('%.3g +/- %.3g %% mood, T=%.3g, p=%.3g'%(m,se,T,p))
 
 # %% Link to age in adolescents
-# PlotAgeVsCoeffs('AllOpeningRestAndRandom') # TODO: Get this working
+PlotAgeVsCoeffs('AllOpeningRestAndRandom') 
 
 # %% Get Stability plots
 

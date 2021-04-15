@@ -24,7 +24,8 @@ print('=== Loading Data... ===')
 
 # Declare cohorts to run
 have_gbe = False # are the Rutledge Great Brain Experiment data included?
-cohortsToRun = ['AllOpeningRestAndRandom','COVID01','COVID02','COVID03','Stability01-Rest','Stability01-Rest_block2','Stability02-Rest']#,'Stability01-RandomVer2']
+cohortsToRun = ['AllOpeningRestAndRandom','AllOpeningRestAndRandom-noAge','COVID01','COVID02','COVID03','Stability01-Rest','Stability01-Rest_block2','Stability02-Rest']#,'Stability01-RandomVer2']
+cohortsToRun = ['AllOpeningRestAndRandom','AllOpeningRestAndRandom-noAge']
 if have_gbe:
     cohortsToRun = cohortsToRun + ['GbeExplore','GbeConfirm'] # add on GBE cohorts
 
@@ -204,7 +205,7 @@ for outName in cohortsToRun:
                 dfRatingList.append(dfRating.loc[isRightBlock,['cohort','participant','rating',
                                         'time','iRating','isMale','meanIRIOver20',
                                         'totalWinnings','meanRPE','fracRiskScore',
-                                        'isAge0to16','isAge16to18','isAge40to100']])
+                                        'isAge0to16','isAge16to18','isAge40to100','age']])
     #            dfRatingList.append(dfRating.loc[isRightBlock,['cohort','participant','rating',
     #                                    'time','iRating','isMale','meanIRIOver20',
     #                                    'totalWinnings','meanRPE','fracRiskScore','age']])
@@ -283,7 +284,9 @@ for outName in cohortsToRun:
     if outName.startswith('Gbe'): # Model for Mobile App participants
         lmString = 'Mood ~ 1 + Time * (meanIRIOver20 + totalWinnings + meanRPE + lifeHappyOver0p7) + (Time | Subject)'
     elif includeRelativeBaseline: # Online participants if each cohort's baseline should be included
-        lmString = 'Mood ~ 1 + RelativeBaseline + Time * (' + ' + '.join(dfAll.columns[5:-1]) + ') + (Time | Subject)'
+        lmString = 'Mood ~ 1 + RelativeBaseline + Time * (isMale + meanIRIOver20 + totalWinnings + meanRPE + fracRiskScore + isAge0to16 + isAge16to18 + isAge40to100) + (Time | Subject)'
+    elif outName=='AllOpeningRestAndRandom-noAge': # same as below, but without age factors
+        lmString = 'Mood ~ 1 + Time * (isMale + meanIRIOver20 + totalWinnings + meanRPE + fracRiskScore) + (Time | Subject)'
     else: # Online participants
         lmString = 'Mood ~ 1 + Time * (isMale + meanIRIOver20 + totalWinnings + meanRPE + fracRiskScore + isAge0to16 + isAge16to18 + isAge40to100) + (Time | Subject)'
         # Alternative models
