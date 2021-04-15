@@ -33,6 +33,7 @@ batchNames = ['COVID01','COVID02','COVID03','Expectation-7min','Expectation-12mi
               'Stability01-RandomVer2','Stability02-RandomVer2',
               'Stability01-Rest','Stability02-Rest',
               'Stability01-Closed','Stability02-Closed']
+batchNames = ['RestDownUp']
 dataCheckDir = '../Data/DataChecks' # where dataCheck files sit
 rawDataDir = '../Data/PilotData' # where raw data files sit
 dataDir = '../Data/OutFiles' # where processed data sits
@@ -40,7 +41,7 @@ outFigDir = '../Figures' # where results should go
 if not os.path.exists(outFigDir):
     os.mkdir(outFigDir)
 plotEveryParticipant = False # should we make a plot for every participant?
-overwrite = False; # overwrite previous results if they already exist?
+overwrite = True; # overwrite previous results if they already exist?
 
 
 # %% Import data
@@ -59,17 +60,9 @@ for batchName in batchNames:
     # Import data check file
     dataCheckFile = '%s/%s_DataCheck.csv'%(dataCheckDir,batchName)
 
-    if os.path.exists(dataCheckFile) and not overwrite:
-        # read dataCheck
-        print('==== Reading data check from %s...'%dataCheckFile)
-        dfDataCheck = pd.read_csv(dataCheckFile,index_col=0);
-    else:
-        print('==== Checking data from batch file %s...'%batchFile)
-        dfDataCheck = MatchMTurkBatchToFiles(batchFile,pilotDataFolder,batchName,demoDataFile)
-        # Save dataCheck
-        print('==== Saving data check as %s...'%dataCheckFile)
-        dfDataCheck.to_csv(dataCheckFile)
-
+    # read dataCheck
+    print('==== Reading data check from %s...'%dataCheckFile)
+    dfDataCheck = pd.read_csv(dataCheckFile,index_col=0);
     print('==== Done!')
 
 

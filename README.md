@@ -23,8 +23,6 @@ conda activate ./potdys3
 pip install -e .
 ```
 
-conda create -p potdys3 -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.3 ipython jupyter numpy
-
 If you need an environment for running the pytorch models, please open an issue and we'll work on adding this.
 
 ## Usage
@@ -51,3 +49,32 @@ Fits the large-scale linear mixed effects (LME) model and the computational mode
 ### Analysis
 Produces all the figures, tables, and printed results reporeted in the paper. Run the following:
 - [ProduceAllResults.py](scripts/ProduceAllResults.py). All other scripts and functions in this folder will be called by this wrapper script.
+
+### Data Naming Conventions
+
+Cohorts were renamed after analysis to make them more intuitive in the paper. Here is a translation:
+
+| Name in paper | Folder(s) in database |
+| ------------- | ------------------ |
+| 15sRestBetween | Recovery1, RecoveryInstructed1 |
+| 30sRestBetween | RecoveryInstructed1Freq0p5 |
+| 7.5sRestBetween | RecoveryInstructed1Freq2 |
+| 60sRestBetween | RecoveryInstructed1Freq0p25 |
+| AlternateRating | Numbers |
+| Expectation-7mRest | Expectation-7min |
+| Expectation-12mRest | Expectation-12min |
+| RestDownUp | RestDownUp |
+| Daily-Rest-01 | Stability01-Rest |
+| Daily-Rest-02 | Stability02-Rest |
+| Weekly-Rest-01 | COVID01 |
+| Weekly-Rest-02 | COVID02 |
+| Weekly-Rest-03 | COVID03 |
+| Adolescent-01 | RecoveryNimh |
+| Adolescent-02 | RecoveryNimh |
+| Visuomotor | Motion |
+| Visuomotor-Feedback | MotionFeedback |
+| RestAfterWins | Return1 |
+| Daily-Closed-01 | Stability01-closed |
+| Daily-Closed-02 | Stability02-closed |
+| App-Exploratory | *not shared* |
+| App-Confirmatory | *not shared* |

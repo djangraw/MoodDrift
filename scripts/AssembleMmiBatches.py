@@ -16,7 +16,6 @@ Updated 4/8/21 by DJ - added line to calculate Recovery(Instructed)1.
 # %% Import packages
 import pandas as pd
 import numpy as np
-from matplotlib import pyplot as plt
 import os
 from glob import glob
 import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
@@ -26,7 +25,7 @@ from PassageOfTimeDysphoria.Preprocessing.CombineMmiBatches import CombineMmiBat
 dataCheckDir = '../Data/DataChecks'
 outDir = '../Data/OutFiles'
 includeRepeats = False; # should the "AllOpeningRestAndRandom" superbatch include returning subjects?
-overwrite = False # overwrite existing files?
+overwrite = True # overwrite existing files?
 
 print('Gathring batches...')
 batchFiles_glob = glob('%s/*DataCheck.csv'%dataCheckDir)
