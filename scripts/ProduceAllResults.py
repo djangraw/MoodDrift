@@ -27,7 +27,7 @@ IS_EXPLORE = False # GbeExplore (True) or GbeConfirm (False)
 dataDir = '../Data/OutFiles' # path to processed data
 pytorchDir = dataDir # path to model fitting results
 outFigDir = '../Figures' # where model fitting figures should be saved
-have_gbe = False
+have_gbe = True
 
 # %% Print Cohen's D for original cohort
 for batchName in ['Recovery(Instructed)1']:
@@ -203,12 +203,12 @@ if have_gbe:
 
     # %% Plot penalty tuning
 
-    for suffix in ['_tune-Oct2020', '_tune-noBetaT','_tune-Stability01-RandomVer2_ntr31']:
-        ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
+    # for suffix in ['_tune-Oct2020', '_tune-noBetaT','_tune-Stability01-RandomVer2_ntr31']:
+    #     ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
-    # %% Penalty tuning excluding first rating  (12/19/20)
-    for suffix in ['_tune-late','_tune-late-retest','_tune-late-noBetaT']:
-        ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
+    # # %% Penalty tuning excluding first rating  (12/19/20)
+    # for suffix in ['_tune-late','_tune-late-retest','_tune-late-noBetaT']:
+    #     ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
 
     # %% Plot parameter distributions
@@ -1190,7 +1190,7 @@ if have_gbe:
         dfParams = pd.read_csv(inFile,index_col=0)
     
         # get number of plays
-        inFile = '%s/Mmi-GBE_Summary.csv'%dataDir
+        inFile = '%s/Mmi-GbeConfirm_Summary.csv'%dataDir
         print('Loading summary data from %s...'%inFile)
         dfSummary = pd.read_csv(inFile,index_col=0)
         print('Adding number of plays...')
