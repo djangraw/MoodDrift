@@ -54,14 +54,14 @@ lifeSatisfaction = np.array([thisData[5] for thisData in allData])/10.0 # rescal
 
 # get each-play data from FIRST run
 location = np.array([thisData[0] for thisData in allData])
-location[noPlays>1] = [loc[0] for loc in location[noPlays>1]]
+location[noPlays>1] = [loc for loc in location[noPlays>1]]
 allTimesSubmitted = np.array([thisData[1] for thisData in allData])
 timeSubmitted = allTimesSubmitted.copy()
-timeSubmitted[noPlays>1] = [loc[0] for loc in timeSubmitted[noPlays>1]]
+timeSubmitted[noPlays>1] = [loc for loc in timeSubmitted[noPlays>1]]
 secondTimeSubmitted = np.array(['']*len(timeSubmitted),dtype='object')
-secondTimeSubmitted[noPlays>1] = [loc[1] for loc in allTimesSubmitted[noPlays>1]]
+secondTimeSubmitted[noPlays>1] = [loc for loc in allTimesSubmitted[noPlays>1]]
 appVersion = np.array([thisData[2] for thisData in allData])
-appVersion[noPlays>1] = [loc[0] for loc in appVersion[noPlays>1]]
+appVersion[noPlays>1] = [loc for loc in appVersion[noPlays>1]]
 
 # Get happyData from FIRST run
 happyData_list = np.array([thisData[3] for thisData in allData])
