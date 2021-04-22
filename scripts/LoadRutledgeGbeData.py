@@ -9,6 +9,7 @@ Created on Tue Jun 23 12:17:41 2020
 -Updated 7/31/20 by DJ - added pctNoMoves column
 -Updated 1/22/20 by DJ - added secondTimeSubmitted column to summary
 -Updated 4/8/21 by DJ - adapted for shared code structure.
+-Updated 4/22/21 by DJ - changed to use new dataset published publicly by Rutledge lab
 """
 # %% Extract data points of interest from .mat file
 
@@ -20,13 +21,33 @@ from matplotlib import pyplot as plt
 
 # Get in & out directories
 dataDir = '../Data' # directory where data is found
-inFile = '%s/PilotData/GBE_StringarisData.mat'%dataDir # Path to mobile app data file
 outDir = '%s/OutFiles'%dataDir # directory where processed data files go
 outFigDir = '../Figures' # directory where figures should go
 
+# %% Load new data
+        
+inFile = '%s/PilotData/Rutledge_GBE_risk_data.mat'%dataDir # Path to mobile app data file
 
 # Load full dataset
+print('Loading full dataset from %s...'%inFile)
 allData = scipy.io.loadmat(inFile, mdict=None, squeeze_me=True)['subjData']
+# crop dataset to make it match the original version used in our paper
+inFile = '../Data/PilotData/Rutledge_GBE_IDs.csv'
+print('Loading IDs of included subjects from %s...'%inFile)
+subjIDs = pd.read_csv(inFile,header=None).values[:,0]
+print('Cropping...')
+allData_new = allData[subjIDs-1] # IDs from Rutledge lab are 1-based, so we subtract 1 for python's zero-based numbering
+# New dataset distributed by Rutledge lab has 14 fields:
+#    ID, age, isFemale, location, lifeSatisfaction, education, nativeLanguage, deviceType, nPlays, timesPlayed, dayNumber, designVersion, datHeader, data
+# The original dataset used in this paper had 6 fields:
+#    Location, timeSubmitted, appversion, data, noPlays, life satisfaction
+old_field_indices = [3,0,11,13,8,4] # time submitted not present in new dataset... Subbing ID instead.
+allData = [[thisData[index] for index in old_field_indices] for thisData in allData] 
+
+print('Done!')
+
+# %% Extract fields
+
 # get one-time data
 noPlays = np.array([thisData[4] for thisData in allData])
 lifeSatisfaction = np.array([thisData[5] for thisData in allData])/10.0 # rescale to 0-1
@@ -186,9 +207,12 @@ dfTrial.loc[dfTrial.choice==1,'choice'] = 'gamble'
 print('Done!')
 
 # %% Select 5000 participants as exploratory sample
+
+# Randomly (but repeatably) select 5k subjects
 nExp = 5000 # number of exploratory participants
 randSeed = 24567 # seed used to get a repeatable set of participants
 np.random.seed(randSeed)
+# use these 5k subjects as the exploratory mobile app cohort
 exploratoryParticipants = np.random.choice(participants,nExp,replace=False)
 dfRatings_exp = dfRatings.loc[np.isin(dfRatings.participant,exploratoryParticipants),:]
 dfTrial_exp = dfTrial.loc[np.isin(dfTrial.participant,exploratoryParticipants),:]
@@ -200,6 +224,7 @@ dfSummary_conf = dfSummary.loc[~np.isin(dfSummary.participant,exploratoryPartici
 
 # %% Save results as csv files
 
+# Save exploratory mobile app cohort
 outFile = '%s/Mmi-GbeExplore_Ratings.csv'%(outDir)
 print('Saving ratings as %s...'%outFile)
 dfRatings_exp.to_csv(outFile)
@@ -215,7 +240,7 @@ print('Saving subject info as %s...'%outFile)
 dfSummary_exp.to_csv(outFile)
 print('Done!')
 
-
+# Same for confirmatory mobile app cohort
 outFile = '%s/Mmi-GbeConfirm_Ratings.csv'%(outDir)
 print('Saving ratings as %s...'%outFile)
 dfRatings_conf.to_csv(outFile)
@@ -237,8 +262,9 @@ print('Done!')
 isFlat = np.all(allRatingMoves==0, axis=0)
 print('%d flat subjects.'%np.sum(isFlat))
 
-# %%
+# %% Plot ratings
 
+# collect summary stats
 meanRatings = np.nanmean(allRatings,axis=1)
 steRatings = np.nanstd(allRatings,axis=1)/np.sqrt(nSubj)
 medianRatings = np.nanmedian(allRatings,axis=1)
@@ -306,6 +332,7 @@ print('Done!')
 
 # %% Plot winnings
 
+# collect summary stats
 meanWinnings = np.nanmean(allWinnings,axis=1)
 steWinnings = np.nanstd(allWinnings,axis=1)/np.sqrt(nSubj)
 medianWinnings = np.nanmedian(allWinnings,axis=1)
@@ -316,8 +343,6 @@ plt.plot(range(nTrials),meanWinnings,'.-', label='mean+/- ste',zorder=5)
 plt.fill_between(range(nTrials),meanWinnings-steWinnings,meanWinnings+steWinnings,
                  alpha=0.5,zorder=0)
 plt.plot(range(nTrials),medianWinnings,'.-',label='median')
-
-
 
 # Annotate plot
 plt.xlabel('trial number')
@@ -332,33 +357,3 @@ print('Saving figure as %s...'%outFile)
 plt.savefig(outFile)
 print('Done!')
 
-
-# %% Compare ratings
-
-import PlotMmiData as pmd
-dfRatings = pd.read_csv('%s/Mmi-COVID01_Ratings.csv'%outDir)
-dfTrial = pd.read_csv('%s/Mmi-COVID01_Trial.csv'%outDir)
-dfMeanRatings = pmd.GetMeanRatings(dfRatings,participantLabel='COVID01')
-dfMeanTrial = pmd.GetMeanTrials(dfTrial,participantLabel='COVID01')
-plt.figure(625); plt.clf();
-pmd.PlotMmiRatings(dfMeanTrial,dfMeanRatings,interp='linear',autoYlim=True,doBlockLines=True,ratingLabel='COVID01')
-
-#Plot Rutledge GBE ratings
-plt.plot(medianRatingTimes, meanRatings,'.-', label='GBE',zorder=5)
-plt.fill_between(medianRatingTimes,meanRatings-steRatings,meanRatings+steRatings,
-                 alpha=0.5,zorder=0)
-
-plt.xlim([-1,360])
-plt.ylim([0.48,0.63])
-
-# Annotate plot
-nSubj_MMI = np.size(np.unique(dfTrial.participant))
-plt.title('COVID01 (n=%d) vs. Rutledge GBE Data (n=%d)'%(nSubj_MMI,nSubj))
-plt.legend()
-plt.tight_layout()
-
-# Save result
-outFile = '%s/RutledgeGbeVsCovid01.png'%outFigDir
-print('Saving figure as %s...'%outFile)
-plt.savefig(outFile)
-print('Done!')
