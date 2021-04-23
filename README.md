@@ -12,7 +12,7 @@ Data from the mobile app participants described in the paper are a subset of the
 
 > Rutledge, Robb B. (2021), Risky decision and happiness task: The Great Brain Experiment smartphone app, Dryad, Dataset, https://doi.org/10.5061/dryad.prr4xgxkk
 
-However, due to differences between the data as we used it and the data as shared, we are not currently able to share code that will reproduce our results. We are working to resolve these issues and will update the code here soon.
+After downloading the dataset from the above repository, the file Rutledge_GBE_risk_data.mat should be placed in the Data/PilotData folder before running the scripts described below.
 
 ## Dependencies
 

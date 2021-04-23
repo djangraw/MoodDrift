@@ -25,7 +25,7 @@ outDir = '%s/OutFiles'%dataDir # directory where processed data files go
 outFigDir = '../Figures' # directory where figures should go
 
 # %% Load new data
-        
+
 inFile = '%s/PilotData/Rutledge_GBE_risk_data.mat'%dataDir # Path to mobile app data file
 
 # Load full dataset
@@ -42,7 +42,7 @@ allData_new = allData[subjIDs-1] # IDs from Rutledge lab are 1-based, so we subt
 # The original dataset used in this paper had 6 fields:
 #    Location, timeSubmitted, appversion, data, noPlays, life satisfaction
 old_field_indices = [3,0,11,13,8,4] # time submitted not present in new dataset... Subbing ID instead.
-allData = [[thisData[index] for index in old_field_indices] for thisData in allData_new] 
+allData = [[thisData[index] for index in old_field_indices] for thisData in allData_new]
 
 print('Done!')
 
@@ -76,6 +76,8 @@ for i in range(nSubj):
     else:
         happyData[i,:,:] = happyData_list[i][0]
 
+# rescale happiness ratings to 0-1 (only true for new Dryad published dataset)
+happyData[:,:,9:10] = happyData[:,:,9:10]/100.0
 
 #%% Extract trial-wise rating info
 
@@ -108,9 +110,9 @@ for iSubj in range(nSubj):
     allRPEs[isWin,iSubj] = happyData[iSubj,isWin,3] - happyData[iSubj,isWin,4]
     allRPEs[isLoss,iSubj] = happyData[iSubj,isLoss,4] - happyData[iSubj,isLoss,3]
     allRTs[:,iSubj] = happyData[iSubj,:,8]
-    allTimes[:,iSubj] = np.cumsum(np.nan_to_num(np.abs(happyData[iSubj,:,13])) + 
-                                    np.nan_to_num(happyData[iSubj,:,11]) + 
-                                    np.nan_to_num(happyData[iSubj,:,8]) + 
+    allTimes[:,iSubj] = np.cumsum(np.nan_to_num(np.abs(happyData[iSubj,:,13])) +
+                                    np.nan_to_num(happyData[iSubj,:,11]) +
+                                    np.nan_to_num(happyData[iSubj,:,8]) +
                                     staticTrialDur)
     allRatings[:,iSubj] = happyData[iSubj,iRating,9]
     allRatingMoves[:,iSubj] = happyData[iSubj,iRating,9] - happyData[iSubj,iRating,10];
@@ -125,7 +127,7 @@ print('Done!')
 pctNoMoves = np.mean(allRatingMoves==0,axis=0)*100
 
 # %% Save subject info
-participants = np.arange(nSubj)+50000 # first subject = 50000 
+participants = np.arange(nSubj)+50000 # first subject = 50000
 columns = ['participant','location','timeSubmitted','appVersion','lifeHappy','noPlays','secondTimeSubmitted']
 dfSummary = pd.DataFrame(np.zeros((nSubj,len(columns))),columns=columns)
 dfSummary['participant'] = participants
@@ -153,7 +155,7 @@ dfRatings['iTrial'] = dfRatings['iTrial'].astype(int)
 columns = ['participant', 'iBlock', 'iTrial', 'trialType',
        'lastHappyRating', 'targetHappiness', 'time', 'choice', 'RT',
        'RPE', 'outcome', 'winAmount','loseAmount','certainAmount',
-       'outcomeAmount', 'currentWinnings','isRatingTrial', 'rating', 
+       'outcomeAmount', 'currentWinnings','isRatingTrial', 'rating',
        'ratingRT', 'ratingTime']
 dfTrial = pd.DataFrame(np.zeros((nSubj*nTrials,len(columns))),columns=columns)
 dfTrial['participant'] = dfTrial['participant'].astype(int)
@@ -198,7 +200,7 @@ dfTrial.loc[dfTrial.outcomeAmount==dfTrial.loseAmount,'outcome'] = 'lose'
 
 dfTrial.loc[dfTrial.isRatingTrial,'rating'] = allRatings.flatten('F')
 dfTrial.loc[dfTrial.isRatingTrial,'ratingRT'] = allRatingRTs.flatten('F')
-dfTrial.loc[dfTrial.isRatingTrial,'ratingTime'] = allRatingTimes.flatten('F')    
+dfTrial.loc[dfTrial.isRatingTrial,'ratingTime'] = allRatingTimes.flatten('F')
 
 print('Converting choice column from int to string...')
 dfTrial.loc[dfTrial.choice==0,'choice'] = 'certain'
@@ -307,7 +309,7 @@ heatmap = heatmap/nSubj*100;
 extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 # plot
 plt.imshow(np.rot90(heatmap), extent=extent, cmap='jet',aspect='auto') # plot heatmap (must be rotated 90deg for some reason!)
-# annotate plot    
+# annotate plot
 plt.colorbar().set_label('% subjects');
 plt.axhline(y=0.5,linestyle=':',color='w')
 plt.title('2D histogram of ratings (n=%d)'%(nSubj))
@@ -356,4 +358,3 @@ outFile = '%s/RutledgeGbeWinnings.png'%outFigDir
 print('Saving figure as %s...'%outFile)
 plt.savefig(outFile)
 print('Done!')
-

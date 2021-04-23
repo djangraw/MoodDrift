@@ -140,41 +140,46 @@ print('%d of %d subjects had complete survey data.'%(nSubj,nSubj_orig))
 
 # %% Load data from Pavlovia
 
-# Load data
-dfDataCheck = pd.DataFrame(participants,columns=['participant'])
-#dfDataCheck['taskFile'] = '';
-maxNRuns = 0;
-for iSubj,participant in enumerate(participants):
-    # get list of files from this participant
-    files = np.array(glob.glob('%s/%s/%s*.csv'%(rawDataDir,batchName,participant)))
-    # get completion indicator and date
-    fileDate = np.zeros(len(files),datetime.datetime)
-    isComplete = np.zeros(len(files),bool)
-    for iFile,thisFile in enumerate(files):
-        dfIn = pd.read_csv(thisFile);
-        fileDate[iFile] = dparser.parse(dfIn['date'][0].split('_')[0],fuzzy=True);
-        isComplete[iFile] = ('cashBonus' in dfIn.columns)
-    # crop
-    files = files[isComplete]
-    fileDate = fileDate[isComplete]
-    # sort by date
-    iSorted = np.argsort(fileDate)
-    files = files[iSorted]
+# data check file is distributed with shared data
+dataCheckFile = '%s/%s_DataCheck.csv'%(dataCheckDir,batchName)
+dfDataCheck = pd.read_csv(dataCheckFile)
+maxNRuns = 3
 
-    # add files to dfDataCheck dataframe
-    for iFile,thisFile in enumerate(files):
-        dfDataCheck.loc[iSubj,'taskFile_run%d'%(iFile+1)] = files[iFile]
-    maxNRuns = max(maxNRuns,len(files))
-    if len(files)==0:
-        print('***WARNING: participant %d has %d complete data files!'%(participant,len(files)))
-
-outFile = '%s/%s_DataCheck.csv'%(dataCheckDir,batchName)
-print('Saving to %s...'%outFile)
-if os.path.exists(outFile) and not overwrite:
-    print('Not overwriting existing file.')
-else:
-    dfDataCheck.to_csv(outFile)
-    print('Done!')
+# Old code to create datacheck file
+#dfDataCheck = pd.DataFrame(participants,columns=['participant'])
+##dfDataCheck['taskFile'] = '';
+#maxNRuns = 0;
+#for iSubj,participant in enumerate(participants):
+#    # get list of files from this participant
+#    files = np.array(glob.glob('%s/%s/%s*.csv'%(rawDataDir,batchName,participant)))
+#    # get completion indicator and date
+#    fileDate = np.zeros(len(files),datetime.datetime)
+#    isComplete = np.zeros(len(files),bool)
+#    for iFile,thisFile in enumerate(files):
+#        dfIn = pd.read_csv(thisFile);
+#        fileDate[iFile] = dparser.parse(dfIn['date'][0].split('_')[0],fuzzy=True);
+#        isComplete[iFile] = ('cashBonus' in dfIn.columns)
+#    # crop
+#    files = files[isComplete]
+#    fileDate = fileDate[isComplete]
+#    # sort by date
+#    iSorted = np.argsort(fileDate)
+#    files = files[iSorted]
+#
+#    # add files to dfDataCheck dataframe
+#    for iFile,thisFile in enumerate(files):
+#        dfDataCheck.loc[iSubj,'taskFile_run%d'%(iFile+1)] = files[iFile]
+#    maxNRuns = max(maxNRuns,len(files))
+#    if len(files)==0:
+#        print('***WARNING: participant %d has %d complete data files!'%(participant,len(files)))
+#
+#outFile = '%s/%s_DataCheck.csv'%(dataCheckDir,batchName)
+#print('Saving to %s...'%outFile)
+#if os.path.exists(outFile) and not overwrite:
+#    print('Not overwriting existing file.')
+#else:
+#    dfDataCheck.to_csv(outFile)
+#    print('Done!')
 
 # %% Import data
 dfDataCheck['isComplete'] = True;

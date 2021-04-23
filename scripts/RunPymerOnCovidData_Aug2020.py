@@ -23,9 +23,8 @@ from pymer4.models import Lmer
 print('=== Loading Data... ===')
 
 # Declare cohorts to run
-have_gbe = False # are the Rutledge Great Brain Experiment data included?
+have_gbe = True # are the Rutledge Great Brain Experiment data included?
 cohortsToRun = ['AllOpeningRestAndRandom','AllOpeningRestAndRandom-noAge','COVID01','COVID02','COVID03','Stability01-Rest','Stability01-Rest_block2','Stability02-Rest']#,'Stability01-RandomVer2']
-cohortsToRun = ['AllOpeningRestAndRandom','AllOpeningRestAndRandom-noAge']
 if have_gbe:
     cohortsToRun = cohortsToRun + ['GbeExplore','GbeConfirm'] # add on GBE cohorts
 

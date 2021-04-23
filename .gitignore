@@ -1,7 +1,5 @@
 # Large data folders
-Data/DataChecks
-Data/OutFiles
-Data/PilotData
+Data/*/
 
 # Figures produced by the code
 Figures/*.png

@@ -25,7 +25,7 @@ import seaborn as sns
 # Use exploratory (True) or Confirmatory (False) mobile app participants?
 IS_EXPLORE = False # GbeExplore (True) or GbeConfirm (False)
 dataDir = '../Data/OutFiles' # path to processed data
-pytorchDir = dataDir # path to model fitting results
+pytorchDir = '../Data/GbePytorchResults' # path to model fitting results
 outFigDir = '../Figures' # where model fitting figures should be saved
 have_gbe = True
 
@@ -199,7 +199,7 @@ for batchNames in [['Numbers','Recovery(Instructed)1'],
 
 if have_gbe:
     # %% Pytorch: including beta_T improves fit to testing data
-    CalculatePytorchModelError()
+    CalculatePytorchModelError(IS_EXPLORE, IS_LATE=False, dataDir = dataDir, pytorchDir = pytorchDir, outFigDir = outFigDir)
 
     # %% Plot penalty tuning
 
@@ -533,7 +533,7 @@ print('Saving figure as %s...'%outFig)
 plt.savefig(outFig)
 print('Done!')
 
-
+#%%
 if have_gbe:
     # %% Plot beta_T against life happiness score
     sns.set(font_scale=0.8)
@@ -903,17 +903,18 @@ for i in range(2):
         p[j,i] = p[i,j]
         if p[i,j]<cutoff:
             yMax = bar_ylim[1]
-            yStars = [yMax-0.14+(i+j)*.04, yMax-0.12+(i+j)*.04, yMax-0.12+(i+j)*.04, yMax-0.14+(i+j)*.04]
+            yStars = [yMax-0.07+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.07+(i+j)*.04]
             plt.plot([i,i,j,j],yStars ,'k-')
             if isAnyStar:
-                plt.plot((i+j)/2.0,yMax-0.1+(i+j)*.04,'k*')
+                plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*')
             else:
-                plt.plot((i+j)/2.0,yMax-0.1+(i+j)*.04,'k*',label='p < 0.05/%d'%nComparisons)
+                plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*',label='p < 0.05/%d'%nComparisons)
                 isAnyStar = True
         print('%s vs. %s: p=%.3g'%(batchLabels[i],batchLabels[j],p[i,j]))
 
 #plt.legend(loc='lower left')
 plt.xticks(np.arange(len(batchNames)),batchLabels)
+plt.ylim([0.6,1])
 plt.tight_layout(rect=[0,0,1,0.95])
 figTitle='Opening rest period is associated with reduced gambling choices'
 plt.suptitle('%s'%figTitle)
@@ -1138,10 +1139,10 @@ if have_gbe:
     # Load data
     if IS_EXPLORE:
         cohort = 'gbeExplore'
-        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(dataDir,cohort)
+        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
     else:
         cohort = 'GbeConfirm'
-        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(dataDir,cohort)
+        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
     print('Loading actual mood data from %s...'%inFile)
     dfData = pd.read_csv(inFile,index_col=0)
     mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T

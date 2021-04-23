@@ -8,7 +8,9 @@ Created on Mon Oct  5 15:10:35 2020
 
 Updated 10/29/20 by DJ - made axis labels have only first letter capitalized
 Updated 3/31/21 by DJ - adapted for shared code structure.
+Updated 4/23/21 by DJ - accept directories as inputs
 """
+
 # %%
 # Set up
 import numpy as np
@@ -18,7 +20,7 @@ from scipy import stats
 import seaborn as sns
 from sklearn.kernel_ridge import KernelRidge
 
-def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True):
+def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True, dataDir = '../Data/OutFiles', pytorchDir = '../Data/GbePytorchResults', outFigDir = '../Figures'):
     if IS_EXPLORE:
         suffix = '_GbeExplore'
     else:
@@ -27,10 +29,7 @@ def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True):
     if IS_LATE:
         suffix = '%s-late'%suffix
 
-    dataDir = '../Data/OutFiles'
-    pytorchDir = dataDir
-    outFigDir = '../Figures'
-
+   
     # Load results
     inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
     print('Loading pyTorch best fits from %s...'%inFile)
@@ -50,9 +49,9 @@ def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True):
 
     # Load data
     if IS_EXPLORE:
-        inFile = '%s/Mmi-gbeExplore_TrialForMdls.csv'%(dataDir)
+        inFile = '%s/Mmi-gbeExplore_TrialForMdls.csv'%(pytorchDir)
     else:
-        inFile = '%s/Mmi-GbeConfirm_TrialForMdls.csv'%(dataDir)
+        inFile = '%s/Mmi-GbeConfirm_TrialForMdls.csv'%(pytorchDir)
     # don't add late - we want to see how it fits data.
     print('Loading actual mood data from %s...'%inFile)
     dfData = pd.read_csv(inFile,index_col=0)
