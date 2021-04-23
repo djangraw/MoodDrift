@@ -42,7 +42,7 @@ allData_new = allData[subjIDs-1] # IDs from Rutledge lab are 1-based, so we subt
 # The original dataset used in this paper had 6 fields:
 #    Location, timeSubmitted, appversion, data, noPlays, life satisfaction
 old_field_indices = [3,0,11,13,8,4] # time submitted not present in new dataset... Subbing ID instead.
-allData = [[thisData[index] for index in old_field_indices] for thisData in allData] 
+allData = [[thisData[index] for index in old_field_indices] for thisData in allData_new] 
 
 print('Done!')
 

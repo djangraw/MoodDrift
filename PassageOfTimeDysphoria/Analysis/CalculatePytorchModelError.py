@@ -196,6 +196,9 @@ def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True):
 
     print('min median MSE (WITH betaT): %.5g'%np.min(median_losses))
     print('min median MSE (NO betaT): %.5g'%np.min(median_losses_noBetaT))
+    if IS_EXPLORE:
+        stat,p = stats.wilcoxon(MSE[:,best_ind], MSE_noBetaT[:,best_ind_noBetaT])
+    else:
+        stat,p = stats.wilcoxon(median_losses, median_losses_noBetaT)
 
-    stat,p = stats.wilcoxon(MSE[:,best_ind], MSE_noBetaT[:,best_ind_noBetaT])
     print('signrank p=%.3g'%p)
