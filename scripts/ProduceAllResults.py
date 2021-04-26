@@ -530,7 +530,7 @@ plt.suptitle('Depression risk affects mean mood ratings over time')
 # Save figure
 outFig = '%s/Mmi_%s_Comparison.png'%(outFigDir,'-'.join(['NotAtRisk','AtRisk']))
 print('Saving figure as %s...'%outFig)
-plt.savefig(outFi, bbox_inches="tight")
+plt.savefig(outFig, bbox_inches="tight")
 print('Done!')
 
 #%%
@@ -799,7 +799,7 @@ for i,pair in enumerate(cohortPairs):
 
 # Save figure
 plt.tight_layout()
-outFile = '%s/Mmi_%s_Reliability.png'%(dataDir,'-'.join(pairTitles))
+outFile = '%s/Mmi_%s_Reliability.png'%(outFigDir,'-'.join(pairTitles))
 print('Saving figure as %s...'%outFile)
 plt.savefig(outFile)
 print('Done!')
