@@ -487,7 +487,7 @@ pmd.PlotMmiRatings(dfTrialMean,dfRatingMean1,'line',autoYlim=True, doBlockLines=
 # Annotate plot
 plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
 #plt.legend(loc='upper right')
-plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.4))
+plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.65))
 plt.grid(True)
 titleStr = 'Short runs \n (duration > 294 s)'
 plt.title(titleStr)
@@ -502,7 +502,7 @@ pmd.PlotMmiRatings(dfTrialMean,dfRatingMean1,'line',autoYlim=True, doBlockLines=
 # Annotate plot
 plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
 #plt.legend(loc='upper right')
-plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.4))
+plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.65))
 plt.grid(True)
 titleStr = 'Medium runs \n (duration > 410 s)'
 plt.title(titleStr)
@@ -516,7 +516,7 @@ pmd.PlotMmiRatings(dfTrialMean,dfRatingMean1,'line',autoYlim=True, doBlockLines=
 # Annotate plot
 plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
 #plt.legend(loc='upper right')
-plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.4))
+plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.65))
 plt.grid(True)
 titleStr = 'Long runs \n (duration > 600 s)'
 plt.title(titleStr)
@@ -530,7 +530,7 @@ plt.suptitle('Depression risk affects mean mood ratings over time')
 # Save figure
 outFig = '%s/Mmi_%s_Comparison.png'%(outFigDir,'-'.join(['NotAtRisk','AtRisk']))
 print('Saving figure as %s...'%outFig)
-plt.savefig(outFig)
+plt.savefig(outFi, bbox_inches="tight")
 print('Done!')
 
 #%%
