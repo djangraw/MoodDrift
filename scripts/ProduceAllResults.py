@@ -51,7 +51,7 @@ batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','R
 batchLabels = ['15sRestBetween','Expectation-7mRest','Expectation-12mRest','RestDownUp','Daily-Rest-01','Weekly-Rest-01']
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
 # Annotate plot
-plt.title('Resting dysphoria persists across all MTurk cohorts receiving opening rest')
+plt.title('Passage-of-Time dysphoria persists across all MTurk cohorts receiving opening rest')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
@@ -69,7 +69,7 @@ batchNames = ['AnyOpeningRest','RecoveryNimh-run1']
 batchLabels = ['MTurk cohorts','In-person adolescent cohort']
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
 # Annotate plot
-plt.title('Resting-state dysphoria generalizes to different age group & recruitment method')
+plt.title('Passage-of-Time dysphoria generalizes to different age group & recruitment method')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
@@ -85,7 +85,7 @@ batchNames = ['Recovery(Instructed)1','MotionFeedback','Stability01-RandomVer2']
 batchLabels = ['15sRestBetween','Visuomotor-Feedback','Daily-Random-01']
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock='all',doInterpolation=True)
 # Annotate plot
-plt.title('Resting-state dysphoria persists in presence of simple tasks')
+plt.title('Passage-of-Time dysphoria persists in presence of simple tasks')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.xlim([-20,500])
@@ -158,7 +158,7 @@ batchNames = ['RecoveryInstructed1Freq0p25','RecoveryInstructed1Freq0p5','Recove
 batchLabels = ['60sRestBetween','30sRestBetween','15sRestBetween','7.5sRestBetween']
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
 # Annotate plot
-plt.title('Mood rating frequency does not affect resting-state dysphoria slope')
+plt.title('Mood rating frequency does not affect passage-of-time dysphoria slope')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
