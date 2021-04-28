@@ -44,7 +44,7 @@ for batchName in ['Recovery(Instructed)1']:
 
     SDpooled = np.sqrt((SD0**2+SD1**2)/2)
     cohensD = (M1-M0)/SDpooled
-    print("Batch %s (n=%d): After %.1f minutes, Cohen's D = %.3g"%(batchName,nSubj,t1,cohensD))
+    print("Batch %s (n=%d): After %.1f minutes, difference is %0.2f Cohen's D = %.3g"%(batchName,nSubj,t1,(M1-M0),cohensD))
 
 # %% Plot all naive opening rest batches separately
 batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','RestDownUp','Stability01-Rest','COVID01']
