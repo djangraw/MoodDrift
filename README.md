@@ -6,7 +6,8 @@ This repository contains the scripts necessary to preprocess, analyze, print and
 
 ## Datasets
 
-Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/km69z/.
+Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/xbc6u/.
+After downloading and unzipping this file, the contents of the PassageOfTimeDysphoria_Data folder should be moved to the Data folder of this repository.
 
 Data from the mobile app participants described in the paper are a subset of the dataset shared by Robb Rutledge's laboratory, now available at:
 
@@ -34,16 +35,16 @@ Converts raw data into preprocessed files that combine across cohorts (or "batch
 - [ImportMmiData_May2020.py](scripts/ImportMmiData_May2020.py) to import online adult cohorts
 - [ImportNimhMmiData.py](scripts/ImportNimhMmiData.py) to import online adolescent cohorts
 - [AssembleMmiBatches.py](scripts/AssembleMmiBatches.py) to combine across online cohorts for grouped analyses
-- [LoadRutledgeGbeData.py](scripts/LoadRutledgeGbeData.py) to import mobile app cohorts *Not currently working with public GBE data as shared.*
+- [LoadRutledgeGbeData.py](scripts/LoadRutledgeGbeData.py) to import mobile app cohorts
 - [MakePytorchInputTable.py](scripts/MakePytorchInputTable.py) to format data for computational model fitting.
 
 ### Model Fitting
 Fits the large-scale linear mixed effects (LME) model and the computational model described in the paper. The computational model scripts are computationally expensive and best run on a high-performance computing cluster. Run the following:
 - [RunPymerOnCovidData_Aug2020.py](scripts/RunPymerOnCovidData_Aug2020.py) to run the LME model. Must be run from a python environment with pymer4 installed.
-- [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to tune the computational model's hyperparameters. Must have pytorch installed. *Not currently working with public GBE data as shared.*
-- [Tune_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term. *Not currently working with public GBE data as shared.*
-- [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to run the model with given hyperparameters. Must have pytorch installed. *Not currently working with public GBE data as shared.*
-- [Run_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term. *Not currently working with public GBE data as shared.*
+- [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to tune the computational model's hyperparameters. Must have pytorch installed.
+- [Tune_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term.
+- [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to run the model with given hyperparameters. Must have pytorch installed.
+- [Run_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term.
 - [CombineGbeConfirmResults.py](scripts/CombineGbeConfirmResults.py) to combine across computational model results for the confirmatory mobile app sub-cohorts, which were split apart to avoid memory errors.
 
 ### Analysis
@@ -76,5 +77,5 @@ Cohorts were renamed after analysis to make them more intuitive in the paper. He
 | RestAfterWins | Return1 |
 | Daily-Closed-01 | Stability01-closed |
 | Daily-Closed-02 | Stability02-closed |
-| App-Exploratory | *not shared* |
-| App-Confirmatory | *not shared* |
+| App-Exploratory | GbeExplore |
+| App-Confirmatory | GbeConfirm |

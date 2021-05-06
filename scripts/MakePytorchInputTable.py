@@ -10,13 +10,14 @@ Prepare data for processing with pytorch scripts.
 - Updated 3/31/21 by DJ - adapted for shared code structure, added call to
    RemoveFirstRatingFromPytorchData.
 - Updated 4/2/21 by DJ - fixed typos.
+- Updated 5/6/21 by DJ - fixed RemoveFirstRatingFromPytorchData call
 """
 
 # Import packages
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from PassageOfTimeDysphoria.Analysis import RemoveFirstRatingFromPytorchData
+from PassageOfTimeDysphoria.Analysis.RemoveFirstRatingFromPytorchData import RemoveFirstRatingFromPytorchData
 
 # Declare folders
 dataDir = '../Data/OutFiles'
