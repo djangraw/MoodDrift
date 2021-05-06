@@ -44,7 +44,18 @@ for batchName in ['Recovery(Instructed)1']:
 
     SDpooled = np.sqrt((SD0**2+SD1**2)/2)
     cohensD = (M1-M0)/SDpooled
-    print("Batch %s (n=%d): After %.1f minutes, difference is %0.2f Cohen's D = %.3g"%(batchName,nSubj,t1,(M1-M0),cohensD))
+
+    # a little bit of frankenstein in order to the the SE of hte mean difference
+    first_trial = dfRating.loc[dfRating.iBlock == 0].groupby('participant').first().reset_index()
+    last_trial = dfRating.loc[dfRating.iBlock == 0].groupby('participant').last().reset_index()
+    first_and_last = first_trial.merge(last_trial, how='left', on='participant', suffixes=['_first', '_last'])
+
+    first_and_last['dif'] = first_and_last.rating_last - first_and_last.rating_first
+    first_and_last['time_dif'] = first_and_last.time_last - first_and_last.time_first
+    assert np.isclose(first_and_last.dif.mean(), M1-M0)
+    md_se = first_and_last.dif.std()/np.sqrt(len(first_and_last)) 
+
+    print(f"Batch {batchName} (n=nSubj): After {t1:.1f} minutes, difference is {(M1-M0)*100:0.2f} +- {md_se*100:0.2f},  Cohen's D = {cohensD:.3g}")
 
 # %% Plot all naive opening rest batches separately
 batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','RestDownUp','Stability01-Rest','COVID01']
