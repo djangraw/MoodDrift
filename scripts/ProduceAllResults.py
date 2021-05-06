@@ -32,9 +32,10 @@ outFigDir = '../Figures' # where model fitting figures should be saved
 have_gbe = True
 
 # %% Print Cohen's D for original cohort and others
+first_and_lasts = []
 for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run1']:
 
-    dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName))
+    dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName), index_col=0)
     #dfMeanRating = pmd.GetMeanRatings(dfRating.loc[dfRating.iBlock==0,:],nRatings=-1,participantLabel='mean')
     nSubj = len(np.unique(dfRating.participant))
 
@@ -44,7 +45,8 @@ for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run
 
     first_and_last['dif'] = first_and_last.rating_last - first_and_last.rating_first
     first_and_last['time_dif'] = first_and_last.time_last - first_and_last.time_first
-
+    first_and_last['batch'] = batchName
+    first_and_lasts.append(first_and_last)
     M0 = first_and_last.rating_first.mean()
     M1 = first_and_last.rating_last.mean()
     SD0 = first_and_last.rating_first.std()
@@ -57,6 +59,12 @@ for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run
     md_se = first_and_last.dif.std()/np.sqrt(len(first_and_last)) 
 
     print(f"Batch {batchName} (n={nSubj}): After {t1:.1f} minutes, difference is {(M1-M0)*100:0.2f} +- {md_se*100:0.2f},  Cohen's D = {cohensD:.3g}")
+
+first_and_lasts = pd.concat(first_and_lasts)
+first_and_lasts = pd.concat(first_and_lasts)
+adult_difs = first_and_lasts.loc[first_and_lasts.batch == 'AdultOpeningRest'].dif
+adolescent_difs = first_and_lasts.loc[first_and_lasts.batch == 'RecoveryNimh-run1'].dif
+stats.ttest_ind(adult_difs, adolescent_difs)
 
 # %% Plot all naive opening rest batches separately
 batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','RestDownUp','Stability01-Rest','COVID01']
