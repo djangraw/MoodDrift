@@ -1,5 +1,6 @@
 # Large data folders
 Data/*/
+Data/LICENSE
 
 # Figures produced by the code
 Figures/*.png
