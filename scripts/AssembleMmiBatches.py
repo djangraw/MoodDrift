@@ -172,7 +172,10 @@ isLongBatch = (dfBatches.nPreviousRuns==0) & \
              ((dfBatches.block1_targetHappiness=='1.0') | \
               (dfBatches.block1_targetHappiness=='1')) & \
              (dfBatches.block0_meanDuration>=500)
-
+adultopeningrestbatches = ['COVID01', 'Expectation-12min', 'Expectation-7min', 'Numbers',
+       'Recovery1', 'RecoveryInstructed1Freq0p25',
+       'RecoveryInstructed1Freq0p5', 'RecoveryInstructed1Freq2',
+       'RecoveryInstructed1', 'RestDownUp', 'Stability01-Rest']
 
 # Create new "superbatches" that combine multiple cohorts
 CombineMmiBatches(dfBatches.loc[isNoRestBatch,'batchName'].values,'NoOpeningRest');
@@ -180,6 +183,8 @@ CombineMmiBatches(dfBatches.loc[isShortBatch,'batchName'].values,'ShortOpeningRe
 CombineMmiBatches(dfBatches.loc[isLongBatch,'batchName'].values,'LongOpeningRest');
 CombineMmiBatches(dfBatches.loc[isShortBatch | isLongBatch,'batchName'].values,'AnyOpeningRest');
 CombineMmiBatches(dfBatches.loc[isNoRestBatch | isShortBatch | isLongBatch,'batchName'].values,'AnyOrNoRest');
+CombineMmiBatches(adultopeningrestbatches,'AdultOpeningRest');
+
 
 # %% Assemble batch of all cohorts with opening rest or random-gambling block for use in large-scale LME analysis
 

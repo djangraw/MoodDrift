@@ -31,33 +31,32 @@ pytorchDir = '../Data/GbePytorchResults' # path to model fitting results
 outFigDir = '../Figures' # where model fitting figures should be saved
 have_gbe = True
 
-# %% Print Cohen's D for original cohort
-for batchName in ['Recovery(Instructed)1']:
+# %% Print Cohen's D for original cohort and others
+for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run1']:
 
     dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName))
-    dfMeanRating = pmd.GetMeanRatings(dfRating.loc[dfRating.iBlock==0,:],nRatings=-1,participantLabel='mean')
+    #dfMeanRating = pmd.GetMeanRatings(dfRating.loc[dfRating.iBlock==0,:],nRatings=-1,participantLabel='mean')
     nSubj = len(np.unique(dfRating.participant))
 
-    M0 = dfMeanRating.loc[0,'rating']
-    M1 = dfMeanRating.loc[dfMeanRating.shape[0]-1,'rating']
-    SD0 = dfMeanRating.loc[0,'steRating']*np.sqrt(nSubj)
-    SD1 = dfMeanRating.loc[dfMeanRating.shape[0]-1,'steRating']*np.sqrt(nSubj)
-    t1 = dfMeanRating.loc[dfMeanRating.shape[0]-1,'time']/60
-
-    SDpooled = np.sqrt((SD0**2+SD1**2)/2)
-    cohensD = (M1-M0)/SDpooled
-
-    # a little bit of frankenstein in order to the the SE of hte mean difference
-    first_trial = dfRating.loc[dfRating.iBlock == 0].groupby('participant').first().reset_index()
+    first_trial = dfRating.loc[(dfRating.iBlock == 0)].groupby('participant').first().reset_index()
     last_trial = dfRating.loc[dfRating.iBlock == 0].groupby('participant').last().reset_index()
     first_and_last = first_trial.merge(last_trial, how='left', on='participant', suffixes=['_first', '_last'])
 
     first_and_last['dif'] = first_and_last.rating_last - first_and_last.rating_first
     first_and_last['time_dif'] = first_and_last.time_last - first_and_last.time_first
-    assert np.isclose(first_and_last.dif.mean(), M1-M0)
+
+    M0 = first_and_last.rating_first.mean()
+    M1 = first_and_last.rating_last.mean()
+    SD0 = first_and_last.rating_first.std()
+    SD1 = first_and_last.rating_last.std()
+    t1 = (first_and_last.time_last - first_and_last.time_first).mean()/60
+
+    SDpooled = np.sqrt((SD0**2+SD1**2)/2)
+    cohensD = (M1-M0)/SDpooled
+
     md_se = first_and_last.dif.std()/np.sqrt(len(first_and_last)) 
 
-    print(f"Batch {batchName} (n=nSubj): After {t1:.1f} minutes, difference is {(M1-M0)*100:0.2f} +- {md_se*100:0.2f},  Cohen's D = {cohensD:.3g}")
+    print(f"Batch {batchName} (n={nSubj}): After {t1:.1f} minutes, difference is {(M1-M0)*100:0.2f} +- {md_se*100:0.2f},  Cohen's D = {cohensD:.3g}")
 
 # %% Plot all naive opening rest batches separately
 batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','RestDownUp','Stability01-Rest','COVID01']
@@ -78,7 +77,7 @@ print('Done!')
 # %% Plot online adult vs. in-person adolescent cohort
 
 
-batchNames = ['AnyOpeningRest','RecoveryNimh-run1']
+batchNames = ['AdultOpeningRest','RecoveryNimh-run1']
 batchLabels = ['MTurk cohorts','In-person adolescent cohort']
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
 # Annotate plot
@@ -442,7 +441,7 @@ print('Loading pymer input from %s...'%inFile)
 dfPymerInput = pd.read_csv(inFile)
 print('Done!')
 
-participants = np.unique(dfRating.participant)
+participants = np.unique(dfCoeffs.Subject)
 nSubj = len(participants)
 fracRiskScore = np.zeros(nSubj)
 slope = np.zeros(nSubj)
