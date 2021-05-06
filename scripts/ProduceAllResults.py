@@ -6,6 +6,7 @@ To use, run whole script or cell-by-cell for specific results.
 
 - Created 10/22/20 by DJ.
 - Updated 3/31/21 by DJ - adapted for shared code structure.
+- Updated 5/6/21 by DJ - added joint pymer fit, uncommented hyperparam tuning
 """
 
 # Import packages
@@ -18,6 +19,7 @@ import PassageOfTimeDysphoria.Analysis.PlotPytorchPenaltyTuning as ppt
 from PassageOfTimeDysphoria.Analysis.CalculatePytorchModelError import CalculatePytorchModelError
 from PassageOfTimeDysphoria.Analysis.PlotAgeVsCoeffs import PlotAgeVsCoeffs
 from PassageOfTimeDysphoria.Analysis.PlotTimeOfDayVsSlopeAndIntercept import PlotTimeOfDayVsSlopeAndIntercept
+from PassageOfTimeDysphoria.Analysis.PlotPymerFits import PlotPymerHistosJoint
 import PassageOfTimeDysphoria.Analysis.GetMmiIcc as gmi
 from scipy import stats
 import seaborn as sns
@@ -203,12 +205,12 @@ if have_gbe:
 
     # %% Plot penalty tuning
 
-    # for suffix in ['_tune-Oct2020', '_tune-noBetaT','_tune-Stability01-RandomVer2_ntr31']:
-    #     ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
+    for suffix in ['_tune-Oct2020', '_tune-noBetaT']:
+        ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
-    # # %% Penalty tuning excluding first rating  (12/19/20)
-    # for suffix in ['_tune-late','_tune-late-retest','_tune-late-noBetaT']:
-    #     ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
+    # %% Penalty tuning excluding first rating  (12/19/20)
+    for suffix in ['_tune-late','_tune-late-noBetaT']:
+        ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
 
     # %% Plot parameter distributions
@@ -1259,3 +1261,21 @@ if have_gbe:
     rs,ps = stats.spearmanr(initMood,nChoseGamble)
     print('%s first mood rating vs. gambling in 1st %d trials:'%(cohort,nGamble))
     print('rs = %.3g, ps = %.3g'%(rs,ps))
+
+
+# %% Make joint plot of LME initial mood and slopes
+# load pymer fits
+batchName = 'AllOpeningRestAndRandom'
+stage = 'full'
+inFile = '%s/Mmi-%s_PymerCoeffs-%s.csv'%(dataDir,batchName,stage)
+print('Loading pymer fits from %s...'%inFile)
+dfCoeffs = pd.read_csv(inFile)
+# Make joint plot
+PlotPymerHistosJoint(dfCoeffs)
+nSubj = dfCoeffs.shape[0]
+plt.suptitle('LME Parameters for all subjects with opening \nrest or random gambling (n=%d)'%nSubj)
+# Save resulting figure
+outFile = '%s/PymerCoeffJointPlot_%s-%s.png'%(outFigDir,batchName,stage)
+print('Saving figure as %s...'%outFile)
+plt.savefig(outFile)
+print('Done!')
