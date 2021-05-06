@@ -6,7 +6,7 @@ To use, run whole script or cell-by-cell for specific results.
 
 - Created 10/22/20 by DJ.
 - Updated 3/31/21 by DJ - adapted for shared code structure.
-- Updated 5/6/21 by DJ - added joint pymer fit, uncommented hyperparam tuning
+- Updated 5/6/21 by DJ - added code to produce several figures found in paper
 """
 
 # Import packages
@@ -200,8 +200,9 @@ for batchNames in [['Numbers','Recovery(Instructed)1'],
     print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, p=%.3g'%(batchNames[0],np.sum(isIn0),batchNames[1],np.sum(isIn1),T,p))
 
 if have_gbe:
-    # %% Pytorch: including beta_T improves fit to testing data
-    CalculatePytorchModelError(IS_EXPLORE, IS_LATE=False, dataDir = dataDir, pytorchDir = pytorchDir, outFigDir = outFigDir)
+    for is_late in [False,True]:
+        # %% Pytorch: including beta_T improves fit to testing data
+        CalculatePytorchModelError(IS_EXPLORE, IS_LATE=is_late, dataDir = dataDir, pytorchDir = pytorchDir, outFigDir = outFigDir)
 
     # %% Plot penalty tuning
 
@@ -648,7 +649,6 @@ if have_gbe:
     sns.set(font_scale=0.8)
     sns.set_style("whitegrid")
     alpha = 0.2
-    nGrps = 2
     paramToPlot = 'beta_T'
     colsToPlot = ['m0','lambda','beta_E','beta_A','SSE','lifeHappy']
     for stage in ['full','late']:
@@ -674,81 +674,81 @@ if have_gbe:
         dfSummary['beta_T'] = best_pars['beta_T'].values
         best_pars['lifeHappy'] = dfSummary['lifeHappy'].values
 
+        for nGrps in [1,2]:
+
+            plt.close(621)
+            plt.figure(621,figsize=(13,8),dpi=120)
+            plt.clf()
 
 
-        plt.close(621)
-        plt.figure(621,figsize=(13,8),dpi=120)
-        plt.clf()
+            for i,param in enumerate(colsToPlot):
+                plt.subplot(2,3,i+1)
+                if nGrps==1:
+                    rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
+                    print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
+
+                    print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
+                    rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
+                    print('%s vs. %s: r_s = %.3g, p_s = %.3g'%(param,paramToPlot,rs,ps))
+
+                    print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
+                    sns.regplot(x=param, y=paramToPlot, data=best_pars,scatter_kws={'alpha':alpha});
+                    plt.xlabel(paramLabelDict[param])
+                    plt.ylabel(paramLabelDict[paramToPlot])
+                    plt.title('%s vs. %s:\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
+                                              r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
+
+                elif nGrps==2:
+                    topCutoff = np.median(best_pars.lifeHappy)
+                    botCutoff = np.median(best_pars.lifeHappy)
+                    if nGrps==2:
+                        isTop = best_pars.lifeHappy>=topCutoff
+                        isBot = best_pars.lifeHappy<botCutoff
+                    elif nGrps==4:
+                        topCutoff = 0.8
+                        botCutoff = 0.6
+                    elif nGrps==11:
+                        topCutoff = 0.9
+                        botCuotff = 0.1
+                    nTop = np.sum(isTop)
+                    nBot = np.sum(isBot)
+                    # Run spearman corr's
+                    rs_top,ps_top = stats.spearmanr(best_pars.loc[isTop,param],best_pars.loc[isTop,paramToPlot])
+                    print('%s vs. %s (lifeHappy>=%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,topCutoff,rs_top,ps_top))
+                    rs_bot,ps_bot = stats.spearmanr(best_pars.loc[isBot,param],best_pars.loc[isBot,paramToPlot])
+                    print('%s vs. %s (lifeHappy<%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,botCutoff,rs_bot,ps_bot))
+
+                    # Is the diff between the two significant?
+                    zs_top = np.arctanh(rs_top)
+                    zs_bot = np.arctanh(rs_bot)
+                    se_diff_r = np.sqrt(1.0/(nTop - 3) + 1.0/(nBot - 3))
+                    diff = zs_top - zs_bot
+                    z = abs(diff / se_diff_r)
+                    p = (1 - stats.norm.cdf(z))
+                    #            if twotailed:
+                    #                p *= 2
+                    print('correlation difference between top & bottom: z=%.3g, p=%.3g'%(z,p))
+
+                    print('Plotting %d-group %s vs. %s with best fit lines...'%(nGrps,param,paramToPlot))
+                    if param=='lifeHappy':
+                        plt.xlim([-0.06,1.06])
+                    topLabel = 'Life happiness >= %g (n = %d)\n'%(topCutoff,nTop) + r'$r_s=%.3g, p_s=%.3g$'%(rs_top,ps_top)
+                    botLabel = 'Life happiness < %g (n = %d)\n'%(botCutoff,nBot) + r'$r_s=%.3g, p_s=%.3g$'%(rs_bot,ps_bot)
+                    g1 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isTop,:], line_kws={'color':'tab:blue','label':topLabel},scatter_kws={'color':'tab:blue','alpha':alpha});
+                    g2 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isBot,:], line_kws={'color':'tab:orange','label':botLabel},scatter_kws={'color':'tab:orange','alpha':alpha});
+                    plt.xlabel(paramLabelDict[param])
+                    plt.ylabel(paramLabelDict[paramToPlot])
+                    plt.title('%s vs. %s: group corr. diff.\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
+                                              r'$z = %.3g, p = %.3g$'%(z,p))
+                    plt.legend()
+
+                plt.tight_layout()
 
 
-        for i,param in enumerate(colsToPlot):
-            plt.subplot(2,3,i+1)
-            if nGrps==1:
-                rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
-                print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
 
-                print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
-                rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
-                print('%s vs. %s: r_s = %.3g, p_s = %.3g'%(param,paramToPlot,rs,ps))
-
-                print('Plotting %s vs. %s with best fit line...'%(param,paramToPlot))
-                sns.regplot(x=param, y=paramToPlot, data=best_pars,scatter_kws={'alpha':alpha});
-                plt.xlabel(paramLabelDict[parafm])
-                plt.ylabel(paramLabelDict[paramToPlot])
-                plt.title('%s vs. %s:\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
-                                          r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
-
-            elif nGrps==2:
-                topCutoff = np.median(best_pars.lifeHappy)
-                botCutoff = np.median(best_pars.lifeHappy)
-                if nGrps==2:
-                    isTop = best_pars.lifeHappy>=topCutoff
-                    isBot = best_pars.lifeHappy<botCutoff
-                elif nGrps==4:
-                    topCutoff = 0.8
-                    botCutoff = 0.6
-                elif nGrps==11:
-                    topCutoff = 0.9
-                    botCuotff = 0.1
-                nTop = np.sum(isTop)
-                nBot = np.sum(isBot)
-                # Run spearman corr's
-                rs_top,ps_top = stats.spearmanr(best_pars.loc[isTop,param],best_pars.loc[isTop,paramToPlot])
-                print('%s vs. %s (lifeHappy>=%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,topCutoff,rs_top,ps_top))
-                rs_bot,ps_bot = stats.spearmanr(best_pars.loc[isBot,param],best_pars.loc[isBot,paramToPlot])
-                print('%s vs. %s (lifeHappy<%g): r_s = %.3g, p_s = %.3g'%(param,paramToPlot,botCutoff,rs_bot,ps_bot))
-
-                # Is the diff between the two significant?
-                zs_top = np.arctanh(rs_top)
-                zs_bot = np.arctanh(rs_bot)
-                se_diff_r = np.sqrt(1.0/(nTop - 3) + 1.0/(nBot - 3))
-                diff = zs_top - zs_bot
-                z = abs(diff / se_diff_r)
-                p = (1 - stats.norm.cdf(z))
-                #            if twotailed:
-                #                p *= 2
-                print('correlation difference between top & bottom: z=%.3g, p=%.3g'%(z,p))
-
-                print('Plotting %d-group %s vs. %s with best fit lines...'%(nGrps,param,paramToPlot))
-                if param=='lifeHappy':
-                    plt.xlim([-0.06,1.06])
-                topLabel = 'Life happiness >= %g (n = %d)\n'%(topCutoff,nTop) + r'$r_s=%.3g, p_s=%.3g$'%(rs_top,ps_top)
-                botLabel = 'Life happiness < %g (n = %d)\n'%(botCutoff,nBot) + r'$r_s=%.3g, p_s=%.3g$'%(rs_bot,ps_bot)
-                g1 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isTop,:], line_kws={'color':'tab:blue','label':topLabel},scatter_kws={'color':'tab:blue','alpha':alpha});
-                g2 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isBot,:], line_kws={'color':'tab:orange','label':botLabel},scatter_kws={'color':'tab:orange','alpha':alpha});
-                plt.xlabel(paramLabelDict[param])
-                plt.ylabel(paramLabelDict[paramToPlot])
-                plt.title('%s vs. %s: group corr. diff.\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
-                                          r'$z = %.3g, p = %.3g$'%(z,p))
-                plt.legend()
 
             plt.tight_layout()
-
-
-
-
-        plt.tight_layout()
-        plt.savefig('%s/PyTorch_betaT-vs-others%s-%dGrps.png'%(outFigDir,suffix,nGrps))
+            plt.savefig('%s/PyTorch_betaT-vs-others%s-%dGrps.png'%(outFigDir,suffix,nGrps))
 
 
 # %% Get impacts of fracRiskScore from the LME results table
@@ -1012,7 +1012,7 @@ for stage in ['full','late']:
         plt.title(r'Mobile app cohort computational model' + '\n' + r'$r_s=%.3g$, $p_s=%.3g$'%(rs,ps))
 
     plt.tight_layout()
-    outFile = '%s/PyTorchAndLme_m0-vs-lifeHappy_%s.png'%(outFigDir,suffix)
+    outFile = '%s/PyTorchAndLme_m0-vs-lifeHappy%s.png'%(outFigDir,suffix)
     print('Saving figure as %s...'%outFile)
     plt.savefig(outFile)
     print('Done!')
