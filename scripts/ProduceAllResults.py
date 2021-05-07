@@ -331,17 +331,19 @@ if have_gbe:
         dfPymerCoeffs_app = pd.read_csv('%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName_app,stage),index_col=0)
 
         #stat,p = stats.ttest_1samp(best_pars['beta_T'],0)
-        print('mean +/- SE LME slope param: %.3g%% mood/min +/- %.3g'%(np.mean(dfPymerCoeffs_app['Time'])*100,np.std(dfPymerCoeffs_app['Time'])*100/np.sqrt(dfPymerCoeffs_app.shape[0])))
+        print('mean +/- SE LME slope param: %.3g%% mood/min +/- %.3g'%(np.mean(dfPymerCoeffs_app["Time"])*100,np.std(dfPymerCoeffs_app["Time"])*100/np.sqrt(dfPymerCoeffs_app.shape[0])))
         #print('2-tailed t-test on beta_T vs. 0: T=%.3g, p=%.3g'%(stat,p))
 
         stat,p = stats.wilcoxon(dfPymerCoeffs_app['Time'])
         #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
-        print('2-sided wilcoxon sign-rank test on %s LME slope vs. 0: p=%.3g'%(batchName_app,p))
-
+        print(f'2-sided wilcoxon sign-rank test on {batchName_app} LME slope vs. 0: n={len(dfPymerCoeffs_app["Time"])}, dof={len(dfPymerCoeffs_app["Time"]) - 1}, stat={stat:.3g}, p={p:.3g}')
 
         # Print ranksum comparison
         stat,p = stats.ranksums(dfPymerCoeffs_online.Time, dfPymerCoeffs_app.Time)
-        print('Ranksum of LME time coeff for online (%s) vs. mobile app (%s): p=%.3g'%(batchName_online,batchName_app,p))
+        nonline = len(dfPymerCoeffs_online.Time)
+        napp = len(dfPymerCoeffs_app.Time)
+        dof = nonline + napp - 2
+        print(f'Ranksum of LME time coeff for online ({batchName_online}) vs. mobile app ({batchName_app}): nonline={nonline}, napp={napp}, ndof={dof}, stat={stat:.3g}, p={p:.3g}')
 
 
 
