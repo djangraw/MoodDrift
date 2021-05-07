@@ -76,6 +76,6 @@ Cohorts were renamed after analysis to make them more intuitive in the paper. He
 | Visuomotor-Feedback | MotionFeedback |
 | RestAfterWins | Return1 |
 | Daily-Closed-01 | Stability01-closed |
-| Daily-Closed-02 | Stability02-closed |
+| Daily-Random-01 | Stability02-RandomVer2 |
 | App-Exploratory | GbeExplore |
 | App-Confirmatory | GbeConfirm |

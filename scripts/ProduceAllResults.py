@@ -56,11 +56,10 @@ for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run
     SDpooled = np.sqrt((SD0**2+SD1**2)/2)
     cohensD = (M1-M0)/SDpooled
 
-    md_se = first_and_last.dif.std()/np.sqrt(len(first_and_last)) 
+    md_se = first_and_last.dif.std()/np.sqrt(len(first_and_last))
 
     print(f"Batch {batchName} (n={nSubj}): After {t1:.1f} minutes, difference is {(M1-M0)*100:0.2f} +- {md_se*100:0.2f},  Cohen's D = {cohensD:.3g}")
 
-first_and_lasts = pd.concat(first_and_lasts)
 first_and_lasts = pd.concat(first_and_lasts)
 adult_difs = first_and_lasts.loc[first_and_lasts.batch == 'AdultOpeningRest'].dif
 adolescent_difs = first_and_lasts.loc[first_and_lasts.batch == 'RecoveryNimh-run1'].dif
