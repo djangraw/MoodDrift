@@ -199,5 +199,4 @@ def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True, dataDir = '../Dat
         stat,p = stats.wilcoxon(MSE[:,best_ind], MSE_noBetaT[:,best_ind_noBetaT])
     else:
         stat,p = stats.wilcoxon(median_losses, median_losses_noBetaT)
-
-    print('signrank p=%.3g'%p)
+    print(f'2-sided wilcoxon sign-rank test on losses with/without betaT for the median subject across regularizations: n={len(median_losses)}, dof={len(median_losses) - 1}, stat={stat}, p={p:.3g}')
