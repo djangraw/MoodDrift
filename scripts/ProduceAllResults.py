@@ -63,7 +63,9 @@ for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run
 first_and_lasts = pd.concat(first_and_lasts)
 adult_difs = first_and_lasts.loc[first_and_lasts.batch == 'AdultOpeningRest'].dif
 adolescent_difs = first_and_lasts.loc[first_and_lasts.batch == 'RecoveryNimh-run1'].dif
-stats.ttest_ind(adult_difs, adolescent_difs)
+stat, pvalue = stats.ttest_ind(adult_difs, adolescent_difs)
+print(f"Difference between adult and adolescent: n = {len(adult_difs) + len(adolescent_difs)} dof = {len(adult_difs) + len(adolescent_difs) - 2}, stat= {stat:.3g}, pvalue= {pvalue:.3g}")
+
 
 # %% Plot all naive opening rest batches separately
 batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','RestDownUp','Stability01-Rest','COVID01']
@@ -312,7 +314,7 @@ if have_gbe:
 
         stat,p = stats.wilcoxon(best_pars['beta_T'])
         #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
-        print('2-sided wilcoxon sign-rank test on beta_T vs. 0: p=%.3g'%p)
+        print(f'2-sided wilcoxon sign-rank test on beta_T vs. 0: n={len(best_pars)}, dof={len(best_pars) - 1}, stat={stat:.3g}, p={p:.3g}')
 
     # %% Get stats on Mobile app LME slopes vs. 0
 
