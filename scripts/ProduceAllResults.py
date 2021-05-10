@@ -314,8 +314,8 @@ if have_gbe:
 
         stat,p = stats.wilcoxon(best_pars['beta_T'])
         #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
-        print(f'2-sided wilcoxon sign-rank test on beta_T vs. 0: n={len(best_pars)}, dof={len(best_pars) - 1}, stat={stat:.3g}, p={p:.3g}')
-
+        print(f'2-sided wilcoxon sign-rank test on beta_T vs. 0: n={len(best_pars)}, dof={len(best_pars) - 1}, stat={stat:0.3g}, p={p:.3g}')
+        print(f'stat in full {stat}')
     # %% Get stats on Mobile app LME slopes vs. 0
 
     batchName_online = 'AllOpeningRestAndRandom'
