@@ -428,17 +428,18 @@ print('Done!')
 m = dfFits.loc['fracRiskScore','Estimate']*100
 se = dfFits.loc['fracRiskScore','SE']*100
 T = dfFits.loc['fracRiskScore','T-stat']
+dof = dfFits.loc['fracRiskScore', 'DF']
 p = dfFits.loc['fracRiskScore','P-val']
 print('Depression Risk Score x intercept in LME:')
-print('%.3g +/- %.3g %% mood, T=%.3g, p=%.3g'%(m,se,T,p))
-
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
 m = dfFits.loc['Time:fracRiskScore','Estimate']*100
 se = dfFits.loc['Time:fracRiskScore','SE']*100
 T = dfFits.loc['Time:fracRiskScore','T-stat']
+dof = dfFits.loc['Time:fracRiskScore', 'DF']
 p = dfFits.loc['Time:fracRiskScore','P-val']
 print('Depression Risk Score x slope in LME: T=%.3g, p=%.3g'%(T,p))
-print('%.3g +/- %.3g %% mood/min, T=%.3g, p=%.3g'%(m,se,T,p))
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
 # %% Get mean slope in depressed and non-depressed participants
 
