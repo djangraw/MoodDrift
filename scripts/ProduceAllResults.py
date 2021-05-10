@@ -137,6 +137,8 @@ print('===LME RESULTS FOR ONLINE PARTICIPANTS:===')
 print('Decline in mood = %.3g +/- %.3g %%/min'%(np.mean(moodSlope*100),np.std(moodSlope*100)/np.sqrt(moodSlope.size)))
 print('Decline in mood after 10 minutes: %.3g%% +/- %.3g, Cohen''s D=%.3g'%(np.mean(mood10)*100, np.std(mood10*100)/np.sqrt(mood10.size),D))
 print('Wilcoxon signed rank vs. 0: p=%.3g'%p)
+slope_range = dfCoeffs.Time.quantile([0.025,0.975]).values*100
+print(f"2.5percentile slope = {slope_range[0]:0.3f}, 97.5percentile slope = {slope_range[1]:0.3f}")
 
 # %% Test difference between adolescents and not
 isAdolescent = dfCoeffs.Subject<0
