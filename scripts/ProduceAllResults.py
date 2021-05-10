@@ -919,14 +919,18 @@ for iBatch, batchName in enumerate(batchNames):
 
 # Add stars for stats tests
 p=np.zeros((3,3))
+stat=np.zeros((3,3))
+dof=np.zeros((3,3))
 print('=== Ranksum tests on subject-wise gamble proportions: ===')
 nComparisons = 3;
 cutoff = 0.05/nComparisons;
 isAnyStar = False
 for i in range(2):
     for j in range(i+1,3):
-        _,p[i,j] = stats.ranksums(nChoseGamble[i],nChoseGamble[j])
+        stat[i,j] ,p[i,j] = stats.ranksums(nChoseGamble[i],nChoseGamble[j])
         p[j,i] = p[i,j]
+        stat[j,i] = stat[i,j]
+        dof[j,i] = dof[i,j] = len(nChoseGamble[i]) + len(nChoseGamble[j]) - 2
         if p[i,j]<cutoff:
             yMax = bar_ylim[1]
             yStars = [yMax-0.07+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.07+(i+j)*.04]
@@ -936,7 +940,7 @@ for i in range(2):
             else:
                 plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*',label='p < 0.05/%d'%nComparisons)
                 isAnyStar = True
-        print('%s vs. %s: p=%.3g'%(batchLabels[i],batchLabels[j],p[i,j]))
+        print('%s vs. %s: stat=%.3g, dof=%.3g, p=%.3g'%(batchLabels[i],batchLabels[j],stat[i,j],dof[i,j], p[i,j]))
 
 #plt.legend(loc='lower left')
 plt.xticks(np.arange(len(batchNames)),batchLabels)
