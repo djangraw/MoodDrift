@@ -153,21 +153,38 @@ print('Loading pymer fits from %s...'%inFile)
 dfFits = pd.read_csv(inFile,index_col=0)
 print('Done!')
 
+
+m = dfFits.loc['Time:isMaleTRUE','Estimate']*100
+se = dfFits.loc['Time:isMaleTRUE','SE']*100
 T = dfFits.loc['Time:isMaleTRUE','T-stat']
+dof = dfFits.loc['Time:isMaleTRUE', 'DF']
 p = dfFits.loc['Time:isMaleTRUE','P-val']
-print('Gender x slope in LME: T=%.3g, p=%.3g'%(T,p))
+print('Gender x slope in LME:')
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
+m = dfFits.loc['Time:meanIRIOver20','Estimate']*100
+se = dfFits.loc['Time:meanIRIOver20','SE']*100
 T = dfFits.loc['Time:meanIRIOver20','T-stat']
+dof = dfFits.loc['Time:meanIRIOver20', 'DF']
 p = dfFits.loc['Time:meanIRIOver20','P-val']
-print('Inter-Rating Interval x slope in LME: T=%.3g, p=%.3g'%(T,p))
+print('Inter-Rating Interval x slope in LME:')
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
+m = dfFits.loc['Time:totalWinnings','Estimate']*100
+se = dfFits.loc['Time:totalWinnings','SE']*100
 T = dfFits.loc['Time:totalWinnings','T-stat']
+dof = dfFits.loc['Time:totalWinnings', 'DF']
 p = dfFits.loc['Time:totalWinnings','P-val']
-print('Total Winnings x slope in LME: T=%.3g, p=%.3g'%(T,p))
+print('Total Winnings x slope in LME:')
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
+m = dfFits.loc['Time:meanRPE','Estimate']*100
+se = dfFits.loc['Time:meanRPE','SE']*100
 T = dfFits.loc['Time:meanRPE','T-stat']
+dof = dfFits.loc['Time:meanRPE', 'DF']
 p = dfFits.loc['Time:meanRPE','P-val']
-print('Mean RPE x slope in LME: T=%.3g, p=%.3g'%(T,p))
+print('Mean RPE x slope in LME:')
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
 
 # %% Table02
