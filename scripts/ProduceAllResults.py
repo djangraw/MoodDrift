@@ -1203,6 +1203,13 @@ if have_gbe:
         print('comp model app: %.1f%% participants had beta_T<0'%(np.mean(best_pars['beta_T']<0)*100))
 
 
+
+# %% Print LME table in LaTeX format
+batchName = 'AllOpeningRestAndRandom'
+dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
+print(f'{batchName} LME fit table')
+print(dfPymerFit.to_latex(float_format='%.3g'))
+
 # %% Check whether amplitude of residuals are equal over time
 
 if have_gbe:
