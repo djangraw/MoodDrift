@@ -854,123 +854,134 @@ print('Done!')
 PlotTimeOfDayVsSlopeAndIntercept('AllOpeningRestAndRandom')
 
 # %% Impact of mood on gambling
+
+def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,iGambleBlock,nGamble=4):
+    minNRatings=8 # -1 indicates all, but they must be the same
+    minNTrials=10 # -1 indicates all, but they must be the same
+    xlim=[0,90]
+    bar_ylim=[0.6,0.92]
+    nChoseGamble = [0]* len(batchNames)
+    #plt.rcParams.update({'font.size': 6})
+    plt.close(412)
+    plt.figure(412,figsize=(6,7.5),dpi=180, facecolor='w', edgecolor='k');
+    plt.clf();
+    fig, ax = plt.subplots(3,1,num=412)
+    meanGamble = np.zeros(len(batchNames))
+    steGamble = np.zeros(len(batchNames))
+    ratingLabels = list(batchLabels)
+    # Get gambling behavior for each
+    for iBatch, batchName in enumerate(batchNames):
+        dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName))
+        dfTrial = pd.read_csv('%s/Mmi-%s_Trial.csv'%(dataDir,batchName))
+
+        # Limit to block
+        iBlock = iGambleBlock[iBatch]
+        if iBlock!='all':
+            dfRating = dfRating.loc[dfRating.iBlock==iBlock,:]
+            dfTrial = dfTrial.loc[dfTrial.iBlock==iBlock,:]
+        # Get averages
+        dfRatingMean = pmd.GetMeanRatings(dfRating,minNRatings)
+        dfTrialMean = pmd.GetMeanTrials(dfTrial,minNTrials)
+        nSubj = len(np.unique(dfTrial.participant))
+
+        # Get average gambleFrac in first nGamble trials for each subject
+        nChoseGamble[iBatch] = np.zeros(nSubj)
+        for iSubj,subj in enumerate(np.unique(dfTrial.participant)):
+            isGamble = dfTrial.loc[dfTrial.participant==subj].values =='gamble'
+            nChoseGamble[iBatch][iSubj] = np.sum(isGamble[:nGamble])
+
+        # Plot results
+        ratingLabels[iBatch] = '%s (n = %d)'%(batchLabels[iBatch],nSubj)
+    #    print(dfTrialMean.shape[0])
+
+        plt.sca(ax[0]) #plt.subplot(311)
+        dfTrialMean.time = dfTrialMean.time - dfTrialMean.time[0]
+        dfRatingMean.time = dfRatingMean.time - dfRatingMean.time[0]
+
+        pmd.PlotMmiRatings(dfTrialMean,dfRatingMean,interp='linear',autoYlim=True,doBlockLines=False,ratingLabel=ratingLabels[iBatch])
+    #    plt.plot(dfRatingMean.time - dfRatingMean.time[0],dfRatingMean.rating,'.-',label=ratingLabels[iBatch])
+        plt.xlabel('Time from block start (s)')
+        plt.ylabel('Mood (0-1)')
+        plt.legend(loc=4)
+        plt.title('')
+        plt.xlim(xlim)
+        plt.grid(True,zorder=-3)
+
+        # plot fraction gambling on each trial
+        plt.sca(ax[1]) #plt.subplot(312)
+        plt.plot(dfTrialMean.time,dfTrialMean.gambleFrac,'.-',label=batchLabels[iBatch])
+        # add 95% confidence interval patch
+        plt.fill_between(dfTrialMean.time,dfTrialMean.gambleFracCIMin,
+                                 dfTrialMean.gambleFracCIMax,alpha=0.5,zorder=0)
+        # annotate plot
+        plt.xlabel('Time from block start (s)')
+        plt.ylabel('Fraction choosing to gamble')
+        plt.legend(loc=4)
+        plt.xlim(xlim)
+        plt.grid(True,zorder=-3)
+
+        plt.sca(ax[2]) # plt.subplot(313)
+        meanGamble[iBatch] = np.mean(dfTrialMean.gambleFrac[:nGamble])
+        plt.bar(iBatch,meanGamble[iBatch],zorder=2)
+        steGamble[iBatch] = np.std(1.0*nChoseGamble[iBatch]/nGamble)/np.sqrt(nSubj)
+        plt.plot([iBatch,iBatch],[meanGamble[iBatch]-steGamble[iBatch],
+                  meanGamble[iBatch]+steGamble[iBatch]],'k-')
+        plt.ylabel('Fraction choosing to gamble\nin first %d trials'%nGamble)
+        plt.ylim(bar_ylim)
+        plt.grid(True,zorder=-3)
+
+
+    # Add stars for stats tests
+    nGrps = len(batchNames)
+    p=np.zeros((nGrps,nGrps))
+    stat=np.zeros((nGrps,nGrps))
+    dof=np.zeros((nGrps,nGrps))
+    print('=== Ranksum tests on subject-wise gamble proportions: ===')
+    nComparisons = nGrps*(nGrps-1)/2;
+    cutoff = 0.05/nComparisons;
+    isAnyStar = False
+    for i in range(nGrps-1):
+        for j in range(i+1,nGrps):
+            stat[i,j] ,p[i,j] = stats.ranksums(nChoseGamble[i],nChoseGamble[j])
+            p[j,i] = p[i,j]
+            stat[j,i] = stat[i,j]
+            dof[j,i] = dof[i,j] = len(nChoseGamble[i]) + len(nChoseGamble[j]) - 2
+            if p[i,j]<cutoff:
+                yMax = bar_ylim[1]
+                yStars = [yMax-0.07+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.07+(i+j)*.04]
+                plt.plot([i,i,j,j],yStars ,'k-')
+                if isAnyStar:
+                    plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*')
+                else:
+                    plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*',label='p < 0.05/%d'%nComparisons)
+                    isAnyStar = True
+            print('%s vs. %s: stat=%.3g, dof=%.3g, p=%.3g'%(batchLabels[i],batchLabels[j],stat[i,j],dof[i,j], p[i,j]))
+
+    #plt.legend(loc='lower left')
+    plt.xticks(np.arange(len(batchNames)),batchLabels)
+    plt.ylim([0.6,1])
+    plt.tight_layout(rect=[0,0,1,0.95])
+    figTitle='Opening rest period is associated with reduced gambling choices'
+    plt.suptitle('%s'%figTitle)
+    outFile = '%s/RestDurationComparison_%s.png'%(outFigDir,groupName)
+    print('Saving figure as %s...'%outFile)
+    plt.savefig(outFile)
+    print('Done!')
+
+
 batchNames = ['NoOpeningRest','ShortOpeningRest','LongOpeningRest'];
 groupName = 'No-Short-Long'
 batchLabels = ['No rest','350-450 s rest','500-700 s rest']
-
-iGambleBlock = [0,1,1]
+iGambleBlock = [0,1,1] # which was first gambling block in each batch
 nGamble = 4 # number of initial trials to average gambleFrac in
+CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,iGambleBlock,nGamble=4)
 
-minNRatings=8 # -1 indicates all, but they must be the same
-minNTrials=10 # -1 indicates all, but they must be the same
-xlim=[0,90]
-bar_ylim=[0.6,0.92]
-nChoseGamble = [0]* len(batchNames)
-#plt.rcParams.update({'font.size': 6})
-plt.close(412)
-plt.figure(412,figsize=(6,7.5),dpi=180, facecolor='w', edgecolor='k');
-plt.clf();
-fig, ax = plt.subplots(3,1,num=412)
-meanGamble = np.zeros(len(batchNames))
-steGamble = np.zeros(len(batchNames))
-ratingLabels = list(batchLabels)
-# Get gambling behavior for each
-for iBatch, batchName in enumerate(batchNames):
-    dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName))
-    dfTrial = pd.read_csv('%s/Mmi-%s_Trial.csv'%(dataDir,batchName))
-
-    # Limit to block
-    iBlock = iGambleBlock[iBatch]
-    if iBlock!='all':
-        dfRating = dfRating.loc[dfRating.iBlock==iBlock,:]
-        dfTrial = dfTrial.loc[dfTrial.iBlock==iBlock,:]
-    # Get averages
-    dfRatingMean = pmd.GetMeanRatings(dfRating,minNRatings)
-    dfTrialMean = pmd.GetMeanTrials(dfTrial,minNTrials)
-    nSubj = len(np.unique(dfTrial.participant))
-
-    # Get average gambleFrac in first nGamble trials for each subject
-    nChoseGamble[iBatch] = np.zeros(nSubj)
-    for iSubj,subj in enumerate(np.unique(dfTrial.participant)):
-        isGamble = dfTrial.loc[dfTrial.participant==subj].values =='gamble'
-        nChoseGamble[iBatch][iSubj] = np.sum(isGamble[:nGamble])
-
-    # Plot results
-    ratingLabels[iBatch] = '%s (n = %d)'%(batchLabels[iBatch],nSubj)
-#    print(dfTrialMean.shape[0])
-
-    plt.sca(ax[0]) #plt.subplot(311)
-    dfTrialMean.time = dfTrialMean.time - dfTrialMean.time[0]
-    dfRatingMean.time = dfRatingMean.time - dfRatingMean.time[0]
-
-    pmd.PlotMmiRatings(dfTrialMean,dfRatingMean,interp='linear',autoYlim=True,doBlockLines=False,ratingLabel=ratingLabels[iBatch])
-#    plt.plot(dfRatingMean.time - dfRatingMean.time[0],dfRatingMean.rating,'.-',label=ratingLabels[iBatch])
-    plt.xlabel('Time from block start (s)')
-    plt.ylabel('Mood (0-1)')
-    plt.legend(loc=4)
-    plt.title('')
-    plt.xlim(xlim)
-    plt.grid(True,zorder=-3)
-
-    # plot fraction gambling on each trial
-    plt.sca(ax[1]) #plt.subplot(312)
-    plt.plot(dfTrialMean.time,dfTrialMean.gambleFrac,'.-',label=batchLabels[iBatch])
-    # add 95% confidence interval patch
-    plt.fill_between(dfTrialMean.time,dfTrialMean.gambleFracCIMin,
-                             dfTrialMean.gambleFracCIMax,alpha=0.5,zorder=0)
-    # annotate plot
-    plt.xlabel('Time from block start (s)')
-    plt.ylabel('Fraction choosing to gamble')
-    plt.legend(loc=4)
-    plt.xlim(xlim)
-    plt.grid(True,zorder=-3)
-
-    plt.sca(ax[2]) # plt.subplot(313)
-    meanGamble[iBatch] = np.mean(dfTrialMean.gambleFrac[:nGamble])
-    plt.bar(iBatch,meanGamble[iBatch],zorder=2)
-    steGamble[iBatch] = np.std(1.0*nChoseGamble[iBatch]/nGamble)/np.sqrt(nSubj)
-    plt.plot([iBatch,iBatch],[meanGamble[iBatch]-steGamble[iBatch],
-              meanGamble[iBatch]+steGamble[iBatch]],'k-')
-    plt.ylabel('Fraction choosing to gamble\nin first %d trials'%nGamble)
-    plt.ylim(bar_ylim)
-    plt.grid(True,zorder=-3)
-
-
-# Add stars for stats tests
-p=np.zeros((3,3))
-stat=np.zeros((3,3))
-dof=np.zeros((3,3))
-print('=== Ranksum tests on subject-wise gamble proportions: ===')
-nComparisons = 3;
-cutoff = 0.05/nComparisons;
-isAnyStar = False
-for i in range(2):
-    for j in range(i+1,3):
-        stat[i,j] ,p[i,j] = stats.ranksums(nChoseGamble[i],nChoseGamble[j])
-        p[j,i] = p[i,j]
-        stat[j,i] = stat[i,j]
-        dof[j,i] = dof[i,j] = len(nChoseGamble[i]) + len(nChoseGamble[j]) - 2
-        if p[i,j]<cutoff:
-            yMax = bar_ylim[1]
-            yStars = [yMax-0.07+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.07+(i+j)*.04]
-            plt.plot([i,i,j,j],yStars ,'k-')
-            if isAnyStar:
-                plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*')
-            else:
-                plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*',label='p < 0.05/%d'%nComparisons)
-                isAnyStar = True
-        print('%s vs. %s: stat=%.3g, dof=%.3g, p=%.3g'%(batchLabels[i],batchLabels[j],stat[i,j],dof[i,j], p[i,j]))
-
-#plt.legend(loc='lower left')
-plt.xticks(np.arange(len(batchNames)),batchLabels)
-plt.ylim([0.6,1])
-plt.tight_layout(rect=[0,0,1,0.95])
-figTitle='Opening rest period is associated with reduced gambling choices'
-plt.suptitle('%s'%figTitle)
-outFile = '%s/RestDurationComparison_%s.png'%(outFigDir,groupName)
-print('Saving figure as %s...'%outFile)
-plt.savefig(outFile)
-print('Done!')
+batchNames = ['NoOpeningRest','AnyOpeningRest'];
+groupName = 'No-Any'
+batchLabels = ['No rest','Any rest']
+iGambleBlock = [0,1] # which was first gambling block in each batch
+nGamble = 4 # number of initial trials to average gambleFrac in
+CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,iGambleBlock,nGamble=4)
 
 
 # %% Plot m0 against life happiness score
