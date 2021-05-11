@@ -1254,9 +1254,10 @@ if have_gbe:
         print('beta_T vs. number of plays:')
         rs,ps = stats.spearmanr(dfParams.beta_T,dfParams.noPlays)
         print('rs=%.3g, ps=%.3g'%(rs,ps))
-        _,p = stats.ranksums(dfParams.loc[dfParams.noPlays==1,'beta_T'],
+        stat,p = stats.ranksums(dfParams.loc[dfParams.noPlays==1,'beta_T'],
                              dfParams.loc[dfParams.noPlays>1,'beta_T'])
-        print('ranksum: p=%.3g'%p)
+        dof = len(dfParams.loc[dfParams.noPlays==1,'beta_T']) + len(dfParams.loc[dfParams.noPlays>1,'beta_T']) - 2
+        print(f'ranksum: stat = {stat:.3g}, dof = {dof}, p={p:.3g}')
 
         plt.figure(692);
         plt.clf();
