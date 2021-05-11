@@ -235,7 +235,10 @@ for batchNames in [['Numbers','Recovery(Instructed)1'],
     isIn1 = [x in cohort1 for x in dfCoeffs.Subject]
 
     T,p = stats.ttest_ind(dfCoeffs.loc[isIn0,'Time'],dfCoeffs.loc[isIn1,'Time'])
-    print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, p=%.3g'%(batchNames[0],np.sum(isIn0),batchNames[1],np.sum(isIn1),T,p))
+    n0 = np.sum(isIn0)
+    n1 = np.sum(isIn1)
+    dof = n0 + n1 - 2
+    print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, dof=%.3g p=%.3g'%(batchNames[0],n0,batchNames[1],n1,T,dof,p))
 
 if have_gbe:
     for is_late in [False,True]:
