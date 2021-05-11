@@ -33,7 +33,7 @@ have_gbe = True
 
 # %% Print Cohen's D for original cohort and others
 first_and_lasts = []
-for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run1']:
+for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run1','AllOpeningRestAndRandom']:
 
     dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName), index_col=0)
     #dfMeanRating = pmd.GetMeanRatings(dfRating.loc[dfRating.iBlock==0,:],nRatings=-1,participantLabel='mean')
