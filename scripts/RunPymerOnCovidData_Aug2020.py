@@ -368,7 +368,7 @@ for outName in cohortsToRun:
 
             # Get fixed FX output
             dfFixef = model.fixef
-            1/0
+            
             # print fit values for a few subjects
             try:
                 print(dfFixef.head(5))
