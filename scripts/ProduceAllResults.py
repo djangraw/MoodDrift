@@ -248,10 +248,12 @@ if have_gbe:
     # %% Plot penalty tuning
 
     for suffix in ['_tune-Oct2020', '_tune-noBetaT']:
+        print(f'=== Pytorch Penalty Tuning: {suffix}')
         ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
     # %% Penalty tuning excluding first rating  (12/19/20)
     for suffix in ['_tune-late','_tune-late-noBetaT']:
+        print(f'=== Pytorch Penalty Tuning: {suffix}')
         ppt.PlotPenaltyTuning(suffix,dataDir=pytorchDir,outFigDir=outFigDir)
 
 
@@ -1007,7 +1009,6 @@ dfCoeffs = pd.read_csv(inFile)
 # get slope for each participant
 coeffs = np.zeros_like(nChoseGamble)
 for iSubj,subj in enumerate(participants):
-    print(subj)
     coeffs[iSubj] = dfCoeffs.loc[np.abs(dfCoeffs.Subject)==subj,'Time'].values[0] # abs because we made NIMH participant numbers negative
 # do stats test
 rs,ps = stats.spearmanr(coeffs,nChoseGamble)
@@ -1206,7 +1207,7 @@ if have_gbe:
         stat,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
         dof = len(dfPymerCoeffs_online['Time']) + len(best_pars['beta_T']) - 2
         print(f'pymer online vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
-        
+
         stat,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
         dof = len(dfPymerCoeffs_app['Time']) + len(best_pars['beta_T']) - 2
         print(f'pymer app vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
