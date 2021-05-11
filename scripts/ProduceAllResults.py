@@ -1358,3 +1358,13 @@ outFile = '%s/PymerCoeffJointPlot_%s-%s.png'%(outFigDir,batchName,stage)
 print('Saving figure as %s...'%outFile)
 plt.savefig(outFile)
 print('Done!')
+
+# %% Test for multitasking
+batchName = 'AllOpeningRestAndRandom'
+# load ratings
+dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName), index_col=0)
+# check which trials were locked in or moved.
+isLockedIn = pd.notna(dfRating.RT).values
+isMoved = dfRating.rating!=0.5
+pctLockedOrMoved = np.mean(isLockedIn | isMoved) * 100
+print(f'Batch {batchName}: Mood ratings were locked in or moved on {pctLockedOrMoved}% of trials.')
