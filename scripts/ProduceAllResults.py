@@ -786,16 +786,18 @@ print('Done!')
 m = dfFits.loc['isAge16to18TRUE','Estimate']*100
 se = dfFits.loc['isAge16to18TRUE','SE']*100
 T = dfFits.loc['isAge16to18TRUE','T-stat']
+dof = dfFits.loc['isAge16to18TRUE','DF']
 p = dfFits.loc['isAge16to18TRUE','P-val']
 print('Age 16-18 x intercept in LME:')
-print('%.3g +/- %.3g %% mood, T=%.3g, p=%.3g'%(m,se,T,p))
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
 m = dfFits.loc['Time:isAge16to18TRUE','Estimate']*100
 se = dfFits.loc['Time:isAge16to18TRUE','SE']*100
 T = dfFits.loc['Time:isAge16to18TRUE','T-stat']
+dof = dfFits.loc['Time:isAge16to18TRUE','DF']
 p = dfFits.loc['Time:isAge16to18TRUE','P-val']
 print('Age 16-18 x slope in LME:')
-print('%.3g +/- %.3g %% mood, T=%.3g, p=%.3g'%(m,se,T,p))
+print('%.3g +/- %.3g %% mood, T=%.3g, dof=%0.3g, p=%.3g'%(m,se,T,dof,p))
 
 # %% Link to age in adolescents
 PlotAgeVsCoeffs('AllOpeningRestAndRandom')
