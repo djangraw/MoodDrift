@@ -427,15 +427,20 @@ if have_gbe:
     plt.ylabel('Percent of participants')
     plt.legend()
     plt.title('LME mood slope parameter histograms')
-
+    online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
     # Save figure
     #outFile = '%s/Mmi-Vs-Gbe-Slopes.png'%outFigDirƒ%%
     outFile = '%s/LmeSlopeHistograms_OnlineVsApp_%s_2grp.png'%(outFigDir,batchName_app)
     print('Saving figure as %s...'%outFile)
     plt.savefig(outFile)
     print('Done!')
-
-
+    online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
+    app_lme_median = np.percentile(dfPymerCoeffs_app['Time']*100.0, 50)
+    lme_dif = online_lme_median - app_lme_median
+    app_pytorch_median = np.percentile(best_pars.beta_T * 100.0, 50)
+    lme_app_dif = online_lme_median - app_pytorch_median
+    print(f'Online LME median slope = {online_lme_median}, app lme median = {app_lme_median}, dif = {lme_dif}')
+    print(f'Online LME median slope = {online_lme_median}, app pyTorch median = {app_pytorch_median}, dif = {lme_app_dif}')
 
 # %% Get impacts of fracRiskScore from the LME results table
 batchName = 'AllOpeningRestAndRandom'
