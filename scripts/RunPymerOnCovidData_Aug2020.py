@@ -355,7 +355,8 @@ for outName in cohortsToRun:
             
             # Fit it
             print('=== Fitting Model... ===')
-            dfFit = model.fit()
+            _ = model.fit()
+            dfFit = model.coefs
             print(dfFit)
 
             # Print model AIC
@@ -367,7 +368,7 @@ for outName in cohortsToRun:
 
             # Get fixed FX output
             dfFixef = model.fixef
-
+            1/0
             # print fit values for a few subjects
             try:
                 print(dfFixef.head(5))
