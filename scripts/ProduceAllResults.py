@@ -235,7 +235,10 @@ for batchNames in [['Numbers','Recovery(Instructed)1'],
     isIn1 = [x in cohort1 for x in dfCoeffs.Subject]
 
     T,p = stats.ttest_ind(dfCoeffs.loc[isIn0,'Time'],dfCoeffs.loc[isIn1,'Time'])
-    print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, p=%.3g'%(batchNames[0],np.sum(isIn0),batchNames[1],np.sum(isIn1),T,p))
+    n0 = np.sum(isIn0)
+    n1 = np.sum(isIn1)
+    dof = n0 + n1 - 2
+    print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, dof=%.3g p=%.3g'%(batchNames[0],n0,batchNames[1],n1,T,dof,p))
 
 if have_gbe:
     for is_late in [False,True]:
@@ -424,15 +427,20 @@ if have_gbe:
     plt.ylabel('Percent of participants')
     plt.legend()
     plt.title('LME mood slope parameter histograms')
-
+    online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
     # Save figure
     #outFile = '%s/Mmi-Vs-Gbe-Slopes.png'%outFigDirƒ%%
     outFile = '%s/LmeSlopeHistograms_OnlineVsApp_%s_2grp.png'%(outFigDir,batchName_app)
     print('Saving figure as %s...'%outFile)
     plt.savefig(outFile)
     print('Done!')
-
-
+    online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
+    app_lme_median = np.percentile(dfPymerCoeffs_app['Time']*100.0, 50)
+    lme_dif = online_lme_median - app_lme_median
+    app_pytorch_median = np.percentile(best_pars.beta_T * 100.0, 50)
+    lme_app_dif = online_lme_median - app_pytorch_median
+    print(f'Online LME median slope = {online_lme_median}, app lme median = {app_lme_median}, dif = {lme_dif}')
+    print(f'Online LME median slope = {online_lme_median}, app pyTorch median = {app_pytorch_median}, dif = {lme_app_dif}')
 
 # %% Get impacts of fracRiskScore from the LME results table
 batchName = 'AllOpeningRestAndRandom'
@@ -1191,12 +1199,17 @@ if have_gbe:
         print('median pymer online slope: %.3g'%np.median(dfPymerCoeffs_online['Time']))
         print('median pymer app slope: %.3g'%np.median(dfPymerCoeffs_app['Time']))
         print('median comp. model app slope: %.3g'%np.median(best_pars['beta_T']))
-        _,p = stats.ranksums(dfPymerCoeffs_online['Time'],dfPymerCoeffs_app['Time'])
-        print('pymer online vs. pymer app: ranksum p=%.3g'%p)
-        _,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
-        print('pymer online vs. comp. model app: ranksum p=%.3g'%p)
-        _,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
-        print('pymer app vs. comp. model app: ranksum p=%.3g'%p)
+        stat,p = stats.ranksums(dfPymerCoeffs_online['Time'],dfPymerCoeffs_app['Time'])
+        dof = len(dfPymerCoeffs_online['Time']) + len(dfPymerCoeffs_app['Time']) - 2
+        print(f'pymer online vs. pymer app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
+
+        stat,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
+        dof = len(dfPymerCoeffs_online['Time']) + len(best_pars['beta_T']) - 2
+        print(f'pymer online vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
+        
+        stat,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
+        dof = len(dfPymerCoeffs_app['Time']) + len(best_pars['beta_T']) - 2
+        print(f'pymer app vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
 
         print('pymer online: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_online['Time']<0)*100))
         print('pymer app: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_app['Time']<0)*100))
@@ -1290,9 +1303,10 @@ if have_gbe:
         print('beta_T vs. number of plays:')
         rs,ps = stats.spearmanr(dfParams.beta_T,dfParams.noPlays)
         print('rs=%.3g, ps=%.3g'%(rs,ps))
-        _,p = stats.ranksums(dfParams.loc[dfParams.noPlays==1,'beta_T'],
+        stat,p = stats.ranksums(dfParams.loc[dfParams.noPlays==1,'beta_T'],
                              dfParams.loc[dfParams.noPlays>1,'beta_T'])
-        print('ranksum: p=%.3g'%p)
+        dof = len(dfParams.loc[dfParams.noPlays==1,'beta_T']) + len(dfParams.loc[dfParams.noPlays>1,'beta_T']) - 2
+        print(f'ranksum: stat = {stat:.3g}, dof = {dof}, p={p:.3g}')
 
         plt.figure(692);
         plt.clf();
