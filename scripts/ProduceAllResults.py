@@ -861,6 +861,7 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
     xlim=[0,90]
     bar_ylim=[0.6,0.92]
     nChoseGamble = [0]* len(batchNames)
+    participants = [0]* len(batchNames)
     #plt.rcParams.update({'font.size': 6})
     plt.close(412)
     plt.figure(412,figsize=(6,7.5),dpi=180, facecolor='w', edgecolor='k');
@@ -882,11 +883,12 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
         # Get averages
         dfRatingMean = pmd.GetMeanRatings(dfRating,minNRatings)
         dfTrialMean = pmd.GetMeanTrials(dfTrial,minNTrials)
-        nSubj = len(np.unique(dfTrial.participant))
+        participants[iBatch] = np.unique(dfTrial.participant)
+        nSubj = len(participants[iBatch])
 
         # Get average gambleFrac in first nGamble trials for each subject
         nChoseGamble[iBatch] = np.zeros(nSubj)
-        for iSubj,subj in enumerate(np.unique(dfTrial.participant)):
+        for iSubj,subj in enumerate(participants[iBatch]):
             isGamble = dfTrial.loc[dfTrial.participant==subj].values =='gamble'
             nChoseGamble[iBatch][iSubj] = np.sum(isGamble[:nGamble])
 
@@ -968,7 +970,9 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
     plt.savefig(outFile)
     print('Done!')
 
+    return participants,nChoseGamble
 
+# Compare no opening rest, short opening rest, and long opening rest
 batchNames = ['NoOpeningRest','ShortOpeningRest','LongOpeningRest'];
 groupName = 'No-Short-Long'
 batchLabels = ['No rest','350-450 s rest','500-700 s rest']
@@ -976,13 +980,30 @@ iGambleBlock = [0,1,1] # which was first gambling block in each batch
 nGamble = 4 # number of initial trials to average gambleFrac in
 CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,iGambleBlock,nGamble=4)
 
+# Compare no opening rest and any opening rest
 batchNames = ['NoOpeningRest','AnyOpeningRest'];
 groupName = 'No-Any'
 batchLabels = ['No rest','Any rest']
 iGambleBlock = [0,1] # which was first gambling block in each batch
 nGamble = 4 # number of initial trials to average gambleFrac in
-CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,iGambleBlock,nGamble=4)
+participants, nChoseGamble = CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,iGambleBlock,nGamble=4)
 
+# Compare
+participants = participants[1]
+nChoseGamble = nChoseGamble[1]
+batchName = 'AllOpeningRestAndRandom' # should include any participants in AnyOpeningRest
+stage = 'full'
+inFile = '%s/Mmi-%s_PymerCoeffs-%s.csv'%(dataDir,batchName,stage)
+print('Loading pymer fits from %s...'%inFile)
+dfCoeffs = pd.read_csv(inFile)
+# get slope for each participant
+coeffs = np.zeros_like(nChoseGamble)
+for iSubj,subj in enumerate(participants):
+    print(subj)
+    coeffs[iSubj] = dfCoeffs.loc[np.abs(dfCoeffs.Subject)==subj,'Time'].values[0] # abs because we made NIMH participant numbers negative
+# do stats test
+rs,ps = stats.spearmanr(coeffs,nChoseGamble)
+print(f'{batchName} nChoseGamble vs. LME mood slope: r_s={rs:.3g}, p_s={ps:.3g}')
 
 # %% Plot m0 against life happiness score
 
