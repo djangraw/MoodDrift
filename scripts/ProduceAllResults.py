@@ -1167,12 +1167,17 @@ if have_gbe:
         print('median pymer online slope: %.3g'%np.median(dfPymerCoeffs_online['Time']))
         print('median pymer app slope: %.3g'%np.median(dfPymerCoeffs_app['Time']))
         print('median comp. model app slope: %.3g'%np.median(best_pars['beta_T']))
-        _,p = stats.ranksums(dfPymerCoeffs_online['Time'],dfPymerCoeffs_app['Time'])
-        print('pymer online vs. pymer app: ranksum p=%.3g'%p)
-        _,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
-        print('pymer online vs. comp. model app: ranksum p=%.3g'%p)
-        _,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
-        print('pymer app vs. comp. model app: ranksum p=%.3g'%p)
+        stat,p = stats.ranksums(dfPymerCoeffs_online['Time'],dfPymerCoeffs_app['Time'])
+        dof = len(dfPymerCoeffs_online['Time']) + len(dfPymerCoeffs_app['Time']) - 2
+        print(f'pymer online vs. pymer app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
+
+        stat,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
+        dof = len(dfPymerCoeffs_online['Time']) + len(best_pars['beta_T']) - 2
+        print(f'pymer online vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
+        
+        stat,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
+        dof = len(dfPymerCoeffs_app['Time']) + len(best_pars['beta_T']) - 2
+        print(f'pymer app vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
 
         print('pymer online: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_online['Time']<0)*100))
         print('pymer app: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_app['Time']<0)*100))
