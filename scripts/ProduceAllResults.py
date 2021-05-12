@@ -1390,3 +1390,13 @@ isLockedIn = pd.notna(dfRating.RT).values
 isMoved = dfRating.rating!=0.5
 pctLockedOrMoved = np.mean(isLockedIn | isMoved) * 100
 print(f'Batch {batchName}: Mood ratings were locked in or moved on {pctLockedOrMoved}% of trials.')
+
+
+# get cohen's D based on https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4324017/
+
+dat = pd.read_csv('PassageOfTimeDysphoria/Data/OutFiles/Mmi-AllOpeningRestAndRandom_Ratings.csv', index_col=0)
+fits = pd.read_csv('PassageOfTimeDysphoria/Data/OutFiles/Mmi-AllOpeningRestAndRandom_pymerFit-full.csv', index_col=0)
+mean_duration = (dat.loc[dat.iBlock == 0].groupby('participant')['time'].max().mean()/60)
+std_final_rating = dat.loc[(dat.iBlock == 0)].groupby('participant').rating.last().std()
+print(f"Estimates for the effect size of the full LME for all online participants (AllOpeningRestAndRandom_Ratings) at the mean duration ({mean_duration:0.3g} minutes).")
+print((fits.loc['Time', ['Estimate', '2.5_ci', '97.5_ci']] * mean_duration)/std_final_rating)
