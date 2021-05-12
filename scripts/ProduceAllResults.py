@@ -242,6 +242,7 @@ for batchNames in [['Numbers','Recovery(Instructed)1'],
 
 if have_gbe:
     for is_late in [False,True]:
+        print(f'=== Pytorch Penalty Tuning: is_late={is_late}')
         # %% Pytorch: including beta_T improves fit to testing data
         CalculatePytorchModelError(IS_EXPLORE, IS_LATE=is_late, dataDir = dataDir, pytorchDir = pytorchDir, outFigDir = outFigDir)
 
@@ -382,18 +383,22 @@ if have_gbe:
     print('Loading best parameters from %s...'%inFile)
     best_pars = pd.read_csv(inFile);
 
-    # Load LME results
-    batchName = 'AllOpeningRestAndRandom'
-    stage = 'full'
-    inFile = '%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName,stage)
-    print('Loading pymer fits from %s...'%inFile)
-    dfCoeffs = pd.read_csv(inFile)
-    print('Done!')
+    for stage in ['full','late']:
+        print('=== STAGE = %s ==='%stage)
+        # Load LME results
+        batchName = 'AllOpeningRestAndRandom'
+        inFile = '%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName,stage)
+        print('Loading pymer fits from %s...'%inFile)
+        dfCoeffs = pd.read_csv(inFile)
+        print('Done!')
 
-    # Print ranksum comparison
+        # Print ranksum comparison
 
-    stat,p = stats.ranksums(dfCoeffs.Time, best_pars.beta_T)
-    print('Ranksum of LME time coeff vs. PyTorch beta_T (%s): p=%.3g'%(suffix,p))
+        stat,p = stats.ranksums(dfCoeffs.Time, best_pars.beta_T)
+        nonline = len(dfCoeffs.Time)
+        napp = len(best_pars.beta_T)
+        dof = nonline + napp - 2
+        print(f'Ranksum of LME time coeff for online ({batchName}) vs. PyTorch beta_T for mobile app ({suffix}): nonline={nonline}, napp={napp}, ndof={dof}, stat={stat:.3g}, p={p:.3g}')
 
 
     # %% Plot histograms of LME slopes from online and mobile app data
