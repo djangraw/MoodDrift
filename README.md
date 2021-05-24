@@ -30,7 +30,7 @@ After downloading and unzipping the dataset from the above repository, locate th
 If you need an environment for running the pytorch models, please open an issue and we'll work on adding this.
 
 ## Usage
-Data can be downloaded from the above locations to the Data folder of this repository. The scripts described below should then be run from the scripts folder (e.g. `cd scripts;python ImportMmiData_May2020.py`). Processed data files will be saved to the Data/OutFiles folder. Figures will be saved to the Figures folder.
+Data can be downloaded from the above locations to the Data folder of this repository. The scripts described below should then be run from the scripts folder (e.g. `cd scripts;python ImportMmiData_May2020.py`). Processed data files will be saved to the `Data/OutFiles` folder. Figures will be saved to the `Figures` folder.
 We have broken down processing into 3 processing stages, outlined below.
 
 ### Preprocessing
@@ -44,7 +44,7 @@ Converts raw data into preprocessed files that combine across cohorts (or "batch
 
 
 ### Model Fitting
-Fits the large-scale linear mixed effects (LME) model and the computational model described in the paper. The computational model scripts are computationally expensive and best run on a high-performance computing cluster. Run the following:
+Fits the large-scale linear mixed effects (LME) model and the computational model described in the paper. The computational model scripts are computationally expensive and best run on a high-performance computing cluster. These scripts require considerable compute resources and `pytorch` which is not include in the conda environment built above. All outputs of these scripts are included in this repository thus they may be skipped if you just want to reproduce the figures. Executing the scripts in this section may require experience with `pytorch` and additional assistance from the authors :
 - [RunPymerOnCovidData_Aug2020.py](scripts/RunPymerOnCovidData_Aug2020.py) to run the LME model. Must be run from a python environment with pymer4 installed.
 - [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to tune the computational model's hyperparameters. Must have pytorch installed.
 - [Tune_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term.
