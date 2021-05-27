@@ -4,30 +4,33 @@ This repository contains the scripts necessary to preprocess, analyze, print and
 
 > Jangraw, Keren, Bedder, Rutledge, Pereira et al. (2021). "Passage-of-Time Dysphoria: A Highly Replicable, Gradual Decline in Subjective Mood Observed During Rest and Simple Tasks." BioRxiv.
 
+
+## Dependencies
+
+Code for preprocessing, fitting mixed effects models, and analysis and plotting of results will work from a conda environment. To get started, run the following commands:
+```
+conda create -p potdys3 -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.3 r-psych=2.1.3 xlrd=2.0.1
+conda activate ./potdys3
+git clone https://github.com/djangraw/PassageOfTimeDysphoria.git
+cd PassageOfTimeDysphoria
+pip install -e .
+```
+
 ## Datasets
 
 Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/xbc6u/.
-After downloading and unzipping this file, the contents of the PassageOfTimeDysphoria_Data folder should be moved to the Data folder of this repository.
+After downloading and unzipping this file, the contents of the `PassageOfTimeDysphoria_Data` folder should be moved to the `Data` folder of this repository.
 
 Data from the mobile app participants described in the paper are a subset of the dataset shared by Robb Rutledge's laboratory, now available at:
 
 > Rutledge, Robb B. (2021), Risky decision and happiness task: The Great Brain Experiment smartphone app, Dryad, Dataset, https://doi.org/10.5061/dryad.prr4xgxkk
 
-After downloading the dataset from the above repository, the file Rutledge_GBE_risk_data.mat should be placed in the Data/PilotData folder before running the scripts described below.
-
-## Dependencies
-
-Code for preprocessing, fitting mixed effects models, and analysis and plotting of results will work from a conda environment created with this command:
-```
-conda create -p potdys3 -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.3 r-psych=2.1.3 xlrd=2.0.1
-conda activate ./potdys3
-pip install -e .
-```
+After downloading and unzipping the dataset from the above repository, locate the file named `Rutledge_GBE_risk_data.mat` and copy it to the `PassageOfTimeDysphoria/Data/PilotData` folder before running the scripts described below.
 
 If you need an environment for running the pytorch models, please open an issue and we'll work on adding this.
 
 ## Usage
-Data can be downloaded from the above locations to the Data folder of this repository. The scripts described below should then be run from the scripts folder. Processed data files will be saved to the Data/OutFiles folder. Figures will be saved to the Figures folder.
+Data can be downloaded from the above locations to the Data folder of this repository. The scripts described below should then be run from the scripts folder (e.g. `cd scripts;python ImportMmiData_May2020.py`). Processed data files will be saved to the `Data/OutFiles` folder. Figures will be saved to the `Figures` folder.
 We have broken down processing into 3 processing stages, outlined below.
 
 ### Preprocessing
@@ -38,8 +41,10 @@ Converts raw data into preprocessed files that combine across cohorts (or "batch
 - [LoadRutledgeGbeData.py](scripts/LoadRutledgeGbeData.py) to import mobile app cohorts
 - [MakePytorchInputTable.py](scripts/MakePytorchInputTable.py) to format data for computational model fitting.
 
+
+
 ### Model Fitting
-Fits the large-scale linear mixed effects (LME) model and the computational model described in the paper. The computational model scripts are computationally expensive and best run on a high-performance computing cluster. Run the following:
+Fits the large-scale linear mixed effects (LME) model and the computational model described in the paper. The computational model scripts are computationally expensive and best run on a high-performance computing cluster. These scripts require considerable compute resources and `pytorch` which is not include in the conda environment built above. All outputs of these scripts are included in this repository thus they may be skipped if you just want to reproduce the figures. Executing the scripts in this section may require experience with `pytorch` and additional assistance from the authors :
 - [RunPymerOnCovidData_Aug2020.py](scripts/RunPymerOnCovidData_Aug2020.py) to run the LME model. Must be run from a python environment with pymer4 installed.
 - [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to tune the computational model's hyperparameters. Must have pytorch installed.
 - [Tune_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term.
