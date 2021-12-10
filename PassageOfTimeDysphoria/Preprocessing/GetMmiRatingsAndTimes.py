@@ -8,6 +8,8 @@ Created on Tue Apr 21 09:05:54 2020
 @author: jangrawdc
 - Updated 6/2/20 by DJ to fill in missing responses in Numbers version
 - Updated 4/2/21 by DJ - changed Numbers doRatings excel path for shared code structure.
+- Updated 10/29/21 by DJ - added dfProbe output for MW, boredom, and activities sliders.
+- Updated 12/10/21 by DJ - added block column to dfProbe
 """
 
 # Import packages
@@ -112,6 +114,22 @@ def GetMmiRatingsAndTimes(inFile):
     dfTrial = pd.DataFrame(np.ones((nTrials,len(cols)))*np.nan,columns=cols)
     dfTrial['participant'] = participant
     dfTrial['isRatingTrial'] = False;
+    # set up dfProbe (answers to MW, boredom, or activity probe questions)
+    iProbeRating = -1
+    isMWPresent = ('MWSlider_before.response' in dfIn.columns)
+    isBoredomPresent = ('rateBoredomSlider.response' in dfIn.columns)
+    isActivityPresent = ('activitiesSlider.response' in dfIn.columns)
+    probeCols = ['participant','iBlock','iProbe','time','question','rating','RT']
+    if isMWPresent:
+        nProbeRatings = np.sum(pd.notna(dfIn.loc[:,'MWSlider_before.response'])) + np.sum(pd.notna(dfIn.loc[:,'MWSlider_after.response']))
+    elif isBoredomPresent:
+        nProbeRatings = np.sum(pd.notna(dfIn.loc[:,'rateBoredomSlider.response']))
+    elif isActivityPresent:
+        nProbeRatings = np.sum(pd.notna(dfIn.loc[:,'activitiesSlider.response']))
+    else:
+        nProbeRatings = 0
+    dfProbe = pd.DataFrame(np.zeros((nProbeRatings,len(probeCols))),columns=probeCols)
+    dfProbe['participant'] = participant
 
     # Walk down lines of input table
     for iLine in range(nLines):
@@ -140,6 +158,68 @@ def GetMmiRatingsAndTimes(inFile):
             dfRating.loc[iRating,'time'] = tNow
             dfRating.loc[iRating,'iBlock'] = iBlock
             dfRating.loc[iRating,'iTrial'] = iTrial
+
+        # Add MW responses
+        if isMWPresent:
+            if pd.notna(dfIn.loc[iLine,'MWSlider_before.response']):
+                # increment counters
+                iProbeRating = iProbeRating + 1
+                # Update times
+                RT = dfIn.loc[iLine,'MWResp_before.rt']
+                tNow = tNow + RT
+                # Add info to table
+                dfProbe.loc[iProbeRating,'iBlock'] = iBlock
+                dfProbe.loc[iProbeRating,'iProbe'] = iProbeRating
+                dfProbe.loc[iProbeRating,'rating'] = dfIn.loc[iLine,'MWSlider_before.response']
+                dfProbe.loc[iProbeRating,'RT'] = RT
+                dfProbe.loc[iProbeRating,'time'] = tNow
+                dfProbe.loc[iProbeRating,'question'] = dfIn.loc[iLine,'questionMW']
+            elif pd.notna(dfIn.loc[iLine,'MWSlider_after.response']):
+                # increment counters
+                iProbeRating = iProbeRating + 1
+                # Update times
+                RT = dfIn.loc[iLine,'MWResp_after.rt']
+                tNow = tNow + RT
+                # Add info to table
+                dfProbe.loc[iProbeRating,'iBlock'] = iBlock
+                dfProbe.loc[iProbeRating,'iProbe'] = iProbeRating
+                dfProbe.loc[iProbeRating,'rating'] = dfIn.loc[iLine,'MWSlider_after.response']
+                dfProbe.loc[iProbeRating,'RT'] = RT
+                dfProbe.loc[iProbeRating,'time'] = tNow
+                dfProbe.loc[iProbeRating,'question'] = dfIn.loc[iLine,'questionMW']
+        elif isBoredomPresent and pd.notna(dfIn.loc[iLine,'rateBoredomSlider.response']):
+            # increment counters
+            iProbeRating = iProbeRating + 1
+            # Update times
+            RT = dfIn.loc[iLine,'rateBoredomSlider.rt']
+            tNow = tNow + RT
+            # Add info to table
+            dfProbe.loc[iProbeRating,'iBlock'] = iBlock
+            dfProbe.loc[iProbeRating,'iProbe'] = iProbeRating
+            dfProbe.loc[iProbeRating,'rating'] = dfIn.loc[iLine,'rateBoredomSlider.response']
+            dfProbe.loc[iProbeRating,'RT'] = RT
+            dfProbe.loc[iProbeRating,'time'] = tNow
+            dfProbe.loc[iProbeRating,'question'] = dfIn.loc[iLine,'statement']
+        elif isActivityPresent and pd.notna(dfIn.loc[iLine,'activities_resp.rt']):
+            # Update times
+            actDur = dfIn.loc[0,'actDur'] # typically 420 s
+            RT = dfIn.loc[iLine,'activities_resp.rt']
+            print(f'Adding {actDur}s activities block and {RT}s RT to current time...')
+            tNow = tNow + actDur + RT
+            
+        elif isActivityPresent and pd.notna(dfIn.loc[iLine,'activitiesSlider.response']):
+            # increment counters
+            iProbeRating = iProbeRating + 1
+            # Update times
+            RT = dfIn.loc[iLine,'activitiesSlider.rt']
+            tNow = tNow + RT
+            # Add info to table
+            dfProbe.loc[iProbeRating,'iBlock'] = iBlock
+            dfProbe.loc[iProbeRating,'iProbe'] = iProbeRating
+            dfProbe.loc[iProbeRating,'rating'] = dfIn.loc[iLine,'activitiesSlider.response']
+            dfProbe.loc[iProbeRating,'RT'] = RT
+            dfProbe.loc[iProbeRating,'time'] = tNow
+            dfProbe.loc[iProbeRating,'question'] = dfIn.loc[iLine,'questionAct']
 
         # Trial (with or without mood rating)
         if pd.notna(dfIn.loc[iLine,'choice']):
@@ -215,4 +295,4 @@ def GetMmiRatingsAndTimes(inFile):
 
 
     # Return results
-    return dfTrial,dfRating,dfLifeHappy
+    return dfTrial,dfRating,dfLifeHappy,dfProbe

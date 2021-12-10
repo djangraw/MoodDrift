@@ -4,6 +4,8 @@
 Created on Tue Apr 21 13:49:22 2020
 
 @author: jangrawdc
+-Updated 12/3/21 by DJ - detected & accommodated new potd-survey version w/ MW & boredom scales instead of COVID.
+-Updated 12/10/21 by DJ - fixed indexing
 """
 import pandas as pd
 import numpy as np
@@ -143,17 +145,32 @@ def ImportMmiSurveyData(inFile, mTurkID=np.nan, demoDataFile='OutFiles/COVID01_D
         dfQandA.loc[iLine,'Answer'] = answer;
         dfQandA.loc[iLine,'RT'] = RT
 
-
-    # Manually categorize
-    dfQandA['Survey'] = 'BLANK'
-    dfQandA.loc[0:4,'Survey'] = 'DEMOG'
-    dfQandA.loc[4:24,'Survey'] = 'CESD'
-    dfQandA.loc[28:41,'Survey'] = 'SHAPS'
-    dfQandA.loc[[24,25,42],'Survey'] = 'CATCH'
-    dfQandA.loc[46:,'Survey'] = 'COVID'
-    # fill in catch answers manually
-    dfQandA['iCatchAnswer'] = np.nan
-    dfQandA.loc[[24,25,42],'iCatchAnswer'] = [2,1,3]
+    # Manually categorize in new "potd-survey" version
+    if 'potd-survey' in inFile:
+        print('New potd-survey version detected.')
+        # Manually categorize
+        dfQandA['Survey'] = 'BLANK'
+        dfQandA.loc[0:4,'Survey'] = 'DEMOG'
+        dfQandA.loc[4:24,'Survey'] = 'CESD'
+        dfQandA.loc[28:41,'Survey'] = 'SHAPS'
+        dfQandA.loc[[24,25,42],'Survey'] = 'CATCH'
+        dfQandA.loc[46:50,'Survey'] = 'MW'
+        dfQandA.loc[52:55,'Survey'] = 'BORED'
+        dfQandA.loc[58:61,'Survey'] = 'BORED'
+        # fill in catch answers manually
+        dfQandA['iCatchAnswer'] = np.nan
+        dfQandA.loc[[24,25,42],'iCatchAnswer'] = [2,1,3]
+    else:
+        # Manually categorize
+        dfQandA['Survey'] = 'BLANK'
+        dfQandA.loc[0:4,'Survey'] = 'DEMOG'
+        dfQandA.loc[4:24,'Survey'] = 'CESD'
+        dfQandA.loc[28:41,'Survey'] = 'SHAPS'
+        dfQandA.loc[[24,25,42],'Survey'] = 'CATCH'
+        dfQandA.loc[46:,'Survey'] = 'COVID'
+        # fill in catch answers manually
+        dfQandA['iCatchAnswer'] = np.nan
+        dfQandA.loc[[24,25,42],'iCatchAnswer'] = [2,1,3]
 
     for survey in np.unique(dfQandA.Survey):
         dfQandA.loc[dfQandA.Survey==survey,'SurveyQNum'] = np.arange(np.sum(dfQandA.Survey==survey))+1

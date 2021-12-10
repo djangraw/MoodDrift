@@ -4,6 +4,7 @@
 Score clinical and COVID surveys associated with the MMI task.
 
 Created 4/21/20 by DJ.
+Updated 12/3/21 by DJ - added MW and boredom scale scoring
 """
 import pandas as pd
 import numpy as np
@@ -50,6 +51,10 @@ def ScoreMmiSurvey(dfQandA,participant):
             raise ValueError('COVID question ID %s not recognized... cannot score!'%qID)
 
     dfSurvey['COVID'] = covidScore
+    # score MW
+    dfSurvey['MW'] = np.sum(dfQandA.loc[dfQandA.Survey=='MW','iAnswer'].values)
+    # score Boredom
+    dfSurvey['BORED'] = np.sum(dfQandA.loc[dfQandA.Survey=='BORED','iAnswer'].values)
 
     dfSurvey['age'] = dfSurvey['age'].astype(float)
     dfSurvey['status'] = dfSurvey['status'].astype(float)

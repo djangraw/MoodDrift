@@ -11,6 +11,8 @@ cohorts), or run without modifying to import all batches collected on MTurk.
 
 - Created 4/21/20 by DJ.
 - Updated 3/31/21 by DJ - adapted for shared code structure.
+- Updated 12/2/21 by DJ - recreate dataCheck file if neededj
+- Updated 12/10/21 by DJ - save dfProbe, overwrite datacheck if overwrite=True
 """
 
 # %% Import packages
@@ -33,13 +35,14 @@ batchNames = ['COVID01','COVID02','COVID03','Expectation-7min','Expectation-12mi
               'Stability01-RandomVer2','Stability02-RandomVer2',
               'Stability01-Rest','Stability02-Rest',
               'Stability01-Closed','Stability02-Closed']
+batchNames = ['Controls']
 dataCheckDir = '../Data/DataChecks' # where dataCheck files sit
 rawDataDir = '../Data/PilotData' # where raw data files sit
 dataDir = '../Data/OutFiles' # where processed data sits
 outFigDir = '../Figures' # where results should go
 if not os.path.exists(outFigDir):
     os.mkdir(outFigDir)
-plotEveryParticipant = False # should we make a plot for every participant?
+plotEveryParticipant = True # should we make a plot for every participant?
 overwrite = True; # overwrite previous results if they already exist?
 
 
@@ -59,6 +62,13 @@ for batchName in batchNames:
     # Import data check file
     dataCheckFile = '%s/%s_DataCheck.csv'%(dataCheckDir,batchName)
 
+    # Create data check file if needed
+    if (not os.path.exists(dataCheckFile)) or overwrite:
+        print('Generating data check file...')
+        dfDataCheck = MatchMTurkBatchToFiles(batchFile,pilotDataFolder,batchName,demoDataFile)
+        print(f'Saving to {dataCheckFile}...')
+        dfDataCheck.to_csv(dataCheckFile)
+
     # read dataCheck
     print('==== Reading data check from %s...'%dataCheckFile)
     dfDataCheck = pd.read_csv(dataCheckFile,index_col=0);
@@ -75,6 +85,7 @@ for batchName in batchNames:
     trialList = []
     ratingList =[]
     lifeHappyList = []
+    probeList = []
     nSubj = dfDataCheck_complete.shape[0]
     for iLine in range(nSubj):
         # Print status
@@ -82,11 +93,12 @@ for batchName in batchNames:
         # Task
         inFile = dfDataCheck_complete.loc[iLine,'taskFile']
         inFile = inFile.replace('../PilotData',rawDataDir) # replace relative path from data check file with relative path from here
-        dfTrial,dfRating,dfLifeHappy = GetMmiRatingsAndTimes(inFile)
+        dfTrial,dfRating,dfLifeHappy,dfProbe = GetMmiRatingsAndTimes(inFile)
         # Get summary of task data
         trialList.append(dfTrial)
         ratingList.append(dfRating)
         lifeHappyList.append(dfLifeHappy)
+        probeList.append(dfProbe)
 
         # Survey
         inFile = dfDataCheck_complete.loc[iLine,'surveyFile']
@@ -118,17 +130,20 @@ for batchName in batchNames:
     dfRating = pd.concat(ratingList);
     dfSurvey = pd.concat(surveyList);
     dfLifeHappy = pd.concat(lifeHappyList);
+    dfProbe = pd.concat(probeList);
 
     # %% Save?
     files = {'trial': '%s/Mmi-%s_Trial.csv'%(dataDir,batchName),
              'ratings': '%s/Mmi-%s_Ratings.csv'%(dataDir,batchName),
              'survey':'%s/Mmi-%s_Survey.csv'%(dataDir,batchName),
-             'lifeHappy':'%s/Mmi-%s_LifeHappy.csv'%(dataDir,batchName)}
+             'lifeHappy':'%s/Mmi-%s_LifeHappy.csv'%(dataDir,batchName),
+             'probe':'%s/Mmi-%s_Probes.csv'%(dataDir,batchName)}
 
     tables = {'trial': dfTrial,
              'ratings': dfRating,
              'survey': dfSurvey,
-             'lifeHappy': dfLifeHappy}
+             'lifeHappy': dfLifeHappy,
+             'probe': dfProbe}
 
     for item in [x[0] for x in files.items()]:
         if os.path.exists(files[item]) and not overwrite:
@@ -191,11 +206,11 @@ for batchName in batchNames:
             print('Not overwriting.')
         else:
             dfKey.to_excel(outFile)
-    
+
     # %% Generate dummy key file matching blocks 0 and 2 from the same dataset
-    
+
     if batchName=='Stability01-Rest':
-        
+
         for iSubj in dfDataCheck.index:
             # add key of original participant number
             dfDataCheck.loc[iSubj,'participant_day1'] = dfDataCheck.loc[iSubj,'participant']

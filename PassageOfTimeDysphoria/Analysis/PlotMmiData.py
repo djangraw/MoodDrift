@@ -7,6 +7,7 @@ Created on Wed May 13 09:38:37 2020
 
 - Updated 10/29/20 by DJ - made axis labels have only first letter capitalized
 - Updated 3/31/21 by DJ - adapted for shared code structure.
+- Updated 12/6/21 by DJ - added option for block with no mood ratings
 """
 
 import pandas as pd
@@ -30,11 +31,15 @@ def GetBlockTimes(dfTrial,dfRating):
             tBlockSwitch[iBlock+1] = dfRating.time[iLast+1]-3
         else:
             tBlockSwitch[iBlock+1] = dfRating.time[iLast]+3
-        iLast = np.where(dfTrial.iBlock==iBlock)[0][-1]
-        if (type(dfTrial.loc[iLast,'targetHappiness'])==np.float64) and not np.isnan(dfTrial.loc[iLast,'targetHappiness']):
-            blockType[iBlock] = '%s (target=%g)'%(dfTrial.trialType[iLast],dfTrial.targetHappiness[iLast])
-        else:
-            blockType[iBlock] = dfTrial.trialType[iLast]
+        # label block type
+        if np.any(dfTrial.iBlock==iBlock): # if there are any ratings during the block (rest, gambling, etc.)
+            iLast = np.where(dfTrial.iBlock==iBlock)[0][-1]
+            if (type(dfTrial.loc[iLast,'targetHappiness'])==np.float64) and not np.isnan(dfTrial.loc[iLast,'targetHappiness']):
+                blockType[iBlock] = '%s (target=%g)'%(dfTrial.trialType[iLast],dfTrial.targetHappiness[iLast])
+            else:
+                blockType[iBlock] = dfTrial.trialType[iLast]
+        else: # no ratings during the block
+            blockType[iBlock] = 'Other' # unknown block type
 
     return tBlockSwitch,blockType
 

@@ -5,6 +5,7 @@ Get raw data files for an MTurk batch.
 
 Created 4/21/20 by DJ.
 Updated 3/31/21: removed outDir input
+Updated 12/10/21 by DJ - make survey file detection caps-agnostic
 """
 
 import pandas as pd
@@ -58,8 +59,8 @@ def MatchMTurkBatchToFiles(batchFile,pilotDataFolder,batchName='',demoDataFile='
                 # convert to string
                 if not isinstance(hashCode,str):
                     hashCode = '%d'%hashCode
-
-                if 'Survey' in expName: # it's a survey
+                
+                if 'survey' in expName.lower(): # it's a survey
                     fileType = 'survey'
                 else:
                     fileType = 'task'

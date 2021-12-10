@@ -12,6 +12,7 @@ Created on Tue May 19 13:41:11 2020
 - Updated 6/2/20 by DJ - renamed dfDataCheck
 - Updated 3/31/21 by DJ - adapted for shared code structure.
 - Updated 4/2/21 by DJ - allowed date strings in MM/DD/YY format, use and accommodate de-ID'ed demographics file.
+- Updated 12/10/21 by DJ - added dfProbe output to GetMmiRatingsAndTimes.
 """
 
 # %% Set up
@@ -39,7 +40,7 @@ def GetYearMonthDay(dateStr):
             dateYear = 1900+dateYear2
     else:
         raise ValueError('date string must be in YYYY-MM-DD or MM/DD/YY format')
-        
+
     return dateYear,dateMonth,dateDay
 
 # Get age from datestrings for current time and DOB
@@ -202,8 +203,8 @@ for iLine in range(nSubj):
             date = dfDataCheck_complete.loc[iLine,'taskFile_run%d'%run].split('_')[2]
             # Task
             inFile = dfDataCheck_complete.loc[iLine,'taskFile_run%d'%run]
-            inFile = inFile.replace('../PilotData',rawDataDir) # replace relative path from data check file with relative path from here            
-            dfTrial,dfRating,dfLifeHappy = GetMmiRatingsAndTimes(inFile)
+            inFile = inFile.replace('../PilotData',rawDataDir) # replace relative path from data check file with relative path from here
+            dfTrial,dfRating,dfLifeHappy,dfProbe = GetMmiRatingsAndTimes(inFile)
             # Add run/date info
             for df in [dfTrial,dfRating,dfLifeHappy]:
                 df['run'] = run
