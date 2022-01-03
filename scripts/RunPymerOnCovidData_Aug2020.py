@@ -8,6 +8,9 @@ Runs Pymer's linear mixed effects (LME) analysis on specified cohorts.
 - Updated 2/4/2021 by DJ - accommodated GbeConfirm cohort.
 - Updated 3/31/21 by DJ - adapted for shared code structure.
 - Updated 4/15/21 by DJ - added have_gbe flag, removed extraneous imports
+- Updated 12/20/21 by DJ - switched to control batches, save pymer model.
+- Updated 1/3/22 by DJ - added option to include or exclude 'control' batches 
+   collected in 2021.
 """
 
 # %% import some basic libraries
@@ -18,6 +21,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 # Import the linear regression model class
 from pymer4.models import Lmer
+# from pymer4.io import save_model
 
 # %% Declare constants
 print('=== Loading Data... ===')
@@ -27,12 +31,15 @@ have_gbe = True # are the Rutledge Great Brain Experiment data included?
 cohortsToRun = ['AllOpeningRestAndRandom','AllOpeningRestAndRandom-noAge','COVID01','COVID02','COVID03','Stability01-Rest','Stability01-Rest_block2','Stability02-Rest']#,'Stability01-RandomVer2']
 if have_gbe:
     cohortsToRun = cohortsToRun + ['GbeExplore','GbeConfirm'] # add on GBE cohorts
+# ADD CONTROL ANALYSES: MW and Boredom cohorts
+cohortsToRun = cohortsToRun + ['BoredomBeforeAndAfter','BoredomAfterOnly','MwBeforeAndAfter','MwAfterOnly','AllBoredom','AllMw']
 
 # Declare other parameters
 procDataDir = '../Data/OutFiles' # path to preprocessed data
 outDir = '../Data/OutFiles' # where results should be saved
 outFigDir = '../Figures' # where figures should be saved
 includeRepeats = False; # include cohorts that are not naive in the data
+includeControlsInSuperbatches = False # should AdultOpeningRest and AllOpeningRestAndRandom include relevant controls batches?
 includeRelativeBaseline = False; # include relative baseline as a fixed effect in the LME
 includeCohort = False; # include cohort as a random effect in the LME
 mfqCutoff = 12.0 # Clinical cutoff of MFQ score to be classified as 'at risk'
@@ -40,7 +47,7 @@ cesdCutoff = 16.0 # Clinical cutoff of CES-D score to be classified as 'at risk'
 
 # %% Run analysis
 for outName in cohortsToRun:
-
+    print(f'=== Running cohort {outName}...')
     # Use cohort names to determine which data should be used
     if outName.endswith('_block2'):
         iBlock = 2;
@@ -55,35 +62,40 @@ for outName in cohortsToRun:
                                                          'random',0]},
                                         orient='index',columns=['ratingsFile','surveyFile','trialFile',
                                                                 'block0_type','nPreviousRuns'])
-    elif outName.startswith('AllOpeningRestAndRandom'):
-        dfBatches = pd.read_csv('%s/Mmi-Batches.csv'%procDataDir)
-
-        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns']]
-        dfBatch = dfBatch.loc[(dfBatches.block0_type=='rest') | (dfBatches.block0_type=='random'),:]
-        if not includeRepeats:
-            dfBatch = dfBatch.loc[(dfBatch.nPreviousRuns==0),:]
-        dfBatch = dfBatch.set_index('batchName')
-        dfBatch = dfBatch.drop(['Stability01-random','Stability02-random','RecoveryNimh-run3'],axis=0,errors='ignore')
-
-    elif outName == 'Stability01-Rest_block2':
-        dfBatches = pd.read_csv('%s/Mmi-Batches.csv'%procDataDir)
-        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns']]
-        dfBatch = dfBatch.loc[dfBatches.batchName=='Stability01-Rest',:]
-        dfBatch = dfBatch.set_index('batchName')
-    elif outName == 'Recovery(Instructed)1':
-        dfBatches = pd.read_csv('%s/Mmi-Batches.csv'%procDataDir)
-        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns']]
-        dfBatch = dfBatch.loc[(x in ['Recovery1','RecoveryInstructed1'] for x in dfBatches.batchName),:]
-        dfBatch = dfBatch.set_index('batchName')
     else:
+        # Load table of batch info and crop columns
         dfBatches = pd.read_csv('%s/Mmi-Batches.csv'%procDataDir)
-        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns']]
-        dfBatch = dfBatch.loc[dfBatches.batchName==outName,:]
+        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns']]        
+        # Get custom group batches
+        if outName.startswith('AllOpeningRestAndRandom'):            
+            dfBatch = dfBatch.loc[(dfBatches.block0_type=='rest') | (dfBatches.block0_type=='random'),:]
+            if not includeRepeats:
+                dfBatch = dfBatch.loc[(dfBatch.nPreviousRuns==0),:]
+            if not includeControlsInSuperbatches:
+                print('Excluding control batches collected in 2021 from AllOpeningRestAndRandom...')
+                dfBatch = dfBatch.loc[(dfBatch.endDate < '2021-01-01'),:]
+            dfBatch = dfBatch.set_index('batchName')
+            dfBatch = dfBatch.drop(['Stability01-random','Stability02-random','RecoveryNimh-run3'],axis=0,errors='ignore')
+    
+        elif outName == 'Stability01-Rest_block2':
+            dfBatch = dfBatch.loc[dfBatches.batchName=='Stability01-Rest',:]
+        elif outName == 'Recovery(Instructed)1':
+            dfBatch = dfBatch.loc[(x in ['Recovery1','RecoveryInstructed1'] for x in dfBatches.batchName),:]
+        elif outName == 'AllBoredom':
+            dfBatch = dfBatch.loc[(x in ['BoredomBeforeAndAfter','BoredomAfterOnly'] for x in dfBatches.batchName),:]            
+        elif outName == 'AllMw':
+            dfBatch = dfBatch.loc[(x in ['MwBeforeAndAfter','MwAfterOnly'] for x in dfBatches.batchName),:]            
+        else:
+            dfBatch = dfBatch.loc[dfBatches.batchName==outName,:]
+        # Set index to batch name
         dfBatch = dfBatch.set_index('batchName')
 
     # get batch names
     batchNames = dfBatch.index.values
 
+    if len(batchNames)==0:
+        print(f'*** 0 batches found for cohort {outName}... skipping this one! ***')
+        continue
     # %% Load data and assemble LME inputs
 
     # Load data
@@ -155,6 +167,7 @@ for outName in cohortsToRun:
             dfRating.loc[isThisBlock,'iRating'] = np.arange(np.sum(isThisBlock))
 
             if not isGbe:
+                # Add demographic info
                 dfRating.loc[isThisBlock,'isMale'] = dfSurvey.loc[participant,'gender']=='Male'
     #            dfRating.loc[isThisBlock,'ageOver40'] = dfSurvey.loc[participant,'age']-40
     #            dfRating.loc[isThisBlock,'isAdolescent'] = batchName.startswith('RecoveryNimh')
@@ -164,21 +177,22 @@ for outName in cohortsToRun:
                     dfRating.loc[isThisBlock,'isAge%dto%d'%(ageCutoffs[iAge],ageCutoffs[iAge+1])] = \
                         (dfSurvey.loc[participant,'age']>=ageCutoffs[iAge]) & \
                         (dfSurvey.loc[participant,'age']<ageCutoffs[iAge+1])
-
+                # Add depression questionnaire results
                 if 'MFQ' in dfSurvey.columns:
                     dfRating.loc[isThisBlock,'isAtRisk'] = dfSurvey.loc[participant,'MFQ']>mfqCutoff
                     dfRating.loc[isThisBlock,'fracRiskScore'] = dfSurvey.loc[participant,'MFQ']/mfqCutoff
                 elif 'CESD' in dfSurvey.columns:
                     dfRating.loc[isThisBlock,'isAtRisk'] = dfSurvey.loc[participant,'CESD']>cesdCutoff
                     dfRating.loc[isThisBlock,'fracRiskScore'] = dfSurvey.loc[participant,'CESD']/cesdCutoff
-
                 else:
                     print('Warining: %s has neither MFQ nor CESD'%batchName)
                     dfRating.loc[isThisBlock,'isAtRisk'] = False;
                 dfRating.loc[isThisBlock,'isRepeatParticipant'] = (row.nPreviousRuns>0)
+            # Add info about life happiness and Inter-rating interval (IRI)
             dfRating.loc[isThisBlock,'lifeHappyOver0p7'] = dfSurvey.loc[participant,'lifeHappy']-0.7
             dfRating.loc[isThisBlock,'meanIRIOver20'] = np.mean(np.diff(dfRating.loc[isThisBlock,'time']))-20
             dfRating.loc[isThisBlock,'medianIRIOver20'] = np.median(np.diff(dfRating.loc[isThisBlock,'time']))-20
+            # Add gambling info
             if isTask:
                 dfRating.loc[isThisBlock,'totalWinnings'] = np.sum(dfTrial.loc[(dfTrial.participant==participant) & (dfTrial.iBlock==iBlock),'outcomeAmount'])
                 dfRating.loc[isThisBlock,'meanRPE'] = np.mean(dfTrial.loc[(dfTrial.participant==participant) & (dfTrial.iBlock==iBlock),'RPE'])

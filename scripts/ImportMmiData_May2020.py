@@ -35,7 +35,7 @@ batchNames = ['COVID01','COVID02','COVID03','Expectation-7min','Expectation-12mi
               'Stability01-RandomVer2','Stability02-RandomVer2',
               'Stability01-Rest','Stability02-Rest',
               'Stability01-Closed','Stability02-Closed']
-batchNames = ['Controls']
+batchNames = ['MwBeforeAndAfter','BoredomBeforeAndAfter','Activities','BoredomAfterOnly','MwAfterOnly']
 dataCheckDir = '../Data/DataChecks' # where dataCheck files sit
 rawDataDir = '../Data/PilotData' # where raw data files sit
 dataDir = '../Data/OutFiles' # where processed data sits

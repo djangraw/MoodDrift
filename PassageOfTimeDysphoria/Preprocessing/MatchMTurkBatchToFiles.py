@@ -52,7 +52,11 @@ def MatchMTurkBatchToFiles(batchFile,pilotDataFolder,batchName='',demoDataFile='
         print('== Participant %d/%d: %s'%(iSubj,uniqueParticipants.size,participant))
         for thisFile in allFiles:
             print('Checking %s...'%os.path.basename(thisFile))
-            dfIn = pd.read_csv(thisFile);
+            try:
+                dfIn = pd.read_csv(thisFile);
+            except:
+                print('File %s could not be loaded!'%os.path.basename(thisFile))
+                continue
             expName = dfIn.expName[0]
             if 'hashCode' in dfIn.columns:
                 hashCode = dfIn.loc[pd.notna(dfIn.hashCode),'hashCode'].values[0]

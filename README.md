@@ -53,8 +53,9 @@ Fits the large-scale linear mixed effects (LME) model and the computational mode
 - [CombineGbeConfirmResults.py](scripts/CombineGbeConfirmResults.py) to combine across computational model results for the confirmatory mobile app sub-cohorts, which were split apart to avoid memory errors.
 
 ### Analysis
-Produces all the figures, tables, and printed results reporeted in the paper. Run the following:
-- [ProduceAllResults.py](scripts/ProduceAllResults.py). All other scripts and functions in this folder will be called by this wrapper script.
+Produces all the figures, tables, and printed results reported in the paper. Run the following:
+- [ProduceAllResults.py](scripts/ProduceAllResults.py). Most scripts and functions in the Analysis folder will be called by this wrapper script.
+- [TestControlHypotheses.py](scripts/TestControlHypotheses.py). Performs preregistered analyses on the follow-up "controls" dataset collected in 2021.
 
 ### Data Naming Conventions
 
@@ -82,5 +83,10 @@ Cohorts were renamed after analysis to make them more intuitive in the paper. He
 | RestAfterWins | Return1 |
 | Daily-Closed-01 | Stability01-closed |
 | Daily-Random-01 | Stability02-RandomVer2 |
+| Activities | Activities |
+| BoredomBeforeAndAfter | BoredomBeforeAndAfter |
+| BoredomAfterOnly | BoredomAfterOnly |
+| MwBeforeAndAfter | MwBeforeAndAfter |
+| MwAfterOnly| MwAfterOnly |
 | App-Exploratory | GbeExplore |
 | App-Confirmatory | GbeConfirm |

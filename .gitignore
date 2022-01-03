@@ -5,6 +5,10 @@ Data/LICENSE
 # Figures produced by the code
 Figures/*.png
 
+# Temporary scripts & files
+*.DS_Store
+TEMP*
+
 # conda environment
 potdys3
 

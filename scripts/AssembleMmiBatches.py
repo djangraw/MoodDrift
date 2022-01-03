@@ -11,6 +11,8 @@ Created 6/2/20 by DJ.
 Updated 3/31/21 by DJ - adapted for shared code structure.
 Updated 4/2/21 by DJ - added overwrite flag.
 Updated 4/8/21 by DJ - added line to calculate Recovery(Instructed)1.
+Updated 1/3/22 by DJ - added option to include or exclude 'control' batches 
+   collected in 2021.
 """
 
 # %% Import packages
@@ -25,9 +27,10 @@ from PassageOfTimeDysphoria.Preprocessing.CombineMmiBatches import CombineMmiBat
 dataCheckDir = '../Data/DataChecks'
 outDir = '../Data/OutFiles'
 includeRepeats = False; # should the "AllOpeningRestAndRandom" superbatch include returning subjects?
+includeControlsInSuperbatches = False # should AdultOpeningRest and AllOpeningRestAndRandom include relevant controls batches?
 overwrite = True # overwrite existing files?
 
-print('Gathring batches...')
+print('Gathering batches...')
 batchFiles_glob = glob('%s/*DataCheck.csv'%dataCheckDir)
 batchFiles_glob.sort()
 print('%d batches found.'%len(batchFiles_glob))
@@ -85,7 +88,7 @@ print('Creating dataframe...')
 maxNBlocks = 4
 cols = ['batchName','startDate','endDate','nSubjAttempted','nSubjCompleted',
         'dataCheckFile','ratingsFile','trialFile','surveyFile','lifeHappyFile',
-        'pymerInputFile','pymerCoeffsFile','nPreviousRuns','isNimhCohort'] + \
+        'probesFile','pymerInputFile','pymerCoeffsFile','nPreviousRuns','isNimhCohort'] + \
         ['block%d_type'%run for run in range(maxNBlocks)] + \
         ['block%d_targetHappiness'%run for run in range(maxNBlocks)] + \
         ['block%d_nTrials'%run for run in range(maxNBlocks)] + \
@@ -104,6 +107,7 @@ dfBatches['ratingsFile'] = ['%s/Mmi-%s_Ratings.csv'%(outDir,batchName) for batch
 dfBatches['trialFile'] = ['%s/Mmi-%s_Trial.csv'%(outDir,batchName) for batchName in batchNames]
 dfBatches['surveyFile'] = ['%s/Mmi-%s_Survey.csv'%(outDir,batchName) for batchName in batchNames]
 dfBatches['lifeHappyFile'] = ['%s/Mmi-%s_LifeHappy.csv'%(outDir,batchName) for batchName in batchNames]
+dfBatches['probesFile'] = ['%s/Mmi-%s_Probes.csv'%(outDir,batchName) for batchName in batchNames]
 dfBatches['pymerInputFile'] = ['%s/Mmi-%s_pymerInput.csv'%(outDir,batchName) for batchName in batchNames]
 dfBatches['pymerCoeffsFile'] = ['%s/Mmi-%s_pymerCoeffs.csv'%(outDir,batchName) for batchName in batchNames]
 dfBatches['nPreviousRuns'] = 0;
@@ -124,17 +128,25 @@ for iBatch,batchName in enumerate(batchNames):
     # Get averages
     dfRatingMean = pmd.GetMeanRatings(dfRating)
     dfTrialMean = pmd.GetMeanTrials(dfTrial)
-
+    
     tBlockSwitch,blockType = pmd.GetBlockTimes(dfTrial,dfRating)
     nBlocks = len(blockType)
     for iBlock in range(nBlocks):
         isThis = (dfTrialMean.iBlock==iBlock)
-        dfBatches.loc[iBatch,'block%d_type'%iBlock] = dfTrialMean.loc[isThis,'trialType'].values[0]
-        dfBatches.loc[iBatch,'block%d_targetHappiness'%iBlock] = dfTrialMean.loc[isThis,'targetHappiness'].values[0]
-        dfBatches.loc[iBatch,'block%d_nTrials'%iBlock] = np.sum(isThis)
-        isThis = (dfRatingMean.iBlock==iBlock)
-        dfBatches.loc[iBatch,'block%d_nRatings'%iBlock] = np.sum(isThis)
-        dfBatches.loc[iBatch,'block%d_meanDuration'%iBlock] = tBlockSwitch[iBlock+1] - tBlockSwitch[iBlock]
+        if (batchName=='Activities') and (iBlock==0):
+            dfBatches.loc[iBatch,'block%d_type'%iBlock] = 'Activities'
+            dfBatches.loc[iBatch,'block%d_targetHappiness'%iBlock] = np.nan
+            dfBatches.loc[iBatch,'block%d_nTrials'%iBlock] = 0
+            isThis = (dfRatingMean.iBlock==iBlock)
+            dfBatches.loc[iBatch,'block%d_nRatings'%iBlock] = np.sum(isThis)
+            dfBatches.loc[iBatch,'block%d_meanDuration'%iBlock] = tBlockSwitch[iBlock+1] - tBlockSwitch[iBlock]
+        else:            
+            dfBatches.loc[iBatch,'block%d_type'%iBlock] = dfTrialMean.loc[isThis,'trialType'].values[0]
+            dfBatches.loc[iBatch,'block%d_targetHappiness'%iBlock] = dfTrialMean.loc[isThis,'targetHappiness'].values[0]
+            dfBatches.loc[iBatch,'block%d_nTrials'%iBlock] = np.sum(isThis)
+            isThis = (dfRatingMean.iBlock==iBlock)
+            dfBatches.loc[iBatch,'block%d_nRatings'%iBlock] = np.sum(isThis)
+            dfBatches.loc[iBatch,'block%d_meanDuration'%iBlock] = tBlockSwitch[iBlock+1] - tBlockSwitch[iBlock]
 
 outFile = '%s/Mmi-Batches.csv'%outDir
 print('Writing to %s...'%outFile)
@@ -176,6 +188,12 @@ adultopeningrestbatches = ['COVID01', 'Expectation-12min', 'Expectation-7min', '
        'Recovery1', 'RecoveryInstructed1Freq0p25',
        'RecoveryInstructed1Freq0p5', 'RecoveryInstructed1Freq2',
        'RecoveryInstructed1', 'RestDownUp', 'Stability01-Rest']
+# if requested, add relevant controls batches to AdultOpeningRest.
+# Exclude BeforeAndAfter batches where repeated administration changed the results.
+if includeControlsInSuperbatches:
+    newBatches = ['BoredomAfterOnly','MwAfterOnly','MwBeforeAndAfter']
+    print(f'Adding control batches {newBatches} to AdultOpeningRest...')
+    adultopeningrestbatches = adultopeningrestbatches + newBatches
 
 # Create new "superbatches" that combine multiple cohorts
 CombineMmiBatches(dfBatches.loc[isNoRestBatch,'batchName'].values,'NoOpeningRest');
@@ -189,11 +207,26 @@ CombineMmiBatches(adultopeningrestbatches,'AdultOpeningRest');
 # %% Assemble batch of all cohorts with opening rest or random-gambling block for use in large-scale LME analysis
 
 # Get batches that match our description
-dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns']]
+dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns','endDate']]
 dfBatch = dfBatch.loc[(dfBatches.block0_type=='rest') | (dfBatches.block0_type=='random'),:]
 if not includeRepeats:
+    print('Excluding repeat participants...')
     dfBatch = dfBatch.loc[(dfBatch.nPreviousRuns==0),:]
+if not includeControlsInSuperbatches:
+    print('Excluding control batches collected in 2021 from AllOpeningRestAndRandom...')
+    dfBatch = dfBatch.loc[(dfBatch.endDate < '2021-01-01'),:]
 dfBatch = dfBatch.drop(['Stability01-random','Stability02-random','RecoveryNimh-run3'],axis=0,errors='ignore')
 
 # Create "superbatch" that combines multiple cohorts
 CombineMmiBatches(dfBatch['batchName'].values,'AllOpeningRestAndRandom',makeSubjectsMatchPymer=True);
+
+
+# %% Assemble batch of MW before+after and boredom before+after cohorts
+
+# Get MW cohort
+CombineMmiBatches(['MwBeforeAndAfter','MwAfterOnly'],'AllMw',makeSubjectsMatchPymer=True);
+# Get boredom cohort
+CombineMmiBatches(['BoredomBeforeAndAfter','BoredomAfterOnly'],'AllBoredom',makeSubjectsMatchPymer=True);
+# Get combined cohort to replicate results (exclude before-and-after cohorts where repeated administration affected results)
+CombineMmiBatches(['MwBeforeAndAfter','MwAfterOnly','BoredomAfterOnly'],'AllOpeningRestControls',makeSubjectsMatchPymer=True);
+

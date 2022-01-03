@@ -8,10 +8,14 @@ Combine MTurk batches from the MMI experiment.
 Created 6/5/20 by DJ.
 Updated 3/31/21 by DJ - adapted for shared code structure.
 Updated 4/2/21 by DJ - changed to not write combined pymer files if individual inputs don't exist
-"""
+Updated 12/22/21 by DJ - added dfProbes for control batches
+Updated 1/3/22 by DJ - addded check for existence of batches/files.
+""" 
+
 # Import packages
 import pandas as pd
 import numpy as np
+import os
 
 # Define main function
 def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDir = '../Data/OutFiles'):
@@ -32,25 +36,44 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
       all batches combined. Each has an added column called 'batchName'.
 
     """
+    
+    # Check that batches are given as input before proceeding
+    if len(oldBatches)==0:
+        print(f'*** No input batches provided! Batch {newBatch} not created. ***')
+        return
 
     # Set up
     dfRating_list = []
     dfTrial_list = []
     dfSurvey_list = []
     dfLifeHappy_list = []
+    dfProbes_list = []
     dfPymerCoeffs_list = []
     dfPymerInput_list = []
     writePymerFiles = True # only write outputs if all input files exist
+    writeProbeFiles = True # only write probe outputs if all input files exist
     # Print status as bookend to processing
     print('Creating new batch %s from %d inputs...'%(newBatch, len(oldBatches)))
 
     # Load info from each batch and concatenate
     for batchName in oldBatches:
+        # check that ratings file exists
+        ratingFile = '%s/Mmi-%s_Ratings.csv'%(dataDir,batchName)
+        if not os.path.exists(ratingFile):
+            print(f'*** File {ratingFile} not found! Batch {newBatch} not created. ***')       
+            return
         # load info using standardized batch file names
         dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName),index_col=0)
         dfTrial = pd.read_csv('%s/Mmi-%s_Trial.csv'%(dataDir,batchName),index_col=0)
         dfSurvey = pd.read_csv('%s/Mmi-%s_Survey.csv'%(dataDir,batchName),index_col=0)
         dfLifeHappy = pd.read_csv('%s/Mmi-%s_LifeHappy.csv'%(dataDir,batchName),index_col=0)
+        # check if probes exist
+        try:
+            dfProbes = pd.read_csv('%s/Mmi-%s_Probes.csv'%(dataDir,batchName),index_col=0)    
+        except IOError:
+            writeProbeFiles = False
+            print('   Thought probe files for batch %s not found. Combined probe outputs will not be written.'%batchName)
+        # check if pymer files exist
         try:
             dfPymerCoeffs = pd.read_csv('%s/Mmi-%s_pymerCoeffs.csv'%(dataDir,batchName))
             dfPymerInput = pd.read_csv('%s/Mmi-%s_pymerInput.csv'%(dataDir,batchName),index_col=0)
@@ -66,6 +89,8 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
         dfTrial['batchName'] = batchName
         dfSurvey['batchName'] = batchName
         dfLifeHappy['batchName'] = batchName
+        if writeProbeFiles:
+            dfProbes['batchName'] = batchName
         if writePymerFiles:
             dfPymerCoeffs['batchName'] = batchName
             dfPymerInput['batchName'] = batchName
@@ -110,6 +135,8 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
         dfTrial_list.append(dfTrial)
         dfSurvey_list.append(dfSurvey)
         dfLifeHappy_list.append(dfLifeHappy)
+        if writeProbeFiles:
+            dfProbes_list.append(dfProbes)
         if writePymerFiles:
             dfPymerCoeffs_list.append(dfPymerCoeffs)
             dfPymerInput_list.append(dfPymerInput)
@@ -119,6 +146,8 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
     dfTrial = pd.concat(dfTrial_list,axis=0,ignore_index=True,sort=False)
     dfSurvey = pd.concat(dfSurvey_list,axis=0,ignore_index=True,sort=False)
     dfLifeHappy = pd.concat(dfLifeHappy_list,axis=0,ignore_index=True,sort=False)
+    if writeProbeFiles:
+        dfProbes = pd.concat(dfProbes_list,axis=0,ignore_index=True,sort=False)
     if writePymerFiles:
         dfPymerCoeffs = pd.concat(dfPymerCoeffs_list,axis=0,sort=False) # index is participant, so don't ignore
         dfPymerInput = pd.concat(dfPymerInput_list,axis=0,ignore_index=True,sort=False)
@@ -133,6 +162,7 @@ def CombineMmiBatches(oldBatches,newBatch='',makeSubjectsMatchPymer=False,dataDi
         dfTrial.to_csv('%s/Mmi-%s_Trial.csv'%(dataDir,newBatch))
         dfSurvey.to_csv('%s/Mmi-%s_Survey.csv'%(dataDir,newBatch))
         dfLifeHappy.to_csv('%s/Mmi-%s_LifeHappy.csv'%(dataDir,newBatch))
+        dfProbes.to_csv('%s/Mmi-%s_Probes.csv'%(dataDir,newBatch))
         if writePymerFiles:
             dfPymerCoeffs.to_csv('%s/Mmi-%s_pymerCoeffs.csv'%(dataDir,newBatch),index_label='Subject')
             dfPymerInput.to_csv('%s/Mmi-%s_pymerInput.csv'%(dataDir,newBatch))

@@ -107,6 +107,8 @@ def GetMmiRatingsAndTimes(inFile):
     participant = dfIn.participant[0]
     nRatings = np.sum(pd.notna(dfIn.loc[:,'blockHappySlider.response'])) + np.sum(pd.notna(dfIn.loc[:,'happySlider.response']))
     nTrials = np.sum(pd.notna(dfIn.loc[:,'lastHappyRating']))
+    if 'actLoop.ran' in dfIn.columns: # activities version of task (only happy ratings come at beginning and end)
+        nTrials = nTrials+1 # add an extra for the initial rest block where there='s only block happiness ratings
     cols = ['participant','iBlock','iTrial','time','rating','RT']
     dfRating = pd.DataFrame(np.zeros((nRatings,len(cols))),columns=cols)
     dfRating['participant'] = participant
@@ -116,12 +118,15 @@ def GetMmiRatingsAndTimes(inFile):
     dfTrial['isRatingTrial'] = False;
     # set up dfProbe (answers to MW, boredom, or activity probe questions)
     iProbeRating = -1
-    isMWPresent = ('MWSlider_before.response' in dfIn.columns)
+    isMWPresent = ('MWSlider_after.response' in dfIn.columns)
     isBoredomPresent = ('rateBoredomSlider.response' in dfIn.columns)
     isActivityPresent = ('activitiesSlider.response' in dfIn.columns)
     probeCols = ['participant','iBlock','iProbe','time','question','rating','RT']
     if isMWPresent:
-        nProbeRatings = np.sum(pd.notna(dfIn.loc[:,'MWSlider_before.response'])) + np.sum(pd.notna(dfIn.loc[:,'MWSlider_after.response']))
+        if ('MWSlider_before.response' in dfIn.columns): # if there were responses before 1st block
+            nProbeRatings = np.sum(pd.notna(dfIn.loc[:,'MWSlider_before.response'])) + np.sum(pd.notna(dfIn.loc[:,'MWSlider_after.response']))
+        else: # if there were only responses after each block
+            nProbeRatings = np.sum(pd.notna(dfIn.loc[:,'MWSlider_after.response']))
     elif isBoredomPresent:
         nProbeRatings = np.sum(pd.notna(dfIn.loc[:,'rateBoredomSlider.response']))
     elif isActivityPresent:
@@ -161,7 +166,7 @@ def GetMmiRatingsAndTimes(inFile):
 
         # Add MW responses
         if isMWPresent:
-            if pd.notna(dfIn.loc[iLine,'MWSlider_before.response']):
+            if ('MWSlider_before.response' in dfIn.columns) and pd.notna(dfIn.loc[iLine,'MWSlider_before.response']):
                 # increment counters
                 iProbeRating = iProbeRating + 1
                 # Update times
