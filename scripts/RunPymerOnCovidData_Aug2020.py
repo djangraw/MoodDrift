@@ -21,6 +21,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 # Import the linear regression model class
 from pymer4.models import Lmer
+import os.path
 # from pymer4.io import save_model
 
 # %% Declare constants
@@ -62,10 +63,15 @@ for outName in cohortsToRun:
                                                          'random',0]},
                                         orient='index',columns=['ratingsFile','surveyFile','trialFile',
                                                                 'block0_type','nPreviousRuns'])
+        # check to make sure that files exist
+        if not os.path.exists(dfBatch.loc[outName,'ratingsFile']):
+            print(f'*** 0 batches found for cohort {outName}... skipping this one! ***')
+            continue
+        
     else:
         # Load table of batch info and crop columns
         dfBatches = pd.read_csv('%s/Mmi-Batches.csv'%procDataDir)
-        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns']]        
+        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns','endDate']]        
         # Get custom group batches
         if outName.startswith('AllOpeningRestAndRandom'):            
             dfBatch = dfBatch.loc[(dfBatches.block0_type=='rest') | (dfBatches.block0_type=='random'),:]
@@ -87,15 +93,18 @@ for outName in cohortsToRun:
             dfBatch = dfBatch.loc[(x in ['MwBeforeAndAfter','MwAfterOnly'] for x in dfBatches.batchName),:]            
         else:
             dfBatch = dfBatch.loc[dfBatches.batchName==outName,:]
+    
+        # check to make sure batches exist
+        if dfBatch.shape[0]==0:
+            print(f'*** 0 batches found for cohort {outName}... skipping this one! ***')
+            continue
+        
         # Set index to batch name
         dfBatch = dfBatch.set_index('batchName')
-
+    
     # get batch names
     batchNames = dfBatch.index.values
 
-    if len(batchNames)==0:
-        print(f'*** 0 batches found for cohort {outName}... skipping this one! ***')
-        continue
     # %% Load data and assemble LME inputs
 
     # Load data
