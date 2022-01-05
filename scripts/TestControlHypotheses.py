@@ -8,6 +8,8 @@ Test the control analyses preregistered on osf.
 Created on Thu Dec 16 15:27:29 2021
 @author: djangraw
 - Updated 12/22/21 by DJ - finished script, commented.
+- Updated 1/5/22 by DJ - added cohen's d calculations, effect size reports, 
+   and activities summary
 """
 
 # Import packages
@@ -52,6 +54,17 @@ def GetBoredomScores(df_boredom_probes):
     return df_summary
 
 
+# Function to calculate Cohen's D
+def GetCohensD(x,y):
+    # weight std devs according to number of elements
+    x_count = len(x)
+    y_count = len(y)
+    # calculate degrees of freedom
+    dof = x_count + y_count - 2
+    # calculate & return cohen's D
+    return (np.mean(x) - np.mean(y)) / np.sqrt(((x_count-1)*np.std(x, ddof=1) ** 2 + (y_count-1)*np.std(y, ddof=1) ** 2) / dof)
+
+
 # Declare constants
 results_dir = '../Data/OutFiles'
 batch_ba = 'BoredomBeforeAndAfter' # before-and-after group, got thought probes both before and after rest block
@@ -77,9 +90,10 @@ for block_to_check in block_names:
     # Run 2 one-sided t-tests
     t_less,p_less = stats.ttest_ind(df_summary_ba[block_to_check],df_summary_ao[block_to_check],alternative='less')
     t_more,p_more = stats.ttest_ind(df_summary_ba[block_to_check],df_summary_ao[block_to_check],alternative='greater')
+    cohens_d = GetCohensD(df_summary_ba[block_to_check],df_summary_ao[block_to_check])
     # Print results
-    print(f'BoredomBeforeAndAfter < BoredomAfterOnly: T={t_less:.03g}, p={p_less:.03g}')
-    print(f'BoredomBeforeAndAfter > BoredomAfterOnly: T={t_more:.03g}, p={p_more:.03g}')
+    print(f'BoredomBeforeAndAfter < BoredomAfterOnly: T={t_less:.03g}, p={p_less:.03g}, Cohens D={cohens_d:.03g}')
+    print(f'BoredomBeforeAndAfter > BoredomAfterOnly: T={t_more:.03g}, p={p_more:.03g}, Cohens D={cohens_d:.03g}')
     # Print conclusions
     if p_less<0.05:
         print(f'** Presenting boredom questions before start of task leads to DECREASED responses after {block_to_check}.')
@@ -87,8 +101,16 @@ for block_to_check in block_names:
         print(f'** Presenting boredom questions before start of task leads to INCREASED responses after {block_to_check}.')
     else:
         print(f'** Presenting boredom questions before start of task DOES NOT change responses after {block_to_check}.')
-
-
+        
+    # if Cohen's D is <0.5, use both groups. Otherwise, use the after-only group.
+    if block_to_check=='block0':
+        if np.abs(cohens_d)<0.5:
+            use_both_boredom = True
+            print('** because d<0.5, we will use both boredom cohorts in subsequent analyses.')
+        else:
+            use_both_boredom = False
+            print('** because d>=0.5, we will use only the BoredomAfterOnly cohort in subsequent analyses.')
+        
 
 # %% Hyp 1.2: Effect of finalBoredom on mood
 print('=======================================')
@@ -121,8 +143,12 @@ def CompareModels(pymer_input,lm_string_h0,lm_string_h1):
     return anova_res, dfFit_h0, dfFit_h1
     
 
-# Since repeat administration changes results, we'll use the after-only group.
-batch = 'BoredomAfterOnly'
+# If repeat administration changes results, we'll use the after-only group. 
+# Otherwise, use both.
+if use_both_boredom:
+    batch = 'AllBoredom'
+else:
+    batch = 'BoredomAfterOnly'
 
 print(f'=== Batch {batch}: Comparing LME models with and without finalBoredom ===')
 # Load pymer input file
@@ -150,7 +176,17 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** Final state boredom DOES explain added variance in subject-level POTD slope.')
 else:
     print('** Final state boredom does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['finalBoredom','Time:finalBoredom']])
+print(dfFit_h1.loc[['Time','finalBoredom','Time:finalBoredom']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'finalBoredom'])
+std_val = np.std(pymer_input.loc[:,'finalBoredom'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:finalBoredom','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:finalBoredom','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
 
     
 # %% Hyp 1.3: Effect of deltaBoredom on mood
@@ -200,7 +236,17 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** Change in state boredom DOES explain added variance in subject-level POTD slope.')
 else:
     print('** Change in state boredom does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['deltaBoredom','Time:deltaBoredom']])
+print(dfFit_h1.loc[['Time','deltaBoredom','Time:deltaBoredom']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'deltaBoredom'])
+std_val = np.std(pymer_input.loc[:,'deltaBoredom'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:deltaBoredom','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:deltaBoredom','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
 
 
 # %% Hyp 1.4: Effect of traitBoredom on mood
@@ -217,8 +263,12 @@ print("""
 """)
 
 
-# Since repeat administration changes results, we'll use the after-only group.
-batch = 'BoredomAfterOnly'
+# If repeat administration changes results, we'll use the after-only group. 
+# Otherwise, use both.
+if use_both_boredom:
+    batch = 'AllBoredom'
+else:
+    batch = 'BoredomAfterOnly'
 
 print(f'=== Batch {batch}: Comparing LME models with and without traitBoredom ===')
 # Load pymer input file
@@ -245,7 +295,18 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** Trait boredom DOES explain added variance in subject-level POTD slope.')
 else:
     print('** Trait boredom does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['traitBoredom','Time:traitBoredom']])
+print(dfFit_h1.loc[['Time','traitBoredom','Time:traitBoredom']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'traitBoredom'])
+std_val = np.std(pymer_input.loc[:,'traitBoredom'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:traitBoredom','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:traitBoredom','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
+
 
 
 # %% Get MW principal components
@@ -367,14 +428,26 @@ for block_to_check in block_names:
     print(f'=== {block_to_check} ===')
     t_less,p_less = stats.ttest_ind(df_summary_ba[block_to_check],df_summary_ao[block_to_check],alternative='less')
     t_more,p_more = stats.ttest_ind(df_summary_ba[block_to_check],df_summary_ao[block_to_check],alternative='greater')
-    print(f'MwBeforeAndAfter < MwAfterOnly: T={t_less:.03g}, p={p_less:.03g}')
-    print(f'MwBeforeAndAfter > MwAfterOnly: T={t_more:.03g}, p={p_more:.03g}')
+    cohens_d = GetCohensD(df_summary_ba[block_to_check],df_summary_ao[block_to_check])
+    # Print results
+    print(f'MwBeforeAndAfter < MwAfterOnly: T={t_less:.03g}, p={p_less:.03g}, Cohens D={cohens_d:.03g}')
+    print(f'MwBeforeAndAfter > MwAfterOnly: T={t_more:.03g}, p={p_more:.03g}, Cohens D={cohens_d:.03g}')
     if p_less<0.05:
         print(f'** Presenting MW questions before start of task leads to DECREASED responses after {block_to_check}.')
     elif p_more<0.05:
         print(f'** Presenting MW questions before start of task leads to INCREASED responses after {block_to_check}.')
     else:
         print(f'** Presenting MW questions before start of task DOES NOT change responses after {block_to_check}.')
+    
+    # if Cohen's D is <0.5, use both groups. Otherwise, use the after-only group.
+    if block_to_check=='block0':
+        if np.abs(cohens_d)<0.5:
+            use_both_mw = True
+            print('** because d<0.5, we will use both MW cohorts in subsequent analyses.')
+        else:
+            use_both_mw = False
+            print('** because d>=0.5, we will use only the MwAfterOnly cohort in subsequent analyses.')
+        
 
 
 # %% Hyp 2.2: Effect of finalEmoDim on mood
@@ -390,10 +463,12 @@ print("""
     H1: Mood ~ 1 + Time * (finalEmoDim + isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)
 """)
 
-# Because 2.1 was not significant, use both before-and-after and after-only batches.
-batch = 'AllMw'
-# If 2.1 were not significant, we'd use after-only batch.
-# batch = 'MwAfterOnly'
+# If repeat administration changes results, we'll use the after-only group. 
+# Otherwise, use both.
+if use_both_mw:
+    batch = 'AllMw'
+else:
+    batch = 'MwAfterOnly'
 
 print(f'=== Batch {batch}: Comparing LME models with and without finalEmoDim ===')
 in_file = f'{results_dir}/Mmi-{batch}_pymerInput-full.csv'
@@ -424,8 +499,18 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** Final MW emotion DOES explain added variance in subject-level POTD slope.')
 else:
     print('** Final MW emotion does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['finalEmoDim','Time:finalEmoDim']])
-    
+print(dfFit_h1.loc[['Time','finalEmoDim','Time:finalEmoDim']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'finalEmoDim'])
+std_val = np.std(pymer_input.loc[:,'finalEmoDim'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:finalEmoDim','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:finalEmoDim','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
+
 
 # %% Hyp 2.3: Effect of deltaEmoDim on mood
 print('=======================================')
@@ -480,7 +565,17 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** Change in MW emotion DOES explain added variance in subject-level POTD slope.')
 else:
     print('** Change in MW emotion does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['deltaEmoDim','Time:deltaEmoDim']])
+print(dfFit_h1.loc[['Time','deltaEmoDim','Time:deltaEmoDim']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'deltaEmoDim'])
+std_val = np.std(pymer_input.loc[:,'deltaEmoDim'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:deltaEmoDim','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:deltaEmoDim','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
 
 
 # %% Hyp 2.4: Effect of traitMW on mood
@@ -496,8 +591,12 @@ print("""
     H1: Mood ~ 1 + Time * (traitMW + isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)
 """)
 
-# Because 2.1 showed no effect of repeat administration, we can use both groups
-batch = 'AllMw'
+# If repeat administration changes results, we'll use the after-only group. 
+# Otherwise, use both.
+if use_both_mw:
+    batch = 'AllMw'
+else:
+    batch = 'MwAfterOnly'
 
 print(f'=== Batch {batch}: Comparing LME models with and without traitMW ===')
 # load pymer input tables
@@ -526,7 +625,17 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** Trait MW DOES explain added variance in subject-level POTD slope.')
 else:
     print('** Trait MW does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['traitMW','Time:traitMW']])
+print(dfFit_h1.loc[['Time','traitMW','Time:traitMW']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'traitMW'])
+std_val = np.std(pymer_input.loc[:,'traitMW'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:traitMW','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:traitMW','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
 
 
 # %% Hyp 3.1: Effect of real-world free activities on mood
@@ -562,6 +671,10 @@ for participant_index,participant in enumerate(participants):
 t_less,p_less = stats.ttest_rel(df_summary['happinessBefore'],df_summary['happinessAfter'],alternative='less')
 t_more,p_more = stats.ttest_rel(df_summary['happinessBefore'],df_summary['happinessAfter'],alternative='greater')
 # Print results
+mean_pre = np.mean(df_summary['happinessBefore'].values)*100
+mean_post = np.mean(df_summary['happinessAfter'].values)*100
+break_minutes = 7 # nominal duration of break period
+print(f'Mean pre-break mood: {mean_pre:.03g}%, post_break mood: {mean_post:.03g}%, change in mood: {mean_post-mean_pre:.03g}% ({(mean_post-mean_pre)/break_minutes:.03g}%/min)')
 print(f'happinessBeforeActivities < happinessAfterActivities (PAIRED): T={t_less:.03g}, p={p_less:.03g}')
 print(f'happinessBeforeActivities > happinessAfterActivities (PAIRED): T={t_more:.03g}, p={p_more:.03g}')
 # Print conclusions
@@ -633,6 +746,48 @@ elif p_more<0.05:
 else:
     print(f'** Free time break DOES NOT change happiness ratings more or less than boredom condition in block {block_to_check}.')
 
+
+
+# %% Get/print info about activities
+batch = 'Activities'
+in_file = f'{results_dir}/Mmi-{batch}_Probes.csv'
+df_did = pd.read_csv(in_file)
+
+questions = ['thought','news','photos','audio','work','job-search','finances','other-comp-pre','messages','wrote','videos','social-media','shopped','mturk','called','game','other-comp','read','wrote','tv','ate','spoke','craft','stood','active','restroom','other-no-comp']
+question_count = len(questions)
+values = np.reshape(df_did.rating.values - 1, [-1,question_count]).T
+
+plt.figure(14,figsize=[12,16],dpi=200,clear=True)
+row_count = np.ceil(np.sqrt(question_count))
+col_count = np.ceil(question_count/row_count)
+
+freq_labels = ["Not at all", "A little", "About half the time", "A lot", "The whole time"]
+freq_count = len(freq_labels)
+bins = np.arange(freq_count+1)-0.5
+act_hist = np.zeros([question_count,freq_count])
+act_mean = np.zeros(question_count)
+for question_index in range(question_count):
+    act_hist[question_index] = np.histogram(values[question_index],bins)[0]
+    act_mean[question_index] = np.mean(values[question_index])
+    
+# plot histo
+plt.imshow(act_hist.T)
+plt.xticks(np.arange(question_count),questions,rotation=45,ha='right')
+plt.yticks(np.arange(freq_count),freq_labels)
+plt.savefig(f'{figures_folder}/ActivitiesHisto.png')
+
+# print in descending order
+order = np.argsort(-act_mean)
+print('=======================================')
+print('')
+print('=======================================')
+print('Frequency of activities reported (in descending order)')
+for question_index in order:
+    print(f'{questions[question_index]}: {act_mean[question_index]/4*100:.03g}%')
+
+
+
+
 # %% Hyp 4.1.3: Floor effects in Effect of deltaBoredom on mood
 print('=======================================')
 print('')
@@ -645,6 +800,80 @@ print("""
     the effects we are observing are due to participants reaching their 
     minimum mood (floor effects).
 """)
+
+# Crop to exclude all mood ratings after miniumum rating (for floor effects)
+def CropToMinRating(pymer_input):
+    participants = np.unique(pymer_input.Subject)
+    for participant_index,participant in enumerate(participants):
+        df_this = pymer_input.loc[pymer_input.Subject==participant,:]
+        min_index = np.argmin(df_this['Mood'])
+        pymer_input = pymer_input.drop(df_this.index[min_index+1:])
+    return pymer_input
+
+# %% Hyp 4.1.2: Floor effects in Effect of finalBoredom on mood
+
+print('=======================================')
+print('')
+print('=======================================')
+print("""
+4.1.2) We hypothesize that final state boredom will explain variance in 
+    subject-level POTD slope. This is a one-sided hypothesis.
+    We will test this with an ANOVA comparing the following two mixed effects 
+    models (difference highlighted in bold):
+    H0: Mood ~ 1 + Time * (isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)
+    H1: Mood ~ 1 + Time * (finalBoredom + isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)
+""")
+# If repeat administration changes results, we'll use the after-only group. 
+# Otherwise, use both.
+if use_both_boredom:
+    batch = 'AllBoredom'
+else:
+    batch = 'BoredomAfterOnly'
+
+print(f'=== Batch {batch}: Comparing LME models with and without finalBoredom ===')
+# Load pymer input file
+in_file = f'{results_dir}/Mmi-{batch}_pymerInput-full.csv'
+print(f'Opening {in_file}...')
+pymer_input = pd.read_csv(in_file, index_col=0)
+
+# Crop to exclude all mood ratings after miniumum rating (for floor effects)
+pymer_input = CropToMinRating(pymer_input)
+
+# Add finalBoredom scores
+in_file = f'{results_dir}/Mmi-{batch}_Probes.csv'
+print(f'Opening {in_file}...')
+df_boredom = pd.read_csv(in_file)
+participants = np.unique(df_boredom.participant)
+for participant_index,participant in enumerate(participants):
+    df_this = df_boredom.loc[df_boredom.participant==participant,:]
+    final_boredom = np.sum(df_this.loc[df_this.iBlock==0,'rating']) # after first block
+    pymer_input.loc[pymer_input.Subject==participant,'finalBoredom'] = final_boredom
+
+# Fit models and run ANOVA to compare
+lm_string_h0 = 'Mood ~ 1 + Time * (isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)'
+lm_string_h1 = 'Mood ~ 1 + Time * (finalBoredom + isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)'
+anova_res, dfFit_h0, dfFit_h1 = CompareModels(pymer_input,lm_string_h0,lm_string_h1)
+
+# Print results and pymer fit
+if anova_res.loc[1,'Pr(>Chisq)']<0.05:
+    print('** Final state boredom DOES explain added variance in subject-level POTD slope.')
+else:
+    print('** Final state boredom does NOT explain added variance in subject-level POTD slope.')
+print(dfFit_h1.loc[['Time','finalBoredom','Time:finalBoredom']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'finalBoredom'])
+std_val = np.std(pymer_input.loc[:,'finalBoredom'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:finalBoredom','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:finalBoredom','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
+
+
+
+# %% Hyp 4.1.3: Floor effects in Effect of deltaBoredom on mood
 
 print('=======================================')
 print('')
@@ -662,16 +891,6 @@ print("""
     boredom measure may have altered the results of the subsequent administration.
 """)
 
-# Crop to exclude all mood ratings after miniumum rating (for floor effects)
-def CropToMinRating(pymer_input):
-    participants = np.unique(pymer_input.Subject)
-    for participant_index,participant in enumerate(participants):
-        df_this = pymer_input.loc[pymer_input.Subject==participant,:]
-        min_index = np.argmin(df_this['Mood'])
-        pymer_input = pymer_input.drop(df_this.index[min_index+1:])
-    return pymer_input
-
-
 # Analyzing change in boredom requires before-and-after group
 batch = 'BoredomBeforeAndAfter'
 
@@ -680,7 +899,6 @@ print(f'=== Batch {batch}: Comparing LME models with and without deltaBoredom ==
 in_file = f'{results_dir}/Mmi-{batch}_pymerInput-full.csv'
 print(f'Opening {in_file}...')
 pymer_input = pd.read_csv(in_file, index_col=0)
-
 
 # Crop to exclude all mood ratings after miniumum rating (for floor effects)
 pymer_input = CropToMinRating(pymer_input)
@@ -709,7 +927,79 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** (PRE-MIN ONLY) Change in state boredom DOES explain added variance in subject-level POTD slope.')
 else:
     print('** (PRE-MIN ONLY) Change in state boredom does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['deltaBoredom','Time:deltaBoredom']])
+print(dfFit_h1.loc[['Time','deltaBoredom','Time:deltaBoredom']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'deltaBoredom'])
+std_val = np.std(pymer_input.loc[:,'deltaBoredom'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:deltaBoredom','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:deltaBoredom','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
+
+
+# %% Hyp 4.1.4: Effect of traitBoredom on mood
+print('=======================================')
+print('')
+print('=======================================')
+print("""
+4.1.4) We hypothesize that trait boredom will explain variance in subject-level 
+    POTD slope.This is a one-sided hypothesis.
+    We will test this with an ANOVA comparing the following two mixed effects 
+    models (difference highlighted in bold):
+    H0: Mood ~ 1 + Time * (isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)
+    H1: Mood ~ 1 + Time * (traitBoredom + isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)
+""")
+
+
+# If repeat administration changes results, we'll use the after-only group. 
+# Otherwise, use both.
+if use_both_boredom:
+    batch = 'AllBoredom'
+else:
+    batch = 'BoredomAfterOnly'
+
+print(f'=== Batch {batch}: Comparing LME models with and without traitBoredom ===')
+# Load pymer input file
+in_file = f'{results_dir}/Mmi-{batch}_pymerInput-full.csv'
+print(f'Opening {in_file}...')
+pymer_input = pd.read_csv(in_file, index_col=0)
+
+# Crop to exclude all mood ratings after miniumum rating (for floor effects)
+pymer_input = CropToMinRating(pymer_input)
+
+# Add traitBoredom scores
+in_file = f'{results_dir}/Mmi-{batch}_Survey.csv'
+print(f'Opening {in_file}...')
+df_boredom = pd.read_csv(in_file)
+participants = np.unique(df_boredom.participant)
+for participant_index,participant in enumerate(participants):
+    boredom_score = df_boredom.loc[df_boredom.participant==participant,'BORED'].values[0]
+    pymer_input.loc[pymer_input.Subject==participant,'traitBoredom'] = boredom_score
+
+# Fit models and run ANOVA to compare
+lm_string_h0 = 'Mood ~ 1 + Time * (isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)'
+lm_string_h1 = 'Mood ~ 1 + Time * (traitBoredom + isMale + meanIRIOver20 + fracRiskScore + isAge40to100) + (1 + Time|Subject)'
+anova_res, dfFit_h0, dfFit_h1 = CompareModels(pymer_input,lm_string_h0,lm_string_h1)
+
+# Print results and pymer fit
+if anova_res.loc[1,'Pr(>Chisq)']<0.05:
+    print('** Trait boredom DOES explain added variance in subject-level POTD slope.')
+else:
+    print('** Trait boredom does NOT explain added variance in subject-level POTD slope.')
+print(dfFit_h1.loc[['Time','traitBoredom','Time:traitBoredom']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'traitBoredom'])
+std_val = np.std(pymer_input.loc[:,'traitBoredom'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:traitBoredom','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:traitBoredom','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
 
 
 # %% Hyp 4.2.2: Floor effects in Effect of finalEmoDim on mood
@@ -762,8 +1052,18 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** (PRE-MIN ONLY) Final MW emotion DOES explain added variance in subject-level POTD slope.')
 else:
     print('** (PRE-MIN ONLY) Final MW emotion does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['finalEmoDim','Time:finalEmoDim']])
+print(dfFit_h1.loc[['Time','finalEmoDim','Time:finalEmoDim']])
     
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'finalEmoDim'])
+std_val = np.std(pymer_input.loc[:,'finalEmoDim'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:finalEmoDim','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:finalEmoDim','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
+
 
 # %% Hyp 4.2.3: Floor effects in Effect of deltaEmoDim on mood
 print('=======================================')
@@ -819,4 +1119,14 @@ if anova_res.loc[1,'Pr(>Chisq)']<0.05:
     print('** (PRE-MIN ONLY) Change in MW emotion DOES explain added variance in subject-level POTD slope.')
 else:
     print('** (PRE-MIN ONLY) Change in MW emotion does NOT explain added variance in subject-level POTD slope.')
-print(dfFit_h1.loc[['deltaEmoDim','Time:deltaEmoDim']])
+print(dfFit_h1.loc[['Time','deltaEmoDim','Time:deltaEmoDim']])
+
+# Print effect size
+mean_val = np.mean(pymer_input.loc[:,'deltaEmoDim'])
+std_val = np.std(pymer_input.loc[:,'deltaEmoDim'])
+before = (dfFit_h1.loc['Time','Estimate'] + dfFit_h1.loc['Time:deltaEmoDim','Estimate'] * mean_val) * 100
+change = (dfFit_h1.loc['Time:deltaEmoDim','Estimate'] * std_val) * 100
+after = before+change
+print(f'** An increase of 1 std ({std_val:.03g}) from the mean ({mean_val:.03g}) \n'+
+      f'** would change the estimated mood slope by {change:.03g} %mood/min, \n'+
+      f'** from {before:.03g} to {after:.03g}, a change of {change/before*100:.03g}%.')
