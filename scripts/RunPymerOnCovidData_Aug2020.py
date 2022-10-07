@@ -9,8 +9,9 @@ Runs Pymer's linear mixed effects (LME) analysis on specified cohorts.
 - Updated 3/31/21 by DJ - adapted for shared code structure.
 - Updated 4/15/21 by DJ - added have_gbe flag, removed extraneous imports
 - Updated 12/20/21 by DJ - switched to control batches, save pymer model.
-- Updated 1/3/22 by DJ - added option to include or exclude 'control' batches 
+- Updated 1/3/22 by DJ - added option to include or exclude 'control' batches
    collected in 2021.
+- Updated 2/2/22 by DJ - added AllOpeningRestControls (combo MW & boredom).
 """
 
 # %% import some basic libraries
@@ -33,7 +34,7 @@ cohortsToRun = ['AllOpeningRestAndRandom','AllOpeningRestAndRandom-noAge','COVID
 if have_gbe:
     cohortsToRun = cohortsToRun + ['GbeExplore','GbeConfirm'] # add on GBE cohorts
 # ADD CONTROL ANALYSES: MW and Boredom cohorts
-cohortsToRun = cohortsToRun + ['BoredomBeforeAndAfter','BoredomAfterOnly','MwBeforeAndAfter','MwAfterOnly','AllBoredom','AllMw']
+cohortsToRun = cohortsToRun + ['BoredomBeforeAndAfter','BoredomAfterOnly','MwBeforeAndAfter','MwAfterOnly','AllBoredom','AllMw','AllOpeningRestControls']
 
 # Declare other parameters
 procDataDir = '../Data/OutFiles' # path to preprocessed data
@@ -67,13 +68,13 @@ for outName in cohortsToRun:
         if not os.path.exists(dfBatch.loc[outName,'ratingsFile']):
             print(f'*** 0 batches found for cohort {outName}... skipping this one! ***')
             continue
-        
+
     else:
         # Load table of batch info and crop columns
         dfBatches = pd.read_csv('%s/Mmi-Batches.csv'%procDataDir)
-        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns','endDate']]        
+        dfBatch = dfBatches[['batchName','ratingsFile','surveyFile','trialFile','lifeHappyFile','block0_type','nPreviousRuns','endDate']]
         # Get custom group batches
-        if outName.startswith('AllOpeningRestAndRandom'):            
+        if outName.startswith('AllOpeningRestAndRandom'):
             dfBatch = dfBatch.loc[(dfBatches.block0_type=='rest') | (dfBatches.block0_type=='random'),:]
             if not includeRepeats:
                 dfBatch = dfBatch.loc[(dfBatch.nPreviousRuns==0),:]
@@ -82,26 +83,39 @@ for outName in cohortsToRun:
                 dfBatch = dfBatch.loc[(dfBatch.endDate < '2021-01-01'),:]
             dfBatch = dfBatch.set_index('batchName')
             dfBatch = dfBatch.drop(['Stability01-random','Stability02-random','RecoveryNimh-run3'],axis=0,errors='ignore')
-    
+        elif outName.startswith('AdultOpeningRest'):
+            dfBatch = dfBatch.loc[(dfBatches.block0_type=='rest') & (dfBatches.isNimhCohort==False),:]
+            if not includeRepeats:
+                dfBatch = dfBatch.loc[(dfBatch.nPreviousRuns==0),:]
+            if not includeControlsInSuperbatches:
+                print(f'Excluding control batches collected in 2021 from {outName}...')
+                dfBatch = dfBatch.loc[(dfBatch.endDate < '2021-01-01'),:]
+            dfBatch = dfBatch.set_index('batchName')
+            dfBatch = dfBatch.drop(['Stability01-random','Stability02-random','RecoveryNimh-run3'],axis=0,errors='ignore')
+
+
         elif outName == 'Stability01-Rest_block2':
             dfBatch = dfBatch.loc[dfBatches.batchName=='Stability01-Rest',:]
         elif outName == 'Recovery(Instructed)1':
             dfBatch = dfBatch.loc[(x in ['Recovery1','RecoveryInstructed1'] for x in dfBatches.batchName),:]
         elif outName == 'AllBoredom':
-            dfBatch = dfBatch.loc[(x in ['BoredomBeforeAndAfter','BoredomAfterOnly'] for x in dfBatches.batchName),:]            
+            dfBatch = dfBatch.loc[(x in ['BoredomBeforeAndAfter','BoredomAfterOnly'] for x in dfBatches.batchName),:]
         elif outName == 'AllMw':
-            dfBatch = dfBatch.loc[(x in ['MwBeforeAndAfter','MwAfterOnly'] for x in dfBatches.batchName),:]            
+            dfBatch = dfBatch.loc[(x in ['MwBeforeAndAfter','MwAfterOnly'] for x in dfBatches.batchName),:]
+        elif outName == 'AllOpeningRestControls':
+            dfBatch = dfBatch.loc[(x in ['MwBeforeAndAfter','MwAfterOnly','BoredomBeforeAndAfter','BoredomAfterOnly'] for x in dfBatches.batchName),:]
         else:
             dfBatch = dfBatch.loc[dfBatches.batchName==outName,:]
-    
+
         # check to make sure batches exist
         if dfBatch.shape[0]==0:
             print(f'*** 0 batches found for cohort {outName}... skipping this one! ***')
             continue
-        
+
         # Set index to batch name
-        dfBatch = dfBatch.set_index('batchName')
-    
+        if (not outName.startswith('AllOpeningRestAndRandom')) and (not outName.startswith('AdultOpeningRest')):
+            dfBatch = dfBatch.set_index('batchName')
+
     # get batch names
     batchNames = dfBatch.index.values
 
@@ -375,7 +389,7 @@ for outName in cohortsToRun:
 
             # fit LME model
             model = Lmer(lmString,data=dfData)
-            
+
             # Fit it
             print('=== Fitting Model... ===')
             _ = model.fit()
@@ -391,7 +405,7 @@ for outName in cohortsToRun:
 
             # Get fixed FX output
             dfFixef = model.fixef
-            
+
             # print fit values for a few subjects
             try:
                 print(dfFixef.head(5))
@@ -404,6 +418,9 @@ for outName in cohortsToRun:
                 fig = plt.figure()
                 sns_plot = sns.regplot(x='fits', y='Mood', data=model.data, fit_reg=True)
                 outFile = '%s/Mmi-%s_pymerFits-%s.png'%(outFigDir,outName,stage)
+                print('Saving %s...'%outFile)
+                plt.savefig(outFile)
+                outFile = '%s/Mmi-%s_pymerFits-%s.pdf'%(outFigDir,outName,stage)
                 print('Saving %s...'%outFile)
                 plt.savefig(outFile)
             else:

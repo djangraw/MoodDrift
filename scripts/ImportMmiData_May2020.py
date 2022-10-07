@@ -35,7 +35,7 @@ batchNames = ['COVID01','COVID02','COVID03','Expectation-7min','Expectation-12mi
               'Stability01-RandomVer2','Stability02-RandomVer2',
               'Stability01-Rest','Stability02-Rest',
               'Stability01-Closed','Stability02-Closed']
-batchNames = ['MwBeforeAndAfter','BoredomBeforeAndAfter','Activities','BoredomAfterOnly','MwAfterOnly']
+batchNames = batchNames + ['MwBeforeAndAfter','BoredomBeforeAndAfter','Activities','BoredomAfterOnly','MwAfterOnly']
 dataCheckDir = '../Data/DataChecks' # where dataCheck files sit
 rawDataDir = '../Data/PilotData' # where raw data files sit
 dataDir = '../Data/OutFiles' # where processed data sits
@@ -43,7 +43,7 @@ outFigDir = '../Figures' # where results should go
 if not os.path.exists(outFigDir):
     os.mkdir(outFigDir)
 plotEveryParticipant = True # should we make a plot for every participant?
-overwrite = True; # overwrite previous results if they already exist?
+overwrite = False; # overwrite previous results if they already exist?
 
 
 # %% Import data

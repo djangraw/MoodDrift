@@ -20,8 +20,8 @@ def PlotAgeVsCoeffs(cohort = 'AllOpeningRestAndRandom'):
     # Declare directories & constants
     dataDir = '../Data/OutFiles'
     outFigDir = '../Figures'
-    
-    
+
+
     # %% Load data
     dfCoeffs = pd.read_csv('%s/Mmi-%s-noAge_pymerCoeffs-full.csv'%(dataDir,cohort))
     dfAll = pd.read_csv('%s/Mmi-%s-noAge_pymerInput-full.csv'%(dataDir,cohort)) # or get from Run... script
@@ -30,9 +30,9 @@ def PlotAgeVsCoeffs(cohort = 'AllOpeningRestAndRandom'):
         dfCoeffs.loc[i,'age'] = dfAll.loc[dfAll.Subject==dfCoeffs.Subject[i],'age'].values[0]
         dfCoeffs.loc[i,'Cohort'] = dfAll.loc[dfAll.Subject==dfCoeffs.Subject[i],'Cohort'].values[0]
         dfCoeffs.loc[i,'fracRiskScore'] = dfAll.loc[dfAll.Subject==dfCoeffs.Subject[i],'fracRiskScore'].values[0]
-    
+
     # %% Plot age vs. slope, colored by Cohort
-    
+
     plt.figure(342); plt.clf();
     isNimh = dfCoeffs.Cohort=='RecoveryNimh-run1'
     plt.subplot(2,1,1)
@@ -43,12 +43,13 @@ def PlotAgeVsCoeffs(cohort = 'AllOpeningRestAndRandom'):
     plt.title('Age vs. LME slope parameter in online participants')
     plt.legend()
     #plt.colorbar()
-    
+
     plt.subplot(2,1,2)
     plt.scatter(dfCoeffs['age'],dfCoeffs['Time']*100.0,c=dfCoeffs['fracRiskScore'],marker='.',label='participant')
     plt.colorbar().set_label('Fraction of depression risk score\n(MFQ/12 or CESD/16)')
     plt.xlabel('Age (years)')
     plt.ylabel('Slope (% mood/min)')
     plt.tight_layout()
-    
+
     plt.savefig('%s/Mmi-%s_ageVsSlope.png'%(outFigDir,cohort))
+    plt.savefig('%s/Mmi-%s_ageVsSlope.pdf'%(outFigDir,cohort))

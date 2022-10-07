@@ -79,6 +79,7 @@ def PlotPenaltyTuning(suffix,dataDir='../Data/OutFiles',outFigDir='../Figures'):
     plt.tight_layout(rect=(0,0,1.0,0.94))
     plt.suptitle('PyTorch Penalty Hyperparameter Tuning')
     plt.savefig('%s/PyTorch_PenaltyTuning%s.png'%(outFigDir,suffix))
+    plt.savefig('%s/PyTorch_PenaltyTuning%s.pdf'%(outFigDir,suffix))
 
     # %% Plot loss vs. pen_T at best pen_EA
 
@@ -93,3 +94,4 @@ def PlotPenaltyTuning(suffix,dataDir='../Data/OutFiles',outFigDir='../Figures'):
         plt.title(r'Losses at $\lambda_{EA}=%g$'%grid[best_ind,0])
         plt.tight_layout()
         plt.savefig('%s/PyTorch_PenaltyTuning_betaT%s.png'%(outFigDir,suffix))
+        plt.savefig('%s/PyTorch_PenaltyTuning_betaT%s.pdf'%(outFigDir,suffix))

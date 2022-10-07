@@ -9,6 +9,7 @@ Created on Mon Oct  5 15:10:35 2020
 Updated 10/29/20 by DJ - made axis labels have only first letter capitalized
 Updated 3/31/21 by DJ - adapted for shared code structure.
 Updated 4/23/21 by DJ - accept directories as inputs
+Updated 9/30/22 by DJ - save svg figure, print median/IQRs
 """
 
 # %%
@@ -29,7 +30,7 @@ def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True, dataDir = '../Dat
     if IS_LATE:
         suffix = '%s-late'%suffix
 
-   
+
     # Load results
     inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
     print('Loading pyTorch best fits from %s...'%inFile)
@@ -116,7 +117,7 @@ def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True, dataDir = '../Dat
     # Annotate figure
     plt.tight_layout()
     plt.savefig('%s/SampleFits%s.png'%(outFigDir,suffix))
-
+    plt.savefig('%s/SampleFits%s.pdf'%(outFigDir,suffix))
 
     # %% Report mean r^2 across subjects
     for corrType in ['Spearman','Pearson']:
@@ -196,7 +197,15 @@ def CalculatePytorchModelError(IS_EXPLORE=False, IS_LATE=True, dataDir = '../Dat
     print('min median MSE (WITH betaT): %.5g'%np.min(median_losses))
     print('min median MSE (NO betaT): %.5g'%np.min(median_losses_noBetaT))
     if IS_EXPLORE:
+        diff = MSE[:,best_ind] - MSE_noBetaT[:,best_ind_noBetaT]
+        median_best = np.median(MSE[:,best_ind])
+        median_best_noBetaT = np.median(MSE_noBetaT[:,best_ind_noBetaT])
         stat,p = stats.wilcoxon(MSE[:,best_ind], MSE_noBetaT[:,best_ind_noBetaT])
     else:
+        diff = median_losses - median_losses_noBetaT
+        median_best = np.median(median_losses)
+        median_best_noBetaT = np.median(median_losses_noBetaT)
         stat,p = stats.wilcoxon(median_losses, median_losses_noBetaT)
+    IQR_diff = stats.iqr(diff)
+    print(f'With vs NO betaT: median={np.median(median_best):.3g} vs. {np.median(median_best_noBetaT):.3g}, IQR={IQR_diff:.3g}')
     print(f'2-sided wilcoxon sign-rank test on losses with/without betaT for the median subject across regularizations: n={len(median_losses)}, dof={len(median_losses) - 1}, stat={stat}, p={p:.3g}')

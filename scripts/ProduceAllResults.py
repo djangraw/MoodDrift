@@ -7,6 +7,10 @@ To use, run whole script or cell-by-cell for specific results.
 - Created 10/22/20 by DJ.
 - Updated 3/31/21 by DJ - adapted for shared code structure.
 - Updated 5/6/21 by DJ - added code to produce several figures found in paper
+- Updated 3/8/22 by DJ - moved horizontal reference line to mean initial mood
+- Updated 3/10/22 by DJ - added life happiness vs. LME mood slope jointplot
+- Updated 9/29/22 by DJ - added descriptive statistics, switched to TRIMD in titles
+- Updated 9/30/22 by DJ - save figures as both png and eps
 """
 
 # Import packages
@@ -31,6 +35,84 @@ pytorchDir = '../Data/GbePytorchResults' # path to model fitting results
 outFigDir = '../Figures' # where model fitting figures should be saved
 have_gbe = True
 
+# function to control how figures get saved
+def save_figure(filename,**kwargs):
+    """
+    Save a figure as both .png and .eps files.
+
+    INPUTS:
+    -------
+    filename: str
+        The filename where you want to save the figure (with no extension).
+    **kwargs: dict
+        Any other inputs you want to send to plt.savefig
+
+    OUTPUTS:
+    --------
+    None.
+    """
+    # save both png and eps versions
+    for extension in ['png', 'pdf']:
+        outFig = f'{filename}.{extension}'
+        print('Saving figure as %s...'%outFig)
+        plt.savefig(outFig,format=extension,**kwargs)
+    print('Done!')
+
+
+
+if have_gbe:
+    plt.close(689)
+    fig,ax = plt.subplots(1,2,num=689,figsize=[10,4],dpi=200,clear=True)
+    for is_explore_index,is_explore_loop in enumerate([True,False]):
+        if is_explore_loop:
+            suffix = '_GbeExplore'
+        else:
+            suffix = '_GbeConfirm'
+        # Load results
+        inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
+        print('Loading pyTorch best fits from %s...'%inFile)
+        fits = np.load(inFile)
+        n_trials,n_subjects = fits.shape
+        print('Done!')
+
+        # Load data
+        if is_explore_loop:
+            cohort = 'gbeExplore'
+            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
+        else:
+            cohort = 'GbeConfirm'
+            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
+        print('Loading actual mood data from %s...'%inFile)
+        dfData = pd.read_csv(inFile,index_col=0)
+        mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T
+        tMood = dfData['time'].values.reshape((-1,n_trials)).T
+
+        residuals = fits-mood
+        meanResiduals = np.mean(residuals,axis=1)
+        rmsResiduals = np.sqrt(np.mean(residuals**2,axis=1))
+        isRating = ~np.isnan(rmsResiduals)
+
+        # Plot
+        ax[is_explor_index].plot(meanResiduals[isRating],'.-',label='mean')
+        ax[is_explor_index].plot(rmsResiduals[isRating],'.-',label='RMS')
+        # Annotate plot
+        ax[is_explor_index].grid(True)
+        ax[is_explor_index].legend()
+        ax[is_explor_index].xlabel('Rating')
+        ax[is_explor_index].ylabel('Residuals of computational model (fit-mood)')
+        if is_explore_loop:
+            plt.title('Exploratory Mobile App Cohort')
+        else:
+            plt.title('Confirmatory Mobile App Cohort')
+        # plt.title('Pytorch model fits over ratings on %s cohort'%cohort)
+
+    plt.tight_layout()
+    # Save figure
+    outFile = '%s/PytorchResidualsVsTime_ExploreAndConfirm'%(outFigDir)
+    save_figure(outFile)
+
+
+raise()
 # %% Print Cohen's D for original cohort and others
 first_and_lasts = []
 for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run1','AllOpeningRestAndRandom']:
@@ -70,17 +152,37 @@ print(f"Difference between adult and adolescent: n = {len(adult_difs) + len(adol
 # %% Plot all naive opening rest batches separately
 batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','RestDownUp','Stability01-Rest','COVID01']
 batchLabels = ['15sRestBetween','Expectation-7mRest','Expectation-12mRest','RestDownUp','Daily-Rest-01','Weekly-Rest-01']
-CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
+plt.figure(511,figsize=(10,12),dpi=180);
+plt.subplot(3,1,1)
+CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True,makeNewFig=False)
 # Annotate plot
-plt.title('Passage-of-Time dysphoria persists across all MTurk cohorts receiving opening rest')
+plt.title('TRIMD persists across all MTurk cohorts receiving opening rest')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
+plt.text(-0.1, 1.1, 'A', transform=plt.gca().transAxes,
+            size=40)#, weight='bold')
 # Save figure
-outFig = '%s/Mmi_%s_Comparison.png'%(outFigDir,'-'.join(batchNames))
-print('Saving figure as %s...'%outFig)
-plt.savefig(outFig)
-print('Done!')
+# outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
+# save_figure(outFig)
+
+# %% Plot simple task cohorts
+batchNames = ['Recovery(Instructed)1','MotionFeedback','Stability01-RandomVer2']
+#batchLabels = ['Rest','Visuomotor task','Random gambling']
+batchLabels = ['15sRestBetween','Visuomotor-Feedback','Daily-Random-01']
+plt.subplot(3,1,2)
+CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock='all',doInterpolation=True,makeNewFig=False)
+# Annotate plot
+plt.title('TRIMD persists in presence of simple tasks')
+plt.gca().set_axisbelow(True)
+plt.ylim([0.4,0.8])
+plt.xlim([-20,500])
+plt.grid()
+plt.text(-0.1, 1.1, 'B', transform=plt.gca().transAxes,
+            size=40)#, weight='bold')
+# Save figure
+# outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
+# save_figure(outFig)
 
 
 # %% Plot online adult vs. in-person adolescent cohort
@@ -88,34 +190,23 @@ print('Done!')
 
 batchNames = ['AdultOpeningRest','RecoveryNimh-run1']
 batchLabels = ['MTurk cohorts','In-person adolescent cohort']
-CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
+plt.subplot(3,1,3)
+CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True,makeNewFig=False)
 # Annotate plot
-plt.title('Passage-of-Time dysphoria generalizes to different age group & recruitment method')
+plt.title('TRIMD generalizes to different age group & recruitment method')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
 # Save figure
-outFig = '%s/Mmi_%s_Comparison.png'%(outFigDir,'-'.join(batchNames))
-print('Saving figure as %s...'%outFig)
-plt.savefig(outFig)
-print('Done!')
+# outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
+# save_figure(outFig)
+plt.text(-0.1, 1.1, 'C', transform=plt.gca().transAxes,
+            size=40)#, weight='bold')
+plt.tight_layout()
+outFig = '%s/PotdTimecourses'%(outFigDir)
+save_figure(outFig)
 
-# %% Plot simple task cohorts
-batchNames = ['Recovery(Instructed)1','MotionFeedback','Stability01-RandomVer2']
-#batchLabels = ['Rest','Visuomotor task','Random gambling']
-batchLabels = ['15sRestBetween','Visuomotor-Feedback','Daily-Random-01']
-CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock='all',doInterpolation=True)
-# Annotate plot
-plt.title('Passage-of-Time dysphoria persists in presence of simple tasks')
-plt.gca().set_axisbelow(True)
-plt.ylim([0.4,0.8])
-plt.xlim([-20,500])
-plt.grid()
-# Save figure
-outFig = '%s/Mmi_%s_Comparison.png'%(outFigDir,'-'.join(batchNames))
-print('Saving figure as %s...'%outFig)
-plt.savefig(outFig)
-print('Done!')
+raise()
 
 
 # %% LME results: Mean decline and Cohen's D with time
@@ -132,11 +223,11 @@ print('Done!')
 moodSlope = dfCoeffs.Time
 mood10 = moodSlope*10.0 # decline in mood after 10 minutes
 D = np.mean(mood10)/np.std(mood10)
-_,p = stats.wilcoxon(moodSlope)
+stat,p = stats.wilcoxon(moodSlope)
 print('===LME RESULTS FOR ONLINE PARTICIPANTS:===')
 print('Decline in mood = %.3g +/- %.3g %%/min'%(np.mean(moodSlope*100),np.std(moodSlope*100)/np.sqrt(moodSlope.size)))
 print('Decline in mood after 10 minutes: %.3g%% +/- %.3g, Cohen''s D=%.3g'%(np.mean(mood10)*100, np.std(mood10*100)/np.sqrt(mood10.size),D))
-print('Wilcoxon signed rank vs. 0: p=%.3g'%p)
+print('Wilcoxon signed rank vs. 0: W=%.3g, p=%.3g'%(stat,p))
 slope_range = dfCoeffs.Time.quantile([0.025,0.975]).values*100
 print(f"2.5percentile slope = {slope_range[0]:0.3f}, 97.5percentile slope = {slope_range[1]:0.3f}")
 
@@ -144,6 +235,31 @@ print(f"2.5percentile slope = {slope_range[0]:0.3f}, 97.5percentile slope = {slo
 isAdolescent = dfCoeffs.Subject<0
 T,p = stats.ttest_ind(dfCoeffs.loc[isAdolescent,'Time'],dfCoeffs.loc[~isAdolescent,'Time'])
 print('Adolescents vs. not: T=%.3g, p=%.3g'%(T,p))
+# Do same with mood slope in AllOpeningRestAndRandom adolescents vs. not
+stage = 'full'
+batchName = 'AllOpeningRestAndRandom'
+inFile = '%s/Mmi-%s_pymerCoeffs-%s.csv'%(dataDir,batchName,stage)
+print('Loading pymer fits from %s...'%inFile)
+dfCoeffs = pd.read_csv(inFile)
+print('Done!')
+# Get inferential statistics
+isAdolescent = dfCoeffs.Subject<0
+T,p = stats.ttest_ind(dfCoeffs.loc[isAdolescent,'Time'],dfCoeffs.loc[~isAdolescent,'Time'])
+# get descriptive statistics
+n0 = np.sum(isAdolescent)
+n1 = np.sum(~isAdolescent)
+dof = n0 + n1 - 2
+mean0 = np.mean(dfCoeffs.loc[isAdolescent,'Time']*100)
+ste0 = np.std(dfCoeffs.loc[isAdolescent,'Time']*100)/np.sqrt(n0)
+mean1 = np.mean(dfCoeffs.loc[~isAdolescent,'Time']*100)
+ste1 = np.std(dfCoeffs.loc[~isAdolescent,'Time']*100)/np.sqrt(n1)
+CI = stats.norm.interval(alpha=0.95, loc=mean0-mean1, scale=np.sqrt(ste0**2 + ste1**2))
+# print statistics
+# print(f'   {batchNames[0]}: mean +/- ste = {mean0:.3g} +/- {ste0:.3g}')
+# print(f'   {batchNames[1]}: mean +/- ste = {mean1:.3g}. +/- {ste1:.3g}')
+print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, dof=%.3g p=%.3g'%('Adolescent',n0,'Adult',n1,T,dof,p))
+print(f'   {mean0:.3g} vs. {mean1:.3g}, 95\%CI= {CI[0]:.3g} to {CI[1]:.3g}')
+
 
 # %% Get impacts of gender, IRI, winnings, & RPEs from the LME results table
 batchName = 'AllOpeningRestAndRandom'
@@ -198,15 +314,13 @@ batchNames = ['RecoveryInstructed1Freq0p25','RecoveryInstructed1Freq0p5','Recove
 batchLabels = ['60sRestBetween','30sRestBetween','15sRestBetween','7.5sRestBetween']
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
 # Annotate plot
-plt.title('Mood rating frequency does not affect passage-of-time dysphoria slope')
+plt.title('Mood rating frequency does not affect TRIMD slope')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
 # Save figure
-outFig = '%s/Mmi_%s_Comparison.png'%(outFigDir,'-'.join(batchNames))
-print('Saving figure as %s...'%outFig)
-plt.savefig(outFig)
-print('Done!')
+outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
+save_figure(outFig)
 
 
 
@@ -234,11 +348,23 @@ for batchNames in [['Numbers','Recovery(Instructed)1'],
     cohort1 = np.unique(dfPymerIn.loc[dfPymerIn.Cohort==batchNames[1],'Subject'])
     isIn1 = [x in cohort1 for x in dfCoeffs.Subject]
 
+    # get inferential statistics
     T,p = stats.ttest_ind(dfCoeffs.loc[isIn0,'Time'],dfCoeffs.loc[isIn1,'Time'])
     n0 = np.sum(isIn0)
     n1 = np.sum(isIn1)
     dof = n0 + n1 - 2
+    # get descriptive statistics
+    mean0 = np.mean(dfCoeffs.loc[isIn0,'Time']*100)
+    ste0 = np.std(dfCoeffs.loc[isIn0,'Time']*100)/np.sqrt(n0)
+    mean1 = np.mean(dfCoeffs.loc[isIn1,'Time']*100)
+    ste1 = np.std(dfCoeffs.loc[isIn1,'Time']*100)/np.sqrt(n1)
+    CI = stats.norm.interval(alpha=0.95, loc=mean0-mean1, scale=np.sqrt(ste0**2 + ste1**2))
+    # print statistics
+    # print(f'   {batchNames[0]}: mean +/- ste = {mean0:.3g} +/- {ste0:.3g}')
+    # print(f'   {batchNames[1]}: mean +/- ste = {mean1:.3g}. +/- {ste1:.3g}')
     print('*** %s (n=%d) vs. %s (n=%d): T=%.3g, dof=%.3g p=%.3g'%(batchNames[0],n0,batchNames[1],n1,T,dof,p))
+    print(f'   {mean0:.3g} vs. {mean1:.3g}, 95\%CI= {CI[0]:.3g} to {CI[1]:.3g}')
+
 
 if have_gbe:
     for is_late in [False,True]:
@@ -312,10 +438,8 @@ if have_gbe:
         plt.suptitle('Computational model parameter fits')
 
         # save results
-        outFile = '%s/PytorchParamHistos%s.png'%(outFigDir,suffix)
-        print('Saving figure %s...'%outFile)
-        plt.savefig(outFile)
-        print('Done!')
+        outFile = '%s/PytorchParamHistos%s'%(outFigDir,suffix)
+        save_figure(outFile)
 
 
     # %% Get stats on beta_T vs. 0
@@ -338,7 +462,7 @@ if have_gbe:
         #print('2-tailed t-test on beta_T vs. 0: T=%.3g, p=%.3g'%(stat,p))
 
         stat,p = stats.wilcoxon(best_pars['beta_T'])
-        #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
+        print(f'beta_T median={np.median(best_pars["beta_T"]*100):.3g}, IQR={stats.iqr(best_pars["beta_T"]*100):.3g} \%mood/min')
         print(f'2-sided wilcoxon sign-rank test on beta_T vs. 0: n={len(best_pars)}, dof={len(best_pars) - 1}, stat={stat:0.3g}, p={p:.3g}')
         print(f'stat in full {stat}')
     # %% Get stats on Mobile app LME slopes vs. 0
@@ -360,8 +484,9 @@ if have_gbe:
         #print('2-tailed t-test on beta_T vs. 0: T=%.3g, p=%.3g'%(stat,p))
 
         stat,p = stats.wilcoxon(dfPymerCoeffs_app['Time'])
-        #print('median beta_T: %.3g'%np.median(best_pars['beta_T']))
         print(f'2-sided wilcoxon sign-rank test on {batchName_app} LME slope vs. 0: n={len(dfPymerCoeffs_app["Time"])}, dof={len(dfPymerCoeffs_app["Time"]) - 1}, stat={stat:.3g}, p={p:.3g}')
+        print(f'{batchName_app} beta_T median={np.median(dfPymerCoeffs_app["Time"]*100):.3g}, IQR={stats.iqr(dfPymerCoeffs_app["Time"]*100):.3g}  \%mood/min')
+
 
         # Print ranksum comparison
         stat,p = stats.ranksums(dfPymerCoeffs_online.Time, dfPymerCoeffs_app.Time)
@@ -369,8 +494,8 @@ if have_gbe:
         napp = len(dfPymerCoeffs_app.Time)
         dof = nonline + napp - 2
         print(f'Ranksum of LME time coeff for online ({batchName_online}) vs. mobile app ({batchName_app}): nonline={nonline}, napp={napp}, ndof={dof}, stat={stat:.3g}, p={p:.3g}')
-
-
+        print(f'{batchName_online} beta_T median={np.median(dfPymerCoeffs_online["Time"]*100):.3g}, IQR={stats.iqr(dfPymerCoeffs_online["Time"]*100):.3g} \%mood/min')
+        print(f'{batchName_app} beta_T median={np.median(dfPymerCoeffs_app["Time"]*100):.3g}, IQR={stats.iqr(dfPymerCoeffs_app["Time"]*100):.3g} \%mood/min')
 
 
     # %% Compare LME and comp model
@@ -399,6 +524,8 @@ if have_gbe:
         napp = len(best_pars.beta_T)
         dof = nonline + napp - 2
         print(f'Ranksum of LME time coeff for online ({batchName}) vs. PyTorch beta_T for mobile app ({suffix}): nonline={nonline}, napp={napp}, ndof={dof}, stat={stat:.3g}, p={p:.3g}')
+        print(f'{batchName} beta_T median={np.median(dfCoeffs["Time"]*100):.3g}, IQR={stats.iqr(dfCoeffs["Time"]*100):.3g} \%mood/min')
+        print(f'GBE{suffix} beta_T median={np.median(best_pars["beta_T"]*100):.3g}, IQR={stats.iqr(best_pars["beta_T"]*100):.3g} \%mood/min')
 
 
     # %% Plot histograms of LME slopes from online and mobile app data
@@ -436,11 +563,10 @@ if have_gbe:
     plt.title('LME mood slope parameter histograms')
     online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
     # Save figure
-    #outFile = '%s/Mmi-Vs-Gbe-Slopes.png'%outFigDirƒ%%
-    outFile = '%s/LmeSlopeHistograms_OnlineVsApp_%s_2grp.png'%(outFigDir,batchName_app)
-    print('Saving figure as %s...'%outFile)
-    plt.savefig(outFile)
-    print('Done!')
+    #outFile = '%s/Mmi-Vs-Gbe-Slopes'%outFigDirƒ%%
+    outFile = '%s/LmeSlopeHistograms_OnlineVsApp_%s_2grp'%(outFigDir,batchName_app)
+    save_figure(outFile)
+    # print info
     online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
     app_lme_median = np.percentile(dfPymerCoeffs_app['Time']*100.0, 50)
     lme_dif = online_lme_median - app_lme_median
@@ -496,12 +622,12 @@ for i,participant in enumerate(participants):
     slope[i] = dfCoeffs.loc[dfCoeffs.Subject==participant,'Time'].values[0]
     #ms
 isAtRisk = fracRiskScore>=1
-print('Mean +/- ste slope when fracRiskScore>=1: %.3f +/- %.3f'
+print('Mean +/- ste slope when fracRiskScore>=1: %.3f +/- %.3f \%%mood/min'
       %(np.mean(slope[isAtRisk])*100, np.std(slope[isAtRisk]*100)/np.sqrt(np.sum(isAtRisk))))
-print('Median slope when fracRiskScore>=1: %.3f'
+print('Median slope when fracRiskScore>=1: %.3f \%%mood/min'
       %(np.median(slope[isAtRisk])*100))
 isNotAtRisk = fracRiskScore<1
-print('Mean +/- ste slope when fracRiskScore<1: %.3f +/- %.3f'
+print('Mean +/- ste slope when fracRiskScore<1: %.3f +/- %.3f \%%mood/min'
       %(np.mean(slope[isNotAtRisk])*100, np.std(slope[isNotAtRisk]*100)/np.sqrt(np.sum(isNotAtRisk))))
 
 # %% Depression risk vs. not
@@ -512,6 +638,7 @@ cols[cols.index('Time')] = 'time'
 cols[cols.index('Mood')] = 'rating'
 dfRating.columns = cols
 dfRating['iBlock'] = 0
+dfRating['iTrial'] = np.nan
 dfRating['time'] = dfRating['time']*60
 
 participants = np.unique(dfRating.participant)
@@ -544,7 +671,9 @@ dfRatingMean1 = pmd.GetMeanRatings(dfRating.loc[isAtRisk,:],nRatings=-1,particip
 pmd.PlotMmiRatings(dfTrialMean,dfRatingMean0,'line',autoYlim=True, doBlockLines=False, ratingLabel=dfRatingMean0.participant[0])
 pmd.PlotMmiRatings(dfTrialMean,dfRatingMean1,'line',autoYlim=True, doBlockLines=False, ratingLabel=dfRatingMean1.participant[0])
 # Annotate plot
-plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
+meanInitialMood = np.mean([dfRatingMean0['rating'].values[0], dfRatingMean1['rating'].values[0]])
+plt.axhline(meanInitialMood,c='k',ls='--',zorder=-6)#,label='mean initial mood')
+# plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
 #plt.legend(loc='upper right')
 plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.65))
 plt.grid(True)
@@ -559,7 +688,9 @@ dfRatingMean1 = pmd.GetMeanRatings(dfRating.loc[isAtRisk & isMedium,:],nRatings=
 pmd.PlotMmiRatings(dfTrialMean,dfRatingMean0,'line',autoYlim=True, doBlockLines=False, ratingLabel=dfRatingMean0.participant[0])
 pmd.PlotMmiRatings(dfTrialMean,dfRatingMean1,'line',autoYlim=True, doBlockLines=False, ratingLabel=dfRatingMean1.participant[0])
 # Annotate plot
-plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
+meanInitialMood = np.mean([dfRatingMean0['rating'].values[0], dfRatingMean1['rating'].values[0]])
+plt.axhline(meanInitialMood,c='k',ls='--',zorder=-6)#,label='mean initial mood')
+# plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
 #plt.legend(loc='upper right')
 plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.65))
 plt.grid(True)
@@ -573,7 +704,9 @@ dfRatingMean1 = pmd.GetMeanRatings(dfRating.loc[isAtRisk & isLong,:],nRatings=-1
 pmd.PlotMmiRatings(dfTrialMean,dfRatingMean0,'line',autoYlim=True, doBlockLines=False, ratingLabel=dfRatingMean0.participant[0])
 pmd.PlotMmiRatings(dfTrialMean,dfRatingMean1,'line',autoYlim=True, doBlockLines=False, ratingLabel=dfRatingMean1.participant[0])
 # Annotate plot
-plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
+meanInitialMood = np.mean([dfRatingMean0['rating'].values[0], dfRatingMean1['rating'].values[0]])
+plt.axhline(meanInitialMood,c='k',ls='--',zorder=-6)#,label='mean initial mood')
+# plt.axhline(0.5,c='k',ls='--',zorder=-6)#,label='neutral mood')
 #plt.legend(loc='upper right')
 plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.65))
 plt.grid(True)
@@ -587,10 +720,8 @@ fig.subplots_adjust(bottom=0.25)
 plt.suptitle('Depression risk affects mean mood ratings over time')
 
 # Save figure
-outFig = '%s/Mmi_%s_Comparison.png'%(outFigDir,'-'.join(['NotAtRisk','AtRisk']))
-print('Saving figure as %s...'%outFig)
-plt.savefig(outFig, bbox_inches="tight")
-print('Done!')
+outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(['NotAtRisk','AtRisk']))
+save_figure(outFig, bbox_inches="tight")
 
 #%%
 if have_gbe:
@@ -697,7 +828,8 @@ if have_gbe:
         plt.legend()
 
         plt.tight_layout()
-        plt.savefig('%s/PyTorch_betaT-vs-lifeHappyAndBetaA%s.png'%(outFigDir,suffix))
+        outFig = '%s/PyTorch_betaT-vs-lifeHappyAndBetaA%s'%(outFigDir,suffix)
+        save_figure(outFig)
 
 
 
@@ -804,7 +936,8 @@ if have_gbe:
 
 
             plt.tight_layout()
-            plt.savefig('%s/PyTorch_betaT-vs-others%s-%dGrps.png'%(outFigDir,suffix,nGrps))
+            outFig = '%s/PyTorch_betaT-vs-others%s-%dGrps'%(outFigDir,suffix,nGrps)
+            save_figure(outFig)
 
 
 # %% Get impacts of fracRiskScore from the LME results table
@@ -859,10 +992,8 @@ for i,pair in enumerate(cohortPairs):
 
 # Save figure
 plt.tight_layout()
-outFile = '%s/Mmi_%s_Reliability.png'%(outFigDir,'-'.join(pairTitles))
-print('Saving figure as %s...'%outFile)
-plt.savefig(outFile)
-print('Done!')
+outFile = '%s/Mmi_%s_Reliability'%(outFigDir,'-'.join(pairTitles))
+save_figure(outFile)
 
 
 # %% Check for time of day effects
@@ -973,6 +1104,8 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
                     plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*',label='p < 0.05/%d'%nComparisons)
                     isAnyStar = True
             print('%s vs. %s: stat=%.3g, dof=%.3g, p=%.3g'%(batchLabels[i],batchLabels[j],stat[i,j],dof[i,j], p[i,j]))
+            print(f'   median = {np.median(nChoseGamble[i]):.3g} vs. {np.median(nChoseGamble[j]):.3g}')
+            print(f'   IQR = {stats.iqr(nChoseGamble[i]):.3g} vs. {stats.iqr(nChoseGamble[j]):.3g}')
 
     #plt.legend(loc='lower left')
     plt.xticks(np.arange(len(batchNames)),batchLabels)
@@ -980,10 +1113,8 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
     plt.tight_layout(rect=[0,0,1,0.95])
     figTitle='Opening rest period is associated with reduced gambling choices'
     plt.suptitle('%s'%figTitle)
-    outFile = '%s/RestDurationComparison_%s.png'%(outFigDir,groupName)
-    print('Saving figure as %s...'%outFile)
-    plt.savefig(outFile)
-    print('Done!')
+    outFile = '%s/RestDurationComparison_%s'%(outFigDir,groupName)
+    save_figure(outFile)
 
     return participants,nChoseGamble
 
@@ -1003,7 +1134,7 @@ iGambleBlock = [0,1] # which was first gambling block in each batch
 nGamble = 4 # number of initial trials to average gambleFrac in
 participants, nChoseGamble = CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,iGambleBlock,nGamble=4)
 
-# Compare
+# Correlate LME slopes with gambling choices
 participants = participants[1]
 nChoseGamble = nChoseGamble[1]
 batchName = 'AllOpeningRestAndRandom' # should include any participants in AnyOpeningRest
@@ -1105,10 +1236,8 @@ for stage in ['full','late']:
         plt.title(r'Mobile app cohort computational model' + '\n' + r'$r_s=%.3g$, $p_s=%.3g$'%(rs,ps))
 
     plt.tight_layout()
-    outFile = '%s/PyTorchAndLme_m0-vs-lifeHappy%s.png'%(outFigDir,suffix)
-    print('Saving figure as %s...'%outFile)
-    plt.savefig(outFile)
-    print('Done!')
+    outFile = '%s/PyTorchAndLme_m0-vs-lifeHappy%s'%(outFigDir,suffix)
+    save_figure(outFile)
 
 
 # %% Plot LME slopes of app and online cohorts
@@ -1171,10 +1300,8 @@ for stage in ['full','late']:
     plt.title('Mood slope parameter distributions vary with analysis choice')
     plt.tight_layout()
     # Save figure
-    outFile = '%s/LmeSlopeHistograms_OnlineVsApp%s.png'%(outFigDir,suffix)
-    print('Saving figure as %s...'%outFile)
-    plt.savefig(outFile)
-    print('Done!')
+    outFile = '%s/LmeSlopeHistograms_OnlineVsApp%s'%(outFigDir,suffix)
+    save_figure(outFile)
 
 # %% Check for stats differences between above cohorts/analyses
 
@@ -1202,20 +1329,21 @@ if have_gbe:
         print('Loading best parameters from %s...'%inFile)
         best_pars = pd.read_csv(inFile);
 
-        print('median pymer online slope: %.3g'%np.median(dfPymerCoeffs_online['Time']))
-        print('median pymer app slope: %.3g'%np.median(dfPymerCoeffs_app['Time']))
-        print('median comp. model app slope: %.3g'%np.median(best_pars['beta_T']))
+        print(f'pymer online slope: median={np.median(dfPymerCoeffs_online["Time"]*100):.3g}, IQR={stats.iqr(dfPymerCoeffs_online["Time"]*100):.3g} \%mood/min')
+        print(f'pymer app slope: median={np.median(dfPymerCoeffs_app["Time"]*100):.3g}, IQR={stats.iqr(dfPymerCoeffs_app["Time"]*100):.3g} \%mood/min')
+        print(f'comp. model app slope: median={np.median(best_pars["beta_T"]*100):.3g}, IQR={stats.iqr(best_pars["beta_T"]*100):.3g} \%mood/min')
+
         stat,p = stats.ranksums(dfPymerCoeffs_online['Time'],dfPymerCoeffs_app['Time'])
         dof = len(dfPymerCoeffs_online['Time']) + len(dfPymerCoeffs_app['Time']) - 2
-        print(f'pymer online vs. pymer app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
+        print(f'pymer online vs. pymer app: ranksum W_{dof} = {stat:.3g}, p={p:0.3g}')
 
         stat,p = stats.ranksums(dfPymerCoeffs_online['Time'],best_pars['beta_T'])
         dof = len(dfPymerCoeffs_online['Time']) + len(best_pars['beta_T']) - 2
-        print(f'pymer online vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
+        print(f'pymer online vs. comp. model app: ranksum W_{dof} = {stat:.3g}, p={p:0.3g}')
 
         stat,p = stats.ranksums(dfPymerCoeffs_app['Time'],best_pars['beta_T'])
         dof = len(dfPymerCoeffs_app['Time']) + len(best_pars['beta_T']) - 2
-        print(f'pymer app vs. comp. model app: ranksum stat = {stat:.3g}, dof={dof}, p={p:0.3g}')
+        print(f'pymer app vs. comp. model app: ranksum W_{dof} = {stat:.3g}, p={p:0.3g}')
 
         print('pymer online: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_online['Time']<0)*100))
         print('pymer app: %.1f%% participants had beta_T<0'%(np.mean(dfPymerCoeffs_app['Time']<0)*100))
@@ -1232,51 +1360,55 @@ print(dfPymerFit.to_latex(float_format='%.3g'))
 # %% Check whether amplitude of residuals are equal over time
 
 if have_gbe:
-    if IS_EXPLORE:
-        suffix = '_GbeExplore'
-    else:
-        suffix = '_GbeConfirm'
-    # Load results
-    inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
-    print('Loading pyTorch best fits from %s...'%inFile)
-    fits = np.load(inFile)
-    n_trials,n_subjects = fits.shape
-    print('Done!')
-
-    # Load data
-    if IS_EXPLORE:
-        cohort = 'gbeExplore'
-        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
-    else:
-        cohort = 'GbeConfirm'
-        inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
-    print('Loading actual mood data from %s...'%inFile)
-    dfData = pd.read_csv(inFile,index_col=0)
-    mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T
-    tMood = dfData['time'].values.reshape((-1,n_trials)).T
-
-    residuals = fits-mood
-    meanResiduals = np.mean(residuals,axis=1)
-    rmsResiduals = np.sqrt(np.mean(residuals**2,axis=1))
-    isRating = ~np.isnan(rmsResiduals)
-
-    # Set up Plot
     plt.close(689)
-    plt.figure(689,figsize=[10,4],dpi=200)
-    plt.clf()
-    plt.plot(meanResiduals[isRating],'.-',label='mean')
-    plt.plot(rmsResiduals[isRating],'.-',label='RMS')
-    plt.grid(True)
-    plt.legend()
-    plt.xlabel('Rating')
-    plt.ylabel('Residuals of computational model (fit-mood)')
-    plt.title('Pytorch model fits over ratings on %s cohort'%cohort)
+    fig,ax = plt.subplots(1,2,num=689,figsize=[10,4],dpi=200,clear=True)
+    for is_explore_index,is_explore_loop in enumerate([True,False]):
+        if is_explore_loop:
+            suffix = '_GbeExplore'
+        else:
+            suffix = '_GbeConfirm'
+        # Load results
+        inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
+        print('Loading pyTorch best fits from %s...'%inFile)
+        fits = np.load(inFile)
+        n_trials,n_subjects = fits.shape
+        print('Done!')
+
+        # Load data
+        if is_explore_loop:
+            cohort = 'gbeExplore'
+            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
+        else:
+            cohort = 'GbeConfirm'
+            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
+        print('Loading actual mood data from %s...'%inFile)
+        dfData = pd.read_csv(inFile,index_col=0)
+        mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T
+        tMood = dfData['time'].values.reshape((-1,n_trials)).T
+
+        residuals = fits-mood
+        meanResiduals = np.mean(residuals,axis=1)
+        rmsResiduals = np.sqrt(np.mean(residuals**2,axis=1))
+        isRating = ~np.isnan(rmsResiduals)
+
+        # Plot
+        ax[is_explor_index].plot(meanResiduals[isRating],'.-',label='mean')
+        ax[is_explor_index].plot(rmsResiduals[isRating],'.-',label='RMS')
+        # Annotate plot
+        ax[is_explor_index].grid(True)
+        ax[is_explor_index].legend()
+        ax[is_explor_index].xlabel('Rating')
+        ax[is_explor_index].ylabel('Residuals of computational model (fit-mood)')
+        if is_explore_loop:
+            plt.title('Exploratory Mobile App Cohort')
+        else:
+            plt.title('Confirmatory Mobile App Cohort')
+        # plt.title('Pytorch model fits over ratings on %s cohort'%cohort)
+
     plt.tight_layout()
     # Save figure
-    outFile = '%s/PytorchResidualsVsTime_%s%s.png'%(outFigDir,cohort,suffix)
-    print('Saving figure as %s...'%outFile)
-    plt.savefig(outFile)
-    print('Done!')
+    outFile = '%s/PytorchResidualsVsTime_ExploreAndConfirm'%(outFigDir)
+    save_figure(outFile)
 
 # %% Test whether slope is correlated with number of plays
 # Load results
@@ -1312,7 +1444,10 @@ if have_gbe:
         stat,p = stats.ranksums(dfParams.loc[dfParams.noPlays==1,'beta_T'],
                              dfParams.loc[dfParams.noPlays>1,'beta_T'])
         dof = len(dfParams.loc[dfParams.noPlays==1,'beta_T']) + len(dfParams.loc[dfParams.noPlays>1,'beta_T']) - 2
+        print(f'naive player beta_T: median={np.median(dfParams.loc[dfParams.noPlays==1,"beta_T"]*100):.3g}, IQR={stats.iqr(dfParams.loc[dfParams.noPlays==1,"beta_T"]*100):.3g} \%mood/min')
+        print(f'return player beta_T: median={np.median(dfParams.loc[dfParams.noPlays>1,"beta_T"]*100):.3g}, IQR={stats.iqr(dfParams.loc[dfParams.noPlays>1,"beta_T"]*100):.3g} \%mood/min')
         print(f'ranksum: stat = {stat:.3g}, dof = {dof}, p={p:.3g}')
+
 
         plt.figure(692);
         plt.clf();
@@ -1332,10 +1467,8 @@ if have_gbe:
         plt.title('Time sensitivity vs. choice to play again, %s cohort'%cohort)
         plt.tight_layout()
         # Save figure
-        outFile = '%s/PytorchBetaT-Vs-NoPlays%s.png'%(outFigDir,suffix)
-        print('Saving figure as %s...'%outFile)
-        plt.savefig(outFile)
-        print('Done!')
+        outFile = '%s/PytorchBetaT-Vs-NoPlays%s'%(outFigDir,suffix)
+        save_figure(outFile)
 
 # %% Check whether initial mood rating correlates
 
@@ -1381,10 +1514,8 @@ PlotPymerHistosJoint(dfCoeffs)
 nSubj = dfCoeffs.shape[0]
 plt.suptitle('LME Parameters for all subjects with opening \nrest or random gambling (n=%d)'%nSubj)
 # Save resulting figure
-outFile = '%s/PymerCoeffJointPlot_%s-%s.png'%(outFigDir,batchName,stage)
-print('Saving figure as %s...'%outFile)
-plt.savefig(outFile)
-print('Done!')
+outFile = '%s/PymerCoeffJointPlot_%s-%s'%(outFigDir,batchName,stage)
+save_figure(outFile)
 
 # %% Test for multitasking
 batchName = 'AllOpeningRestAndRandom'
@@ -1405,3 +1536,50 @@ mean_duration = (dat.loc[dat.iBlock == 0].groupby('participant')['time'].max().m
 std_final_rating = dat.loc[(dat.iBlock == 0)].groupby('participant').rating.last().std()
 print(f"Estimates for the effect size of the full LME for all online participants (AllOpeningRestAndRandom_Ratings) at the mean duration ({mean_duration:0.3g} minutes).")
 print((fits.loc['Time', ['Estimate', '2.5_ci', '97.5_ci']] * mean_duration)/std_final_rating)
+
+# %% Plot life happiness vs. LME mood slope jointplot
+
+batchName_online = 'AllOpeningRestAndRandom'
+
+#dfPymerFit = pd.read_csv('%s/Mmi-%s_pymerFit-full.csv'%(dataDir,batchName),index_col=0)
+dfPymerCoeffs_online = pd.read_csv('%s/Mmi-%s_pymerCoeffs-full.csv'%(dataDir,batchName_online),index_col=0)
+dfLifeHappy_online = pd.read_csv('%s/Mmi-%s_lifeHappy.csv'%(dataDir,batchName_online),index_col=0)
+
+# make fake table
+nSubj_online = dfPymerCoeffs_online.shape[0]
+dfPymerCoeffs_online = dfPymerCoeffs_online.reset_index()
+dfPymerCoeffs_online['Mood Slope'] = dfPymerCoeffs_online['Time']*100.0
+dfPymerCoeffs_online['Life Happiness'] = np.nan
+for participant_index in range(nSubj_online):
+    participant = dfPymerCoeffs_online.loc[participant_index,'Subject']
+    dfPymerCoeffs_online.loc[participant_index,'Life Happiness'] = \
+        dfLifeHappy_online.loc[dfLifeHappy_online.participant==participant,'rating'].values[0]
+
+
+# Plot histograms
+sns.jointplot(dfPymerCoeffs_online['Mood Slope'],dfPymerCoeffs_online['Life Happiness'])
+#plt.title('All online participants (n=%d), LME'%nSubj_online)
+
+# plot
+g = sns.jointplot('Life Happiness','Mood Slope',
+                    data=dfPymerCoeffs_online[['Life Happiness','Mood Slope']],
+                    kind="reg",space=0)
+# add axis labels
+g.ax_joint.set_xlabel("Life Happiness")
+g.ax_joint.set_ylabel("Mood Slope\n(% mood/min)")
+# Add lines
+g.ax_joint.axvline(x=0.5,c='k',ls=':',zorder=-1,label='neutral')
+g.ax_joint.axhline(y=0,c='k',ls=':',zorder=-1,label='no change')
+g.ax_marg_x.axvline(x=0.5,c='k',ls=':',zorder=-1,label='neutral')
+g.ax_marg_y.axhline(y=0,c='k',ls=':',zorder=-1,label='no change')
+# add legend
+r,p = stats.spearmanr(dfPymerCoeffs_online['Life Happiness'],dfPymerCoeffs_online['Mood Slope'])
+phantom, = g.ax_joint.plot([], [], linestyle="", alpha=0)
+g.ax_joint.legend([phantom],[f'r={r:.3g}, p={p:.3g}'])
+
+# Annotate figure
+plt.tight_layout(rect=[0,0,1,0.93]);
+plt.suptitle('LME Mood Slope vs. Life Happiness for all subjects with opening \nrest or random gambling (n=%d)'%nSubj_online)
+
+outFile = '%s/LmeSlopeVsLifeHappiness'%(outFigDir)
+save_figure(outFile)

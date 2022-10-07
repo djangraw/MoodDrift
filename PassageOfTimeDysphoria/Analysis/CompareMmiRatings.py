@@ -7,6 +7,7 @@ Created on Mon May 25 15:17:04 2020
 
 - Updated 10/29/20 by DJ - made axis labels have only first letter capitalized
 - Updated 3/31/21 by DJ - adapted for shared code structure.
+- Updated 8/11/22 by DJ - plot reference line at mean initial rating instead of 0.5
 """
 # %%
 import pandas as pd
@@ -14,16 +15,17 @@ import numpy as np
 from matplotlib import pyplot as plt
 import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
 
-def CompareMmiRatings(batchNames,procDataDir='../Data/OutFiles',batchLabels=[],iBlock='all',doInterpolation=False):
+def CompareMmiRatings(batchNames,procDataDir='../Data/OutFiles',batchLabels=[],iBlock='all',doInterpolation=False,makeNewFig=True):
 
     # Declare defaults
     if len(batchLabels)==0:
         batchLabels = batchNames
 
     # Set up figure
-    plt.figure(511,figsize=(10,4),dpi=180);
-    plt.clf();
-
+    if makeNewFig:
+        plt.figure(511,figsize=(10,4),dpi=180);
+        plt.clf();
+    initialMood = np.ones(len(batchNames))*np.nan
     for iBatch,batchName in enumerate(batchNames):
 
         dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(procDataDir,batchName))
@@ -42,9 +44,11 @@ def CompareMmiRatings(batchNames,procDataDir='../Data/OutFiles',batchLabels=[],i
         ratingLabel = '%s (n=%d)'%(batchLabels[iBatch],nSubj)
         pmd.PlotMmiRatings(dfTrialMean,dfRatingMean,'line',autoYlim=True,
                            doBlockLines=False,ratingLabel=ratingLabel)
+        initialMood[iBatch] = dfRatingMean['rating'].values[0]
 
     # Annotate plot
-    plt.axhline(0.5,c='k',ls='--',zorder=1,label='neutral mood')
+    # plt.axhline(0.5,c='k',ls='--',zorder=1,label='neutral mood')
+    plt.axhline(np.mean(initialMood),c='k',ls='--',zorder=1,label='mean initial mood')
     plt.legend()
     titleStr = 'Batch ' + ' vs. '.join(batchLabels) + ' comparison'
     plt.title(titleStr)

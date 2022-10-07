@@ -11,8 +11,9 @@ Created 6/2/20 by DJ.
 Updated 3/31/21 by DJ - adapted for shared code structure.
 Updated 4/2/21 by DJ - added overwrite flag.
 Updated 4/8/21 by DJ - added line to calculate Recovery(Instructed)1.
-Updated 1/3/22 by DJ - added option to include or exclude 'control' batches 
+Updated 1/3/22 by DJ - added option to include or exclude 'control' batches
    collected in 2021.
+Updated 8/11/22 by DJ - add MwBeforeAndAfter to AllOpeningRestControls batch
 """
 
 # %% Import packages
@@ -128,7 +129,7 @@ for iBatch,batchName in enumerate(batchNames):
     # Get averages
     dfRatingMean = pmd.GetMeanRatings(dfRating)
     dfTrialMean = pmd.GetMeanTrials(dfTrial)
-    
+
     tBlockSwitch,blockType = pmd.GetBlockTimes(dfTrial,dfRating)
     nBlocks = len(blockType)
     for iBlock in range(nBlocks):
@@ -140,7 +141,7 @@ for iBatch,batchName in enumerate(batchNames):
             isThis = (dfRatingMean.iBlock==iBlock)
             dfBatches.loc[iBatch,'block%d_nRatings'%iBlock] = np.sum(isThis)
             dfBatches.loc[iBatch,'block%d_meanDuration'%iBlock] = tBlockSwitch[iBlock+1] - tBlockSwitch[iBlock]
-        else:            
+        else:
             dfBatches.loc[iBatch,'block%d_type'%iBlock] = dfTrialMean.loc[isThis,'trialType'].values[0]
             dfBatches.loc[iBatch,'block%d_targetHappiness'%iBlock] = dfTrialMean.loc[isThis,'targetHappiness'].values[0]
             dfBatches.loc[iBatch,'block%d_nTrials'%iBlock] = np.sum(isThis)
@@ -157,7 +158,7 @@ else:
     print('Done!')
 
 # %% Combine two batches with identical trials
-    
+
 CombineMmiBatches(['Recovery1','RecoveryInstructed1'],'Recovery(Instructed)1');
 
 # %% Assemble batches with no opening rest, short opening rest, and long opening rest
@@ -228,5 +229,4 @@ CombineMmiBatches(['MwBeforeAndAfter','MwAfterOnly'],'AllMw',makeSubjectsMatchPy
 # Get boredom cohort
 CombineMmiBatches(['BoredomBeforeAndAfter','BoredomAfterOnly'],'AllBoredom',makeSubjectsMatchPymer=True);
 # Get combined cohort to replicate results (exclude before-and-after cohorts where repeated administration affected results)
-CombineMmiBatches(['MwBeforeAndAfter','MwAfterOnly','BoredomAfterOnly'],'AllOpeningRestControls',makeSubjectsMatchPymer=True);
-
+CombineMmiBatches(['MwBeforeAndAfter','MwAfterOnly','BoredomBeforeAndAfter','BoredomAfterOnly'],'AllOpeningRestControls',makeSubjectsMatchPymer=True);

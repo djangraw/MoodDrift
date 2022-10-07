@@ -206,6 +206,9 @@ def GetMmiIcc(cohort1,cohort2,doPlot=False,dataDir='../Data/OutFiles',outFigDir=
         outFile = '%s/Mmi_%s-%s_reliability.png'%(outFigDir,cohort1,cohort2)
         print('Saving figure as %s...'%outFile)
         plt.savefig(outFile)
+        outFile = '%s/Mmi_%s-%s_reliability.pdf'%(outFigDir,cohort1,cohort2)
+        print('Saving figure as %s...'%outFile)
+        plt.savefig(outFile)
         print('Done!')
 
     elif doPlot=='T1T2':
@@ -244,6 +247,9 @@ def GetMmiIcc(cohort1,cohort2,doPlot=False,dataDir='../Data/OutFiles',outFigDir=
 
         plt.tight_layout(rect=(0,0,1.0,0.94))
         outFile = '%s/Mmi_%s-%s_T1T2.png'%(outFigDir,cohort1,cohort2)
+        print('Saving figure as %s...'%outFile)
+        plt.savefig(outFile)
+        outFile = '%s/Mmi_%s-%s_T1T2.pdf'%(outFigDir,cohort1,cohort2)
         print('Saving figure as %s...'%outFile)
         plt.savefig(outFile)
         print('Done!')

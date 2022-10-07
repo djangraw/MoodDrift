@@ -9,6 +9,7 @@ Created on Wed May 13 09:38:37 2020
 - Updated 3/31/21 by DJ - adapted for shared code structure.
 - Updated 12/6/21 by DJ - added option for block with no mood ratings
 - Updated 12/20/21 by DJ - changed mean rating block/trial numbers to match 1st subject
+- Updated 3/8/22 by DJ - cleared bug for interpolation with infrequent ratings
 """
 
 import pandas as pd
@@ -280,11 +281,13 @@ def GetMeanRatings(dfRating,nRatings=-1,participantLabel='mean',doInterpolation=
     dfRatingMean = pd.DataFrame(np.ones((nRatings,len(cols)))*np.nan,columns=cols)
 #    dfRatingMean = dfRating.loc[dfRating.participant==participants[0],:].copy()
 #    dfRatingMean = dfRatingMean.iloc[:nRatings,:]
-    dfRatingMean['participant'] = '%s (n=%s)'%(participantLabel,nSubj)
-    # dfRatingMean['iBlock'] = dfRating['iBlock'].values[0]
-    # dfRatingMean['iTrial'] = np.arange(nRatings)    
-    dfRatingMean['iBlock'] = dfRating['iBlock'].values[:nRatings] # assume block numbers are same for every subject
-    dfRatingMean['iTrial'] = dfRating['iTrial'].values[:nRatings] # assume trial numbers are same for every subject
+    dfRatingMean['participant'] = '%s (n=%s)'%(participantLabel,nSubj) 
+    if dfRating.shape[0]<nRatings: # in case of interpolation
+        dfRatingMean['iBlock'] = dfRating['iBlock'].values[0]
+        dfRatingMean['iTrial'] = np.nan # trials are irrelevant in this case
+    else:
+        dfRatingMean['iBlock'] = dfRating['iBlock'].values[:nRatings] # assume block numbers are same for every subject
+        dfRatingMean['iTrial'] = dfRating['iTrial'].values[:nRatings] # assume trial numbers are same for every subject
     dfRatingMean['rating'] = np.mean(allRating,axis=1)
     dfRatingMean['time'] = np.mean(allTimes,axis=1)
     dfRatingMean['steRating'] = np.std(allRating,axis=1)/np.sqrt(nSubj)

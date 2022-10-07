@@ -1,4 +1,4 @@
-# Passage-of-Time Dysphoria
+# Mood Drift Over Time
 
 This repository contains the scripts necessary to preprocess, analyze, print and plot the results reported in the following paper:
 
@@ -11,14 +11,14 @@ Code for preprocessing, fitting mixed effects models, and analysis and plotting 
 ```
 conda create -p potdys3 -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.3 r-psych=2.1.3 xlrd=2.0.1 r-mumin=1.43.17
 conda activate ./potdys3
-git clone https://github.com/djangraw/PassageOfTimeDysphoria.git
+git clone https://github.com/djangraw/MoodDrift.git
 cd PassageOfTimeDysphoria
 pip install -e .
 ```
 
 ## Datasets
 
-Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/xbc6u/.
+Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/km69z/.
 After downloading and unzipping this file, the contents of the `PassageOfTimeDysphoria_Data` folder should be moved to the `Data` folder of this repository.
 
 Data from the mobile app participants described in the paper are a subset of the dataset shared by Robb Rutledge's laboratory, now available at:
@@ -55,7 +55,9 @@ Fits the large-scale linear mixed effects (LME) model and the computational mode
 ### Analysis
 Produces all the figures, tables, and printed results reported in the paper. Run the following:
 - [ProduceAllResults.py](scripts/ProduceAllResults.py). Most scripts and functions in the Analysis folder will be called by this wrapper script.
+- [dep_effect.py](scripts/dep_effect.py). Checks whether depression-related results are driven by floor effects.
 - [TestControlHypotheses.py](scripts/TestControlHypotheses.py). Performs preregistered analyses on the follow-up "controls" dataset collected in 2021.
+- [TestTotalMwHypotheses.py](scripts/TestTotalMwHypotheses.py). Performs modified versions of the preregistered analyses on the follow-up "mind-wandering" cohorts collected in 2021.
 
 ### Data Naming Conventions
 
