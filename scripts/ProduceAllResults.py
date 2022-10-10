@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Produce all results for the Passage-of-Time Dysphoria paper.
+Produce all results for the Mood Drift Over Time paper.
 To use, run whole script or cell-by-cell for specific results.
 
 - Created 10/22/20 by DJ.
@@ -10,7 +10,8 @@ To use, run whole script or cell-by-cell for specific results.
 - Updated 3/8/22 by DJ - moved horizontal reference line to mean initial mood
 - Updated 3/10/22 by DJ - added life happiness vs. LME mood slope jointplot
 - Updated 9/29/22 by DJ - added descriptive statistics, switched to TRIMD in titles
-- Updated 9/30/22 by DJ - save figures as both png and eps
+- Updated 9/30/22 by DJ - save figures as both png and pdf
+- Updated 10/7/22 by DJ - switched from TRIMD to "mood drift" in titles
 """
 
 # Import packages
@@ -59,60 +60,6 @@ def save_figure(filename,**kwargs):
     print('Done!')
 
 
-
-if have_gbe:
-    plt.close(689)
-    fig,ax = plt.subplots(1,2,num=689,figsize=[10,4],dpi=200,clear=True)
-    for is_explore_index,is_explore_loop in enumerate([True,False]):
-        if is_explore_loop:
-            suffix = '_GbeExplore'
-        else:
-            suffix = '_GbeConfirm'
-        # Load results
-        inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
-        print('Loading pyTorch best fits from %s...'%inFile)
-        fits = np.load(inFile)
-        n_trials,n_subjects = fits.shape
-        print('Done!')
-
-        # Load data
-        if is_explore_loop:
-            cohort = 'gbeExplore'
-            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
-        else:
-            cohort = 'GbeConfirm'
-            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
-        print('Loading actual mood data from %s...'%inFile)
-        dfData = pd.read_csv(inFile,index_col=0)
-        mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T
-        tMood = dfData['time'].values.reshape((-1,n_trials)).T
-
-        residuals = fits-mood
-        meanResiduals = np.mean(residuals,axis=1)
-        rmsResiduals = np.sqrt(np.mean(residuals**2,axis=1))
-        isRating = ~np.isnan(rmsResiduals)
-
-        # Plot
-        ax[is_explor_index].plot(meanResiduals[isRating],'.-',label='mean')
-        ax[is_explor_index].plot(rmsResiduals[isRating],'.-',label='RMS')
-        # Annotate plot
-        ax[is_explor_index].grid(True)
-        ax[is_explor_index].legend()
-        ax[is_explor_index].xlabel('Rating')
-        ax[is_explor_index].ylabel('Residuals of computational model (fit-mood)')
-        if is_explore_loop:
-            plt.title('Exploratory Mobile App Cohort')
-        else:
-            plt.title('Confirmatory Mobile App Cohort')
-        # plt.title('Pytorch model fits over ratings on %s cohort'%cohort)
-
-    plt.tight_layout()
-    # Save figure
-    outFile = '%s/PytorchResidualsVsTime_ExploreAndConfirm'%(outFigDir)
-    save_figure(outFile)
-
-
-raise()
 # %% Print Cohen's D for original cohort and others
 first_and_lasts = []
 for batchName in ['Recovery(Instructed)1', 'AdultOpeningRest', 'RecoveryNimh-run1','AllOpeningRestAndRandom']:
@@ -152,11 +99,11 @@ print(f"Difference between adult and adolescent: n = {len(adult_difs) + len(adol
 # %% Plot all naive opening rest batches separately
 batchNames = ['Recovery(Instructed)1', 'Expectation-7min','Expectation-12min','RestDownUp','Stability01-Rest','COVID01']
 batchLabels = ['15sRestBetween','Expectation-7mRest','Expectation-12mRest','RestDownUp','Daily-Rest-01','Weekly-Rest-01']
-plt.figure(511,figsize=(10,12),dpi=180);
+plt.figure(500,figsize=(10,12),dpi=180);
 plt.subplot(3,1,1)
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True,makeNewFig=False)
 # Annotate plot
-plt.title('TRIMD persists across all MTurk cohorts receiving opening rest')
+plt.title('Mood drift persists across all MTurk cohorts receiving opening rest')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
@@ -173,7 +120,7 @@ batchLabels = ['15sRestBetween','Visuomotor-Feedback','Daily-Random-01']
 plt.subplot(3,1,2)
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock='all',doInterpolation=True,makeNewFig=False)
 # Annotate plot
-plt.title('TRIMD persists in presence of simple tasks')
+plt.title('Mood drift persists in presence of simple tasks')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.xlim([-20,500])
@@ -186,14 +133,12 @@ plt.text(-0.1, 1.1, 'B', transform=plt.gca().transAxes,
 
 
 # %% Plot online adult vs. in-person adolescent cohort
-
-
 batchNames = ['AdultOpeningRest','RecoveryNimh-run1']
 batchLabels = ['MTurk cohorts','In-person adolescent cohort']
 plt.subplot(3,1,3)
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True,makeNewFig=False)
 # Annotate plot
-plt.title('TRIMD generalizes to different age group & recruitment method')
+plt.title('Mood drift generalizes to different age group & recruitment method')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
@@ -206,7 +151,6 @@ plt.tight_layout()
 outFig = '%s/PotdTimecourses'%(outFigDir)
 save_figure(outFig)
 
-raise()
 
 
 # %% LME results: Mean decline and Cohen's D with time
@@ -308,18 +252,18 @@ print('Table 2 comes from %s.'%inFile)
 
 
 # %% Plot mood over time with various IRIs
-
 batchNames = ['RecoveryInstructed1Freq0p25','RecoveryInstructed1Freq0p5','Recovery(Instructed)1','RecoveryInstructed1Freq2']
 #batchLabels = ['60 s rest between ratings','30 s rest between ratings','15 s rest between ratings','7.5 s rest between ratings']
 batchLabels = ['60sRestBetween','30sRestBetween','15sRestBetween','7.5sRestBetween']
 CompareMmiRatings(batchNames,batchLabels=batchLabels,iBlock=0,doInterpolation=True)
 # Annotate plot
-plt.title('Mood rating frequency does not affect TRIMD slope')
+plt.title('Mood rating frequency does not affect mood drift slope')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
 # Save figure
-outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
+#outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
+outFig = '%s/Mmi_RatingFrequency_Comparison'%outFigDir
 save_figure(outFig)
 
 
@@ -1583,3 +1527,55 @@ plt.suptitle('LME Mood Slope vs. Life Happiness for all subjects with opening \n
 
 outFile = '%s/LmeSlopeVsLifeHappiness'%(outFigDir)
 save_figure(outFile)
+
+# Plot GBE explore & confirm residuals (curently throws an error due to missing GbeExplore file)
+if have_gbe:
+    plt.close(689)
+    fig,ax = plt.subplots(1,2,num=689,figsize=[10,4],dpi=200,clear=True)
+    for is_explore_index,is_explore_loop in enumerate([True,False]):
+        if is_explore_loop:
+            suffix = '_GbeExplore'
+        else:
+            suffix = '_GbeConfirm'
+        # Load results
+        inFile = '%s/PyTorchPredictions%s.npy'%(pytorchDir,suffix)
+        print('Loading pyTorch best fits from %s...'%inFile)
+        fits = np.load(inFile)
+        n_trials,n_subjects = fits.shape
+        print('Done!')
+
+        # Load data
+        if is_explore_loop:
+            cohort = 'gbeExplore'
+            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
+        else:
+            cohort = 'GbeConfirm'
+            inFile = '%s/Mmi-%s_TrialForMdls.csv'%(pytorchDir,cohort)
+        print('Loading actual mood data from %s...'%inFile)
+        dfData = pd.read_csv(inFile,index_col=0)
+        mood = dfData['happySlider.response'].values.reshape((-1,n_trials)).T
+        tMood = dfData['time'].values.reshape((-1,n_trials)).T
+
+        residuals = fits-mood
+        meanResiduals = np.mean(residuals,axis=1)
+        rmsResiduals = np.sqrt(np.mean(residuals**2,axis=1))
+        isRating = ~np.isnan(rmsResiduals)
+
+        # Plot
+        ax[is_explor_index].plot(meanResiduals[isRating],'.-',label='mean')
+        ax[is_explor_index].plot(rmsResiduals[isRating],'.-',label='RMS')
+        # Annotate plot
+        ax[is_explor_index].grid(True)
+        ax[is_explor_index].legend()
+        ax[is_explor_index].xlabel('Rating')
+        ax[is_explor_index].ylabel('Residuals of computational model (fit-mood)')
+        if is_explore_loop:
+            plt.title('Exploratory Mobile App Cohort')
+        else:
+            plt.title('Confirmatory Mobile App Cohort')
+        # plt.title('Pytorch model fits over ratings on %s cohort'%cohort)
+
+    plt.tight_layout()
+    # Save figure
+    outFile = '%s/PytorchResidualsVsTime_ExploreAndConfirm'%(outFigDir)
+    save_figure(outFile)

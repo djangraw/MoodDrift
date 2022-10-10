@@ -69,7 +69,7 @@ floor_kept = floor_kept.rename(columns={'batchName':'Cohort', 'participant':'Sub
 floor_dropped = rndat.loc[rndat.keep_floor == 0, ['batchName', 'participant']]
 
 # Fit lmers
-pymer_input = pd.read_csv('../Data/OutFiles_rb/Mmi-AllOpeningRestAndRandom_pymerInput-full.csv', index_col=0)
+pymer_input = pd.read_csv('../Data/OutFiles/Mmi-AllOpeningRestAndRandom_pymerInput-full.csv', index_col=0)
 
 # basic result
 print("basic result")
@@ -221,7 +221,7 @@ time_agg['leb'] = time_agg['mean'] - time_agg['sem']
 time_agg['ueb'] = time_agg['mean'] + time_agg['sem']
 
 to_plot= glmres.copy()
-to_plot['Sign of Mood Over Time'] = to_plot['Time Sign'].replace({-1:'Neg.', 0:'Non-sig.', 1:'Pos.'})
+to_plot['Sign of Mood Drift'] = to_plot['Time Sign'].replace({-1:'Neg.', 0:'Non-sig.', 1:'Pos.'})
 
 
 fig,axes = plt.subplots(1, 3, figsize=(7.5,5))
@@ -255,6 +255,7 @@ ns_color = sns.color_palette('pastel')[0]
 sn_color = sns.color_palette('pastel')[3]
 sp_color = sns.color_palette('pastel')[2]
 
+glmres['Time'] = glmres['Time']*100 # convert to % mood/min
 ax = sns.regplot(x='fracRiskScore', y='Time', data=glmres, scatter=False, line_kws={'color':line_color,
                                                                                   'label': 'Trend'}, ax=ax)
 xns = glmres.loc[~glmres.sig,'fracRiskScore']
@@ -278,7 +279,7 @@ r2_placeholder = Rectangle((0, 0), 1, 1, fc="w", fill=False,
 ax.set_xticks((1, 2))
 ax.set_xlim(xlims)
 ax.set_ylim(ylims)
-ax.set_ylabel('Mood slope over time')
+ax.set_ylabel('Mood drift (%mood/min)')
 ax.set_xlabel("Depression risk")
 ax.get_figure().set_facecolor('white')
 handles, labels = ax.get_legend_handles_labels()
@@ -294,8 +295,8 @@ ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5,-0.25))
 
 # panel c
 ax =axes[2]
-normed = to_plot.groupby('Depression Risk')['Sign of Mood Over Time'].value_counts(normalize=True).mul(100).rename('Percent').reset_index()
-ax = sns.barplot(y='Percent', x='Sign of Mood Over Time', hue='Depression Risk',
+normed = to_plot.groupby('Depression Risk')['Sign of Mood Drift'].value_counts(normalize=True).mul(100).rename('Percent').reset_index()
+ax = sns.barplot(y='Percent', x='Sign of Mood Drift', hue='Depression Risk',
                 data=normed,  order=['Pos.', 'Non-sig.', 'Neg.'],
                 ax=ax)
 pct_exp = pt_frs_exp.copy()
@@ -323,20 +324,22 @@ handels, labels = ax.get_legend_handles_labels()
 
 labels = [f'Not at risk\n(n = {(~glmres["Depression Risk"]).sum()})',
           f'At risk of depression\n(n = {(glmres["Depression Risk"]).sum()})',
-          'Expected', 
+          'Expected',
           f'$\chi^2$ = {chi2:0.2f}\n$p$ = {p:0.2g}']
 handels = [handels[1], handels[2], handels[0], chi2_placeholder]
 ax.legend(handels, labels, loc='upper center', bbox_to_anchor=(0.5,-0.25), )
-ax.set_ylabel('Sign of mood slope over time')
+ax.set_ylabel('Participants')
 
 fig.tight_layout(pad=1, h_pad=0.1)
 fig.set_facecolor('white')
 fig.text(0, 0.95, 'A', weight='bold')
-fig.text(0.31, 0.95, 'B', weight='bold')
+fig.text(0.33, 0.95, 'B', weight='bold')
 fig.text(0.66, 0.95, 'C', weight='bold')
 
-fig.savefig('../Figures/dep_effect.png', dpi=200,bbox_inches="tight")
-fig.savefig('../Figures/dep_effect.pdf')
+outFile = '../Figures/dep_effect'
+print(f'Saving figure as {outFile}...')
+fig.savefig(f'{outFile}.png', dpi=200,bbox_inches="tight")
+fig.savefig(f'{outFile}.pdf')
 
 
 
