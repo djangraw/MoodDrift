@@ -10,7 +10,7 @@ The data in this repository are presented in the following paper:
 
 ## Analysis
 The scripts used to analyze these data can be found on GitHub at
-[github.com/djangraw/MoodDrift](github.com/djangraw/MoodDrift)
+[github.com/djangraw/MoodDrift](https://github.com/djangraw/MoodDrift)
 
 ## Naming Conventions
 
