@@ -3,7 +3,7 @@
 """
 RunCohortMeanLmers.py
 
-Check extent to which cohort mean mood over time can be modeled by an LME. 
+Check extent to which cohort mean mood over time can be modeled by an LME.
 
 - Created 9/14/22 by DJ
 """
@@ -12,7 +12,7 @@ Check extent to which cohort mean mood over time can be modeled by an LME.
 # import CompareTwoLmers as c2l
 import pandas as pd
 import numpy as np
-import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
+import MoodDrift.Analysis.PlotMmiData as pmd
 from matplotlib import pyplot as plt
 
 # declare variables

@@ -332,9 +332,9 @@ ax.set_ylabel('Participants')
 
 fig.tight_layout(pad=1, h_pad=0.1)
 fig.set_facecolor('white')
-fig.text(0, 0.95, 'A', weight='bold')
-fig.text(0.33, 0.95, 'B', weight='bold')
-fig.text(0.66, 0.95, 'C', weight='bold')
+fig.text(0, 0.95, 'a', weight='bold')
+fig.text(0.33, 0.95, 'b', weight='bold')
+fig.text(0.66, 0.95, 'c', weight='bold')
 
 outFile = '../Figures/dep_effect'
 print(f'Saving figure as {outFile}...')

@@ -23,8 +23,8 @@ from matplotlib import pyplot as plt
 import glob
 import dateutil.parser as dparser
 import datetime
-import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
-from PassageOfTimeDysphoria.Preprocessing.GetMmiRatingsAndTimes import GetMmiRatingsAndTimes
+import MoodDrift.Analysis.PlotMmiData as pmd
+from MoodDrift.Preprocessing.GetMmiRatingsAndTimes import GetMmiRatingsAndTimes
 import os.path
 
 # Convert MM/DD/YY datestr to year, month, and day ints

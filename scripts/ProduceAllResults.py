@@ -15,17 +15,17 @@ To use, run whole script or cell-by-cell for specific results.
 """
 
 # Import packages
-import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
+import MoodDrift.Analysis.PlotMmiData as pmd
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from PassageOfTimeDysphoria.Analysis.CompareMmiRatings import CompareMmiRatings
-import PassageOfTimeDysphoria.Analysis.PlotPytorchPenaltyTuning as ppt
-from PassageOfTimeDysphoria.Analysis.CalculatePytorchModelError import CalculatePytorchModelError
-from PassageOfTimeDysphoria.Analysis.PlotAgeVsCoeffs import PlotAgeVsCoeffs
-from PassageOfTimeDysphoria.Analysis.PlotTimeOfDayVsSlopeAndIntercept import PlotTimeOfDayVsSlopeAndIntercept
-from PassageOfTimeDysphoria.Analysis.PlotPymerFits import PlotPymerHistosJoint
-import PassageOfTimeDysphoria.Analysis.GetMmiIcc as gmi
+from MoodDrift.Analysis.CompareMmiRatings import CompareMmiRatings
+import MoodDrift.Analysis.PlotPytorchPenaltyTuning as ppt
+from MoodDrift.Analysis.CalculatePytorchModelError import CalculatePytorchModelError
+from MoodDrift.Analysis.PlotAgeVsCoeffs import PlotAgeVsCoeffs
+from MoodDrift.Analysis.PlotTimeOfDayVsSlopeAndIntercept import PlotTimeOfDayVsSlopeAndIntercept
+from MoodDrift.Analysis.PlotPymerFits import PlotPymerHistosJoint
+import MoodDrift.Analysis.GetMmiIcc as gmi
 from scipy import stats
 import seaborn as sns
 
@@ -107,7 +107,7 @@ plt.title('Mood drift persists across all MTurk cohorts receiving opening rest')
 plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.grid()
-plt.text(-0.1, 1.1, 'A', transform=plt.gca().transAxes,
+plt.text(-0.1, 1.1, 'a', transform=plt.gca().transAxes,
             size=40)#, weight='bold')
 # Save figure
 # outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
@@ -125,7 +125,7 @@ plt.gca().set_axisbelow(True)
 plt.ylim([0.4,0.8])
 plt.xlim([-20,500])
 plt.grid()
-plt.text(-0.1, 1.1, 'B', transform=plt.gca().transAxes,
+plt.text(-0.1, 1.1, 'b', transform=plt.gca().transAxes,
             size=40)#, weight='bold')
 # Save figure
 # outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
@@ -145,7 +145,7 @@ plt.grid()
 # Save figure
 # outFig = '%s/Mmi_%s_Comparison'%(outFigDir,'-'.join(batchNames))
 # save_figure(outFig)
-plt.text(-0.1, 1.1, 'C', transform=plt.gca().transAxes,
+plt.text(-0.1, 1.1, 'c', transform=plt.gca().transAxes,
             size=40)#, weight='bold')
 plt.tight_layout()
 outFig = '%s/PotdTimecourses'%(outFigDir)
@@ -499,20 +499,36 @@ if have_gbe:
     else:
         plt.hist(dfPymerCoeffs_app['Time']*100.0,xHist,weights=weights,alpha=0.5,label='Confirmatory mobile app participants (n=%d), LME'%nSubj_app)
 
+    # add median lines
+    online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
+    app_lme_median = np.percentile(dfPymerCoeffs_app['Time']*100.0, 50)
+    plt.plot([online_lme_median,online_lme_median],[0,7.25],c='tab:blue')
+    plt.plot([app_lme_median,app_lme_median],[0,7.25],c='tab:orange')
+
+    # check significance
+    stat,p = stats.ranksums(dfPymerCoeffs_online.Time, dfPymerCoeffs_app.Time)
+    nonline = len(dfPymerCoeffs_online.Time)
+    napp = len(dfPymerCoeffs_app.Time)
+    dof = nonline + napp - 2
+    print(f'Ranksum of LME time coeff for online ({batchName_online}) vs. mobile app ({batchName_app}): nonline={nonline}, napp={napp}, ndof={dof}, stat={stat:.3g}, p={p:.3g}')
+    # add star
+    if p<0.05:
+        plt.plot(np.array([online_lme_median,online_lme_median,app_lme_median,app_lme_median]),np.array([0,.25,.25,0])+7.5,'k-')
+        plt.plot((online_lme_median + app_lme_median)/2, 8,'k*')
+
+
     # Annotate plot
     plt.grid(True)
     plt.xlabel('LME slope parameter (% mood/min)')
     plt.ylabel('Percent of participants')
     plt.legend()
+    plt.ylim([0,10])
     plt.title('LME mood slope parameter histograms')
-    online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
     # Save figure
     #outFile = '%s/Mmi-Vs-Gbe-Slopes'%outFigDirƒ%%
     outFile = '%s/LmeSlopeHistograms_OnlineVsApp_%s_2grp'%(outFigDir,batchName_app)
     save_figure(outFile)
     # print info
-    online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
-    app_lme_median = np.percentile(dfPymerCoeffs_app['Time']*100.0, 50)
     lme_dif = online_lme_median - app_lme_median
     app_pytorch_median = np.percentile(best_pars.beta_T * 100.0, 50)
     lme_app_dif = online_lme_median - app_pytorch_median
@@ -703,20 +719,9 @@ if have_gbe:
 
 
         plt.close(621)
-        plt.figure(621,figsize=(10,4),dpi=120)
+        plt.figure(621,figsize=(7,4),dpi=120)
         plt.clf()
-        rs,ps = stats.spearmanr(dfSummary['lifeHappy'],dfSummary['beta_T'])
-        print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
-
-        print('Plotting lifeHappy vs. beta_T with best fit line...')
-        plt.subplot(1,3,1)
-        sns.regplot(x='lifeHappy', y='beta_T', data=dfSummary);
-        # Annotate plot
-        plt.xlabel('Life happiness rating (0-1)')
-        plt.ylabel(r'$\beta_T$')
-        plt.title(r'Life happiness vs. $\beta_T$:' + '\n' + r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
-
-        plt.subplot(1,3,2)
+        plt.subplot(1,2,1)
         rs,ps = stats.spearmanr(best_pars[param],best_pars[paramToPlot])
         print('%s vs. %s: r_s = %.3g, p_s = %.3g'%(param,paramToPlot,rs,ps))
 
@@ -727,7 +732,7 @@ if have_gbe:
         plt.title('%s vs. %s:\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
                                   r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
 
-        plt.subplot(1,3,3)
+        plt.subplot(1,2,2)
         topCutoff = np.median(best_pars.lifeHappy)
         botCutoff = np.median(best_pars.lifeHappy)
         if nGrps==2:
@@ -767,12 +772,26 @@ if have_gbe:
         g2 = sns.regplot(x=param, y=paramToPlot, data=best_pars.loc[isBot,:], line_kws={'color':'tab:orange','label':botLabel},scatter_kws={'color':'tab:orange','alpha':alpha});
         plt.xlabel(paramLabelDict[param])
         plt.ylabel(paramLabelDict[paramToPlot])
-        plt.title('%s vs. %s: group corr. diff.\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
+        plt.title('%s vs. %s: group correlation difference\n'%(paramLabelDict[param],paramLabelDict[paramToPlot]) +
                                   r'$z = %.3g, p = %.3g$'%(z,p))
         plt.legend()
 
+
+        # plot b_T against life happiness
+        # rs,ps = stats.spearmanr(dfSummary['lifeHappy'],dfSummary['beta_T'])
+        # print('lifeHappy vs. beta_T: r_s = %.3g, p_s = %.3g'%(rs,ps))
+        #
+        # print('Plotting lifeHappy vs. beta_T with best fit line...')
+        # plt.subplot(1,3,1)
+        # sns.regplot(x='lifeHappy', y='beta_T', data=dfSummary);
+        # # Annotate plot
+        # plt.xlabel('Life happiness rating (0-1)')
+        # plt.ylabel(r'$\beta_T$')
+        # plt.title(r'Life happiness vs. $\beta_T$:' + '\n' + r'$r_s = %.3g, p_s = %.3g$'%(rs,ps))
+
+
         plt.tight_layout()
-        outFig = '%s/PyTorch_betaT-vs-lifeHappyAndBetaA%s'%(outFigDir,suffix)
+        outFig = '%s/PyTorch_betaT-vs-BetaA%s'%(outFigDir,suffix)
         save_figure(outFig)
 
 
@@ -949,7 +968,8 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
     minNRatings=8 # -1 indicates all, but they must be the same
     minNTrials=10 # -1 indicates all, but they must be the same
     xlim=[0,90]
-    bar_ylim=[0.6,0.92]
+    bar_ylim=[0.6,0.9]
+    hist_ybins = np.arange(nGamble+2)/nGamble - 0.5/nGamble
     nChoseGamble = [0]* len(batchNames)
     participants = [0]* len(batchNames)
     #plt.rcParams.update({'font.size': 6})
@@ -960,6 +980,13 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
     meanGamble = np.zeros(len(batchNames))
     steGamble = np.zeros(len(batchNames))
     ratingLabels = list(batchLabels)
+    # initialize for 2d histos
+    xdata = np.zeros(0)
+    ydata = np.zeros(0)
+    weights = np.zeros(0)
+    # initialize lists of mood ratings
+    firstRatings = [0]*len(batchNames)
+    secondRatings = [0]*len(batchNames)
     # Get gambling behavior for each
     for iBatch, batchName in enumerate(batchNames):
         dfRating = pd.read_csv('%s/Mmi-%s_Ratings.csv'%(dataDir,batchName))
@@ -975,6 +1002,15 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
         dfTrialMean = pmd.GetMeanTrials(dfTrial,minNTrials)
         participants[iBatch] = np.unique(dfTrial.participant)
         nSubj = len(participants[iBatch])
+
+        # Get mood
+        firstRatings[iBatch] = np.zeros(nSubj)
+        secondRatings[iBatch] = np.zeros(nSubj)
+        for iRating,participant in enumerate(participants[iBatch]):
+            theseRatings = dfRating.loc[(dfRating.participant==participant),'rating'].values
+            firstRatings[iBatch][iRating] = theseRatings[0]
+            secondRatings[iBatch][iRating] = theseRatings[1]
+
 
         # Get average gambleFrac in first nGamble trials for each subject
         nChoseGamble[iBatch] = np.zeros(nSubj)
@@ -1013,18 +1049,28 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
         plt.grid(True,zorder=-3)
 
         plt.sca(ax[2]) # plt.subplot(313)
+        # add to 2d histogram
+        new_data = nChoseGamble[iBatch]/nGamble
+        ydata = np.concatenate((ydata, new_data) )
+        xdata =  np.concatenate((xdata, np.full(new_data.shape,iBatch)) )
+        weights = np.concatenate((weights, np.full(new_data.shape,100/len(new_data))) )
+        # plot translucent bars
         meanGamble[iBatch] = np.mean(dfTrialMean.gambleFrac[:nGamble])
-        plt.bar(iBatch,meanGamble[iBatch],zorder=2)
-        steGamble[iBatch] = np.std(1.0*nChoseGamble[iBatch]/nGamble)/np.sqrt(nSubj)
-        plt.plot([iBatch,iBatch],[meanGamble[iBatch]-steGamble[iBatch],
-                  meanGamble[iBatch]+steGamble[iBatch]],'k-')
-        plt.ylabel('Fraction choosing to gamble\nin first %d trials'%nGamble)
-        plt.ylim(bar_ylim)
-        plt.grid(True,zorder=-3)
+        plt.bar(iBatch,meanGamble[iBatch],width=0.5,zorder=2,alpha=0.5)#edgecolor=f'C{iBatch}',linewidth=2,color='none')
+        #steGamble[iBatch] = np.std(1.0*nChoseGamble[iBatch]/nGamble)/np.sqrt(nSubj)
+        #plt.plot([iBatch,iBatch],[meanGamble[iBatch]-steGamble[iBatch],
+        #          meanGamble[iBatch]+steGamble[iBatch]],'k-')
 
+    # Make 2d histogram
+    nGrps = len(batchNames)
+    bins = [-0.5 + np.arange(nGrps+1), hist_ybins]
+    h = plt.hist2d(xdata,ydata,bins=bins,vmin=0,vmax=70,weights = weights,cmap='Greys')
+    #print(h)
+    cbar = plt.colorbar()
+    cbar.ax.get_yaxis().labelpad = 15
+    cbar.ax.set_ylabel('% of participants in group', rotation=270)
 
     # Add stars for stats tests
-    nGrps = len(batchNames)
     p=np.zeros((nGrps,nGrps))
     stat=np.zeros((nGrps,nGrps))
     dof=np.zeros((nGrps,nGrps))
@@ -1040,20 +1086,48 @@ def CompareGamblingBehavior(dataDir,outFigDir,batchNames,groupName,batchLabels,i
             dof[j,i] = dof[i,j] = len(nChoseGamble[i]) + len(nChoseGamble[j]) - 2
             if p[i,j]<cutoff:
                 yMax = bar_ylim[1]
-                yStars = [yMax-0.07+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.05+(i+j)*.04, yMax-0.07+(i+j)*.04]
+                yStars = [yMax-0.07+(i+j)*.08, yMax-0.05+(i+j)*.08, yMax-0.05+(i+j)*.08, yMax-0.07+(i+j)*.08]
                 plt.plot([i,i,j,j],yStars ,'k-')
                 if isAnyStar:
-                    plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*')
+                    plt.plot((i+j)/2.0,yMax-0.01+(i+j)*.08,'k*')
                 else:
-                    plt.plot((i+j)/2.0,yMax-0.03+(i+j)*.04,'k*',label='p < 0.05/%d'%nComparisons)
+                    plt.plot((i+j)/2.0,yMax-0.01+(i+j)*.08,'k*',label='p < 0.05/%d'%nComparisons)
                     isAnyStar = True
             print('%s vs. %s: stat=%.3g, dof=%.3g, p=%.3g'%(batchLabels[i],batchLabels[j],stat[i,j],dof[i,j], p[i,j]))
             print(f'   median = {np.median(nChoseGamble[i]):.3g} vs. {np.median(nChoseGamble[j]):.3g}')
             print(f'   IQR = {stats.iqr(nChoseGamble[i]):.3g} vs. {stats.iqr(nChoseGamble[j]):.3g}')
 
+    # Compare mood ratings around same times (TEXT ONLY)
+    p=np.zeros((nGrps,nGrps))
+    stat=np.zeros((nGrps,nGrps))
+    dof=np.zeros((nGrps,nGrps))
+    for i in range(nGrps-1):
+        for j in range(i+1,nGrps):
+            stat,p = stats.ranksums(firstRatings[i],firstRatings[j])
+            dof = len(firstRatings[i]) + len(firstRatings[j]) - 2
+            print('%s vs. %s FIRST RATINGS: stat=%.3g, dof=%.3g, p=%.3g'%(batchLabels[i],batchLabels[j],stat,dof,p))
+            print(f'   median = {np.median(firstRatings[i]):.3g} vs. {np.median(firstRatings[j]):.3g}')
+            print(f'   IQR = {stats.iqr(firstRatings[i]):.3g} vs. {stats.iqr(firstRatings[j]):.3g}')
+
+            stat,p = stats.ranksums(secondRatings[i],secondRatings[j])
+            dof = len(secondRatings[i]) + len(secondRatings[j]) - 2
+            print('%s vs. %s SECOND RATINGS: stat=%.3g, dof=%.3g, p=%.3g'%(batchLabels[i],batchLabels[j],stat,dof,p))
+            print(f'   median = {np.median(secondRatings[i]):.3g} vs. {np.median(secondRatings[j]):.3g}')
+            print(f'   IQR = {stats.iqr(secondRatings[i]):.3g} vs. {stats.iqr(secondRatings[j]):.3g}')
+
+
+
+    # annotate bottom plot
+    plt.ylabel('Fraction of gamble choices\nin first %d trials'%nGamble)
+    #plt.ylim(bar_ylim)
+    plt.grid(True,zorder=-3)
     #plt.legend(loc='lower left')
+    plt.axhline(0,lw=1,c='k')
     plt.xticks(np.arange(len(batchNames)),batchLabels)
-    plt.ylim([0.6,1])
+    plt.ylim([-1/2/nGamble,1+1/2/nGamble])
+    plt.xlim([-0.5,nGrps-0.5])
+
+    # save figure
     plt.tight_layout(rect=[0,0,1,0.95])
     figTitle='Opening rest period is associated with reduced gambling choices'
     plt.suptitle('%s'%figTitle)
@@ -1236,7 +1310,38 @@ for stage in ['full','late']:
         else:
             plt.hist(best_pars.beta_T*100,xHist,weights=weights,alpha=0.6,zorder=3,label='Confirmatory mobile app participants (n=%d), computational model'%nSubj_model)
 
+        # add median lines
+        online_lme_median = np.percentile(dfPymerCoeffs_online['Time']*100.0, 50)
+        app_lme_median = np.percentile(dfPymerCoeffs_app['Time']*100.0, 50)
+        app_pymer_median = np.percentile(best_pars['beta_T']*100.0, 50)
+        plt.plot([online_lme_median,online_lme_median],[0,22],c='tab:blue')
+        plt.plot([app_lme_median,app_lme_median],[0,22],c='tab:orange')
+        plt.plot([app_pymer_median,app_pymer_median],[0,22],c='tab:green')
+
+        # check significance
+        stat,p = stats.ranksums(dfPymerCoeffs_online.Time, dfPymerCoeffs_app.Time)
+        nonline = len(dfPymerCoeffs_online.Time)
+        napp = len(dfPymerCoeffs_app.Time)
+        dof = nonline + napp - 2
+        print(f'Ranksum of LME time coeff for online ({batchName_online}) vs. mobile app ({batchName_app}): nonline={nonline}, napp={napp}, ndof={dof}, stat={stat:.3g}, p={p:.3g}')
+        # add star
+        if p<0.05:
+            plt.plot(np.array([online_lme_median,online_lme_median,app_lme_median,app_lme_median]),np.array([0,1,1,0])+23,'k-')
+            plt.plot((online_lme_median + app_lme_median)/2, 25,'k*')
+
+        # check significance
+        stat,p = stats.ranksums(best_pars['beta_T'], dfPymerCoeffs_app.Time)
+        npymer = len(best_pars['beta_T'])
+        napp = len(dfPymerCoeffs_app.Time)
+        dof = npymer + napp - 2
+        print(f'Ranksum of pymer vs. LME time coeff for mobile app ({batchName_app}): npymer={npymer}, napp={napp}, ndof={dof}, stat={stat:.3g}, p={p:.3g}')
+        # add star
+        if p<0.05:
+            plt.plot(np.array([app_pymer_median,app_pymer_median,app_lme_median,app_lme_median]),np.array([0,1,1,0])+23,'k-')
+            plt.plot((app_pymer_median + app_lme_median)/2, 25,'k*')
+
     # Annotate plot
+    plt.ylim(0,35)
     plt.grid(True)
     plt.xlabel('LME slope parameter or computational\nmodel time sensitivity parameter (% mood/min)')
     plt.ylabel('Percent of participants')
@@ -1336,13 +1441,13 @@ if have_gbe:
         isRating = ~np.isnan(rmsResiduals)
 
         # Plot
-        ax[is_explor_index].plot(meanResiduals[isRating],'.-',label='mean')
-        ax[is_explor_index].plot(rmsResiduals[isRating],'.-',label='RMS')
+        ax[is_explore_index].plot(meanResiduals[isRating],'.-',label='mean')
+        ax[is_explore_index].plot(rmsResiduals[isRating],'.-',label='RMS')
         # Annotate plot
-        ax[is_explor_index].grid(True)
-        ax[is_explor_index].legend()
-        ax[is_explor_index].xlabel('Rating')
-        ax[is_explor_index].ylabel('Residuals of computational model (fit-mood)')
+        ax[is_explore_index].grid(True)
+        ax[is_explore_index].legend()
+        ax[is_explore_index].xlabel('Rating')
+        ax[is_explore_index].ylabel('Residuals of computational model (fit-mood)')
         if is_explore_loop:
             plt.title('Exploratory Mobile App Cohort')
         else:
@@ -1403,12 +1508,24 @@ if have_gbe:
         plt.hist(y1,xHist,weights=weights,alpha=0.4,label='Played again (n=%d)'%len(y1))
         weights = np.ones_like(y2) * 100.0 / len(y2)
         plt.hist(y2,xHist,weights=weights,alpha=0.4,label='Did not play again (n=%d)'%len(y2))
+
+        # add median lines
+        naive_median = np.median(dfParams.loc[dfParams.noPlays==1,"beta_T"]*100)
+        return_median = np.median(dfParams.loc[dfParams.noPlays>1,"beta_T"]*100)
+        plt.plot([naive_median,naive_median],[0,45],c='tab:blue')
+        plt.plot([return_median,return_median],[0,45],c='tab:orange')
+
+        # add star if significant
+        if p<0.05:
+            plt.plot(np.array([naive_median,naive_median,return_median,return_median]),np.array([0,2.5,2.5,0])+47.5,'k-')
+            plt.plot((naive_median + return_median)/2, 50,'k*')
+
         # annotate plot
         plt.legend()
         plt.grid(True)
         plt.xlabel(r'Time sensitivity parameter $\beta_T$ (% mood/min)')
         plt.ylabel('Percent of participants')
-        plt.title('Time sensitivity vs. choice to play again, %s cohort'%cohort)
+        plt.title('Time sensitivity vs. choice to play again\n%s cohort'%cohort)
         plt.tight_layout()
         # Save figure
         outFile = '%s/PytorchBetaT-Vs-NoPlays%s'%(outFigDir,suffix)
@@ -1562,13 +1679,13 @@ if have_gbe:
         isRating = ~np.isnan(rmsResiduals)
 
         # Plot
-        ax[is_explor_index].plot(meanResiduals[isRating],'.-',label='mean')
-        ax[is_explor_index].plot(rmsResiduals[isRating],'.-',label='RMS')
+        ax[is_explore_index].plot(meanResiduals[isRating],'.-',label='mean')
+        ax[is_explore_index].plot(rmsResiduals[isRating],'.-',label='RMS')
         # Annotate plot
-        ax[is_explor_index].grid(True)
-        ax[is_explor_index].legend()
-        ax[is_explor_index].xlabel('Rating')
-        ax[is_explor_index].ylabel('Residuals of computational model (fit-mood)')
+        ax[is_explore_index].grid(True)
+        ax[is_explore_index].legend()
+        ax[is_explore_index].xlabel('Rating')
+        ax[is_explore_index].ylabel('Residuals of computational model (fit-mood)')
         if is_explore_loop:
             plt.title('Exploratory Mobile App Cohort')
         else:

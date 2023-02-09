@@ -3,12 +3,12 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='PassageOfTimeDysphoria',
+    name='MoodDrift',
     version='0.0.1',
     author='David Jangraw',
     author_email='djangraw@gmail.com',
-    description='scripts and functions for PassageOfTimeDysphoria paper',
-    url='https://github.com/djangraw/PassageOfTimeDysphoria',
+    description='scripts and functions for MoodDrift paper',
+    url='https://github.com/djangraw/MoodDrift',
     py_modules=find_packages(),
     install_requires=[],
     classifiers=[

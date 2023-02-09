@@ -2,30 +2,30 @@
 
 This repository contains the scripts necessary to preprocess, analyze, print and plot the results reported in the following paper:
 
-> Jangraw, Keren, Bedder, Rutledge, Pereira et al. (2021). "Passage-of-Time Dysphoria: A Highly Replicable, Gradual Decline in Subjective Mood Observed During Rest and Simple Tasks." BioRxiv.
+> Jangraw et al. (2023). "A Highly Replicable Decline in Mood During Rest and Simple Tasks." Nature Human Behaviour.
 
 
 ## Dependencies
 
 Code for preprocessing, fitting mixed effects models, and analysis and plotting of results will work from a conda environment. To get started, run the following commands:
 ```
-conda create -p potdys3 -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.3 r-psych=2.1.3 xlrd=2.0.1 r-mumin=1.43.17
-conda activate ./potdys3
+conda create -p mooddrift -c ejolly -c conda-forge python=3.8.8 numpy=1.19.2 pandas=1.1.5 pytest=6.2.2 joblib=1.0.1 rpy2=3.4.3 matplotlib=3.3.4 seaborn=0.11.1 scikit-learn=0.24.1 numexpr=2.7.3 patsy=0.5.1 statsmodels=0.12.2 openpyxl=3.0.7 pymer4=0.7.3 r-psych=2.1.3 xlrd=2.0.1 r-mumin=1.43.17
+conda activate ./mooddrift
 git clone https://github.com/djangraw/MoodDrift.git
-cd PassageOfTimeDysphoria
+cd MoodDrift
 pip install -e .
 ```
 
 ## Datasets
 
-Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/km69z/.
+Data from the online participants described in the paper can be found in the following repository on the Open Science Framework: https://osf.io/km69z/. Some of our files are named "Passage of Time Dysphoria" instead of "Mood Drift" because this was our previous name for the phenomenon described in the paper.
 After downloading and unzipping this file, the contents of the `PassageOfTimeDysphoria_Data` folder should be moved to the `Data` folder of this repository.
 
 Data from the mobile app participants described in the paper are a subset of the dataset shared by Robb Rutledge's laboratory, now available at:
 
 > Rutledge, Robb B. (2021), Risky decision and happiness task: The Great Brain Experiment smartphone app, Dryad, Dataset, https://doi.org/10.5061/dryad.prr4xgxkk
 
-After downloading and unzipping the dataset from the above repository, locate the file named `Rutledge_GBE_risk_data.mat` and copy it to the `PassageOfTimeDysphoria/Data/PilotData` folder before running the scripts described below.
+After downloading and unzipping the dataset from the above repository, locate the file named `Rutledge_GBE_risk_data.mat` and copy it to the `Data/PilotData` folder of this repository before running the scripts described below.
 
 If you need an environment for running the pytorch models, please open an issue and we'll work on adding this.
 

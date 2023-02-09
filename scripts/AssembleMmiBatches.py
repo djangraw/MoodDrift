@@ -21,8 +21,8 @@ import pandas as pd
 import numpy as np
 import os
 from glob import glob
-import PassageOfTimeDysphoria.Analysis.PlotMmiData as pmd
-from PassageOfTimeDysphoria.Preprocessing.CombineMmiBatches import CombineMmiBatches
+import MoodDrift.Analysis.PlotMmiData as pmd
+from MoodDrift.Preprocessing.CombineMmiBatches import CombineMmiBatches
 
 # Get batch names
 dataCheckDir = '../Data/DataChecks'
