@@ -46,11 +46,11 @@ Converts raw data into preprocessed files that combine across cohorts (or "batch
 ### Model Fitting
 Fits the large-scale linear mixed effects (LME) model and the computational model described in the paper. The computational model scripts are computationally expensive and best run on a high-performance computing cluster. These scripts require considerable compute resources and `pytorch` which is not include in the conda environment built above. All outputs of these scripts are included in this repository thus they may be skipped if you just want to reproduce the figures. Executing the scripts in this section may require experience with `pytorch` and additional assistance from the authors :
 - [RunPymerOnCovidData_Aug2020.py](scripts/RunPymerOnCovidData_Aug2020.py) to run the LME model. Must be run from a python environment with pymer4 installed.
-- [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to tune the computational model's hyperparameters. Must have pytorch installed.
-- [Tune_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term.
-- [Tune_GBE_pytorch.py](scripts/Tune_GBE_pytorch.py) to run the model with given hyperparameters. Must have pytorch installed.
-- [Run_GBE_pytorch_NoBetaT.py](scripts/Tune_GBE_pytorch_NoBetaT.py) to do the same without the time-responsive beta_T term.
-- [CombineGbeConfirmResults.py](scripts/CombineGbeConfirmResults.py) to combine across computational model results for the confirmatory mobile app sub-cohorts, which were split apart to avoid memory errors.
+- [Tune_GBE_pytorch.py](MoodDrift/ModelFitting/Tune_GBE_pytorch.py) to tune the computational model's hyperparameters. Must have pytorch installed.
+- [Tune_GBE_pytorch_NoBetaT.py](MoodDrift/ModelFitting/Tune_GBE_pytorch_noBetaT.py) to do the same without the time-responsive beta_T term.
+- [Tune_GBE_pytorch.py](MoodDrift/ModelFitting/Tune_GBE_pytorch.py) to run the model with given hyperparameters. Must have pytorch installed.
+- [Run_GBE_pytorch_NoBetaT.py](MoodDrift/ModelFitting/Run_GBE_pytorch_noBetaT.py) to do the same without the time-responsive beta_T term.
+- [CombineGbeConfirmResults.py](MoodDrift/ModelFitting/CombineGbeConfirmResults.py) to combine across computational model results for the confirmatory mobile app sub-cohorts, which were split apart to avoid memory errors.
 
 ### Analysis
 Produces all the figures, tables, and printed results reported in the paper. Run the following:
